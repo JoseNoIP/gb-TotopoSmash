@@ -1,0 +1,17 @@
+# Godot
+.godot/
+*.import
+android/
+builds/debug/
+builds/release/
+*.apk
+*.aab
+*.tmp
+
+# Python / asset tools
+__pycache__/
+*.pyc
+/tmp/
+
+# macOS
+.DS_Store
