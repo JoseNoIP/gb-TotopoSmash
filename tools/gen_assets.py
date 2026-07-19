@@ -262,6 +262,36 @@ def make_app_icon(size=512):
     return _flat(g)
 
 
+def make_totopo_icon(size=512):
+    """Totopo Smash app icon — toasted tortilla chip triangle with a bite, on
+    the board's dark slate background (Constants.COLOR_BG_BOARD)."""
+    BG = (22, 27, 37, 255)
+    CHIP = (249, 169, 40, 255)  # Constants.COLOR_TOTOPO
+    SPECK = (140, 78, 16, 255)
+
+    g = _grid(size, size, BG)
+
+    m = int(size * 0.14)
+    top = (size // 2, m)
+    bl = (m, size - m)
+    br = (size - m, size - m)
+    _poly(g, [top, bl, br], CHIP)
+
+    rnd = random.Random(1101)
+    for _ in range(int(size * size * 0.0006)):
+        y = rnd.randint(top[1], bl[1])
+        t = (y - top[1]) / max(1, (bl[1] - top[1]))
+        left_x = top[0] + t * (bl[0] - top[0])
+        right_x = top[0] + t * (br[0] - top[0])
+        x = rnd.randint(int(left_x), int(right_x))
+        _circle(g, x, y, max(1, size // 170), SPECK)
+
+    bite_r = int(size * 0.22)
+    _circle(g, br[0] - int(size * 0.06), br[1] - int(size * 0.08), bite_r, BG)
+
+    return _flat(g)
+
+
 # ---------------------------------------------------------------------------
 # Character sprites
 # ---------------------------------------------------------------------------

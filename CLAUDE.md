@@ -175,6 +175,7 @@ func _exit_tree() -> void:
 ### Reglas de tipado descubiertas construyendo Totopo Smash
 38. **`var velocity: Vector2` en un script que `extends CharacterBody2D`** → error de compilación "Member velocity redefined" (`velocity` ya es nativo de `CharacterBody2D`, usado por `move_and_slide()`). Si el script implementa su propio movimiento a mano (ej. rebote con `move_and_collide()`), NO redeclarar la propiedad — usar directamente el `velocity` heredado.
 39. **`Dictionary[K, V]` tipada + `.set(&"campo", {...nuevo...})` con un diccionario literal** → falla en silencio (el campo queda vacío; ni error ni warning). Pasa tanto en producción como en tests que intentan inyectar estado. Para reemplazar el contenido desde fuera del objeto: obtener la referencia con `.get(&"campo")` y mutarla in-place (`d.clear(); d[key] = value`) — `Dictionary` es tipo por referencia en GDScript, así que la mutación se refleja en el objeto real sin pasar por `.set()`.
+40. **Input táctil (`InputEventScreenTouch`/`Drag`) no responde a mouse/trackpad en el editor de escritorio** → Godot no emula touch desde mouse por defecto. Si el control del juego es 100% táctil (ver tabla de Stack), agregar en `project.godot`: `[input_devices]` → `pointing/emulate_touch_from_mouse=true`. Sin esto, probar en Mac/PC "no hace nada" y no genera ningún error — parece un bug de gameplay pero es config de proyecto faltante.
 
 ---
 

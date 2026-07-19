@@ -53,6 +53,13 @@ ui_accept={
 ]
 }
 
+[input_devices]
+
+; El Mortar solo escucha InputEventScreenTouch/Drag (GDD: control táctil de 1 dedo).
+; Sin esto, mouse/trackpad en el editor de escritorio no generan esos eventos y
+; apuntar/disparar no responde a nada (Godot no emula touch desde mouse por defecto).
+pointing/emulate_touch_from_mouse=true
+
 [layer_names]
 
 ; Physics layer naming (matches collision_mask usage in code)
