@@ -55,14 +55,19 @@ func _build_grid() -> void:
 	var origin_x: float = (Constants.DESIGN_WIDTH - grid_w) * 0.5
 	var origin_y: float = 140.0
 
+	## El ScrollContainer (Container) reposiciona a sus hijos por su cuenta en cada sort —
+	## un `grid.position` puesto a mano ahí queda ignorado (regla CLAUDE.md nueva, mismo
+	## principio que #32 pero para Container en vez de anchors). Para centrar la grilla, el
+	## que se centra es el propio ScrollContainer (hijo de este Control plano, donde
+	## position/set_size sí se respetan) con el ancho exacto del contenido — no hace falta
+	## scroll horizontal porque nunca hay overflow en X.
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.position = Vector2(0.0, origin_y)
-	scroll.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT - origin_y - 120.0))
+	scroll.position = Vector2(origin_x, origin_y)
+	scroll.set_size(Vector2(grid_w, Constants.DESIGN_HEIGHT - origin_y - 120.0))
 	add_child(scroll)
 
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = COLUMNS
-	grid.position = Vector2(origin_x, 0.0)
 	grid.add_theme_constant_override(&"h_separation", int(BUTTON_GAP))
 	grid.add_theme_constant_override(&"v_separation", int(BUTTON_GAP))
 	scroll.add_child(grid)
