@@ -9,15 +9,29 @@ var _seed_label: Label = Label.new()
 var _pause_button: Button = Button.new()
 
 
+## NO leer GameManager.is_level_mode()/get_current_level_id() aquí directo: HUD nace
+## dentro de Game._build_scene(), que corre ANTES de GameManager.start_game(level_id) —
+## en ese momento _current_level_id todavía trae el valor de la partida ANTERIOR (o "").
+## Por eso el número de nivel/oleada se fija reaccionando a game_started (que se emite
+## DESPUÉS de que start_game() ya actualizó el estado), igual que BoardManager/TurnManager.
 func _ready() -> void:
 	layer = 10
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
 	EventBus.score_changed.connect(_on_score_changed)
-	EventBus.wave_advanced.connect(_on_wave_advanced)
 	EventBus.seed_count_changed.connect(_on_seed_count_changed)
+	EventBus.game_started.connect(_on_game_started)
+	EventBus.wave_advanced.connect(_on_wave_advanced)
 	_on_score_changed(GameManager.get_score())
-	_on_wave_advanced(GameManager.get_wave())
+
+
+## Modo Nivel: wave_advanced nunca se emite después de esto (no aparecen filas nuevas,
+## ver board_manager.gd) — el label se fija una sola vez a "NIVEL N". Modo Infinito: no
+## hace falta nada aquí, wave_advanced(1) ya llega por separado desde BoardManager.
+func _on_game_started() -> void:
+	if GameManager.is_level_mode():
+		var index: int = LevelManager.get_level_index(GameManager.get_current_level_id())
+		_wave_label.text = tr(&"LABEL_LEVEL_NUMBER") % (index + 1)
 
 
 func _build_ui() -> void:
@@ -55,6 +69,9 @@ func _on_score_changed(new_score: int) -> void:
 
 
 func _on_wave_advanced(wave_number: int) -> void:
+	## Nunca se emite en Modo Nivel en la práctica (guard defensivo de cualquier forma).
+	if GameManager.is_level_mode():
+		return
 	_wave_label.text = tr(&"LABEL_WAVE") % wave_number
 
 

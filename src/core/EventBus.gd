@@ -35,6 +35,18 @@ signal block_destroyed(grid_pos: Vector2i, block_type: String, score_value: int)
 signal salsa_exploded(grid_pos: Vector2i)
 signal board_reached_bottom
 
+# --- Modo Nivel (niveles finitos y deterministas, ver LevelManager/LevelLoader) ---
+## Cruda: BoardManager la emite cuando ya no quedan bloques destructibles (piedra no
+## cuenta) y no hay más filas en la cola del nivel. GameManager la escucha y emite
+## level_completed (enriquecida) — mismo patrón que board_reached_bottom -> game_over.
+signal level_cleared(level_id: String)
+signal level_completed(level_id: String, final_score: int)
+
+# --- Acelerar semillas mientras rebotan ---
+## Mortar la emite fuera de la fase AIMING (mantener presionado = true, soltar = false).
+## Seed multiplica su delta efectivo mientras está activa. Nunca durante el apuntado.
+signal seed_boost_changed(active: bool)
+
 # --- Íconos de poder en el tablero ---
 signal lemon_triggered(origin: Vector2)
 ## Emitida por el ícono al ser tocado (antes de que TurnManager sepa el nuevo total).

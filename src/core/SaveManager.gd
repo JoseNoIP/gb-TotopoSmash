@@ -108,3 +108,19 @@ func get_total_games_played() -> int:
 func increment_total_games_played() -> void:
 	_data["total_games_played"] = get_total_games_played() + 1
 	save()
+
+
+# --- Modo Nivel (niveles finitos/deterministas, ver LevelManager) ---
+## 1 = solo el nivel 1 desbloqueado (default de una partida nueva). Deliberadamente sin
+## estrellas/calificación por nivel — solo la frontera de desbloqueo (decisión de
+## alcance: el sistema de mejoras/oro queda fuera de esta sesión).
+func get_highest_level_unlocked() -> int:
+	return _data.get("highest_level_unlocked", 1) as int
+
+
+func set_highest_level_unlocked_if_higher(value: int) -> bool:
+	if value > get_highest_level_unlocked():
+		_data["highest_level_unlocked"] = value
+		save()
+		return true
+	return false

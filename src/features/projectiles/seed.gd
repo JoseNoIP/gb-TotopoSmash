@@ -27,6 +27,7 @@ var _floor_y: float = 0.0
 var _landed: bool = false
 var _bounce_count: int = 0
 var _has_sprite: bool = false
+var _boosted: bool = false
 
 
 func _ready() -> void:
@@ -40,6 +41,15 @@ func _ready() -> void:
 	col.shape = shape
 	add_child(col)
 	_build_sprite()
+	EventBus.seed_boost_changed.connect(_on_seed_boost_changed)
+
+
+func _exit_tree() -> void:
+	EventBus.seed_boost_changed.disconnect(_on_seed_boost_changed)
+
+
+func _on_seed_boost_changed(active: bool) -> void:
+	_boosted = active
 
 
 func _build_sprite() -> void:
@@ -63,12 +73,22 @@ func launch(origin: Vector2, direction: Vector2, speed: float, floor_y: float) -
 	_floor_y = floor_y
 
 
+## Boost (acelerar semillas mientras rebotan, ver mortar.gd): escala el delta efectivo de
+## ESTA semilla en vez de Engine.time_scale global — así no acelera de rebote los tweens
+## (BoardManager._tween_to_row, Mortar._on_molcajete_position_changed) ni Timers
+## (TurnManager._fire_timer) que deben seguir a velocidad normal. move_and_collide() es
+## una consulta de movimiento continua/barrida — no puede "atravesar" un bloque aunque
+## remaining sea grande. El único riesgo real es necesitar más de las iteraciones de
+## rebote habituales dentro de un mismo frame en pasillos angostos; se duplica el tope
+## mientras está boosteada para evitar un frenón visible.
 func _physics_process(delta: float) -> void:
 	if _landed:
 		return
-	var remaining: Vector2 = velocity * delta
+	var eff_delta: float = delta * Constants.SEED_BOOST_MULTIPLIER if _boosted else delta
+	var max_iterations: int = MAX_ITERATIONS_PER_FRAME * 2 if _boosted else MAX_ITERATIONS_PER_FRAME
+	var remaining: Vector2 = velocity * eff_delta
 	var iterations: int = 0
-	while remaining.length() > 0.01 and iterations < MAX_ITERATIONS_PER_FRAME:
+	while remaining.length() > 0.01 and iterations < max_iterations:
 		var collision: KinematicCollision2D = move_and_collide(remaining)
 		if collision == null:
 			break

@@ -1,29 +1,43 @@
 extends Node
-## Máquina de estados de la partida. Dueño del score y la oleada actual de la run.
-## DESVIACIÓN DEL TEMPLATE: sin LEVEL_UP ni GAME_WON — el GDD de Totopo Smash define
-## progresión infinita por oleadas y una única condición de derrota (bloque llega al
-## molcajete). No existe condición de victoria.
+## Máquina de estados de la partida. Dueño del score, la oleada actual (Modo Infinito) y
+## el nivel activo (Modo Nivel — ver LevelManager/level_loader.gd). Modo Infinito: sin
+## condición de victoria, progresión infinita por oleadas (diseño original del GDD).
+## Modo Nivel: sí existe victoria (LEVEL_COMPLETE) — destruir todos los bloques
+## destructibles antes de que el tablero llegue a la fila del molcajete.
 
-enum State { MENU, PLAYING, PAUSED, GAME_OVER }
+enum State { MENU, PLAYING, PAUSED, GAME_OVER, LEVEL_COMPLETE }
 
 var _state: State = State.MENU
 var _score: int = 0
 var _wave: int = 1
+var _current_level_id: String = ""
 
 
 func _ready() -> void:
 	EventBus.board_reached_bottom.connect(_on_board_reached_bottom)
+	EventBus.level_cleared.connect(_on_level_cleared)
 	EventBus.wave_advanced.connect(_on_wave_advanced)
 	EventBus.block_destroyed.connect(_on_block_destroyed)
 
 
-func start_game() -> void:
+## level_id = "" (default) → Modo Infinito, igual que siempre. Los call-sites existentes
+## (Game.gd, TutorialGame.gd) llaman start_game() sin argumentos y no cambian.
+func start_game(level_id: String = "") -> void:
 	_state = State.PLAYING
 	_score = 0
 	_wave = 1
+	_current_level_id = level_id
 	get_tree().paused = false
 	EventBus.game_started.emit()
 	EventBus.score_changed.emit(_score)
+
+
+func get_current_level_id() -> String:
+	return _current_level_id
+
+
+func is_level_mode() -> bool:
+	return not _current_level_id.is_empty()
 
 
 func pause_game() -> void:
@@ -86,3 +100,14 @@ func _on_board_reached_bottom() -> void:
 	if is_new_best:
 		EventBus.high_score_updated.emit(_score)
 	EventBus.game_over.emit(_score, _wave)
+
+
+func _on_level_cleared(level_id: String) -> void:
+	if _state != State.PLAYING:
+		return
+	_state = State.LEVEL_COMPLETE
+	LevelManager.mark_level_completed(level_id)
+	var is_new_best: bool = SaveManager.set_best_score_if_higher(_score)
+	if is_new_best:
+		EventBus.high_score_updated.emit(_score)
+	EventBus.level_completed.emit(level_id, _score)

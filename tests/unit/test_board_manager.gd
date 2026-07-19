@@ -6,6 +6,7 @@ extends GutTest
 
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TotopoBlockGd := preload("res://src/features/blocks/totopo_block.gd")
+const StoneBlockGd := preload("res://src/features/blocks/stone_block.gd")
 
 const CELL_SIZE: float = 55.7
 
@@ -122,6 +123,143 @@ func test_shift_down_drops_a_freed_icon_without_crashing() -> void:
 	assert_false(
 		new_icons.has(Vector2i(3, 1)), "un ícono liberado no debe sobrevivir al desplazamiento"
 	)
+
+
+## --- Modo Nivel (niveles finitos/deterministas, ver LevelManager/level_loader.gd) ---
+
+func test_spawn_level_cell_places_a_block_at_its_exact_position() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	var cell: Dictionary = {"col": 3, "row": 2, "kind": "totopo", "hp": 5}
+	board.call(&"_spawn_level_cell", cell)
+	var blocks: Dictionary = board.get(&"_blocks")
+	assert_true(blocks.has(Vector2i(3, 2)), "la celda debe caer exactamente en (3,2)")
+	var node: StaticBody2D = blocks[Vector2i(3, 2)]
+	assert_eq(int(node.get(&"current_hp")), 5, "el hp debe venir del JSON, no de wave_scaling")
+
+
+func test_spawn_level_cell_places_an_icon() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	board.call(&"_spawn_level_cell", {"col": 1, "row": 0, "kind": "lemon"})
+	var icons: Dictionary = board.get(&"_icons")
+	assert_true(icons.has(Vector2i(1, 0)))
+
+
+## Regresión: Modo Nivel nunca debe usar el spawn aleatorio de Infinito.
+func test_game_started_in_level_mode_does_not_spawn_a_random_row() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	watch_signals(EventBus)
+	GameManager.start_game("level_001")
+	assert_signal_not_emitted(
+		EventBus, "wave_advanced", "modo nivel no debe emitir wave_advanced al iniciar"
+	)
+	var blocks: Dictionary = board.get(&"_blocks")
+	var icons: Dictionary = board.get(&"_icons")
+	assert_true(blocks.size() + icons.size() > 0, "el nivel debe colocar al menos una celda")
+	GameManager.start_game()  # vuelve a Modo Infinito para no contaminar otros tests
+
+
+## Regresión: el tablero se sigue desplazando y game-over sigue funcionando igual en
+## Modo Nivel (es lo que hace que "llegar a la fila del molcajete" siga siendo derrota
+## real aunque no aparezcan filas nuevas).
+func test_all_seeds_returned_in_level_mode_still_checks_game_over() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("level_001")
+	var lone_block: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(lone_block)
+	var forced_key: Vector2i = Vector2i(0, Constants.MOLCAJETE_ROW - 1)
+	lone_block.call(&"setup", forced_key, 5, CELL_SIZE)
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks.clear()
+	blocks[forced_key] = lone_block
+	watch_signals(EventBus)
+	EventBus.all_seeds_returned.emit(0.0)
+	assert_signal_emitted(EventBus, "board_reached_bottom")
+	GameManager.start_game()
+
+
+## _level_row_queue/_level_queue_index se fuerzan a "cola ya agotada": este test cubre
+## _all_destructible_cleared() de forma aislada, no la mecánica de la cola (ver
+## test_level_loader.gd para eso) — level_001 real trae row_queue con contenido, así que
+## sin este override la cola seguiría revelando filas nuevas y jamás se agotaría aquí.
+func test_level_cleared_emitted_when_only_stone_blocks_remain() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("level_001")
+	board.set(&"_level_row_queue", [])
+	board.set(&"_level_queue_index", 0)
+	var stone: StaticBody2D = StoneBlockGd.new()
+	add_child_autofree(stone)
+	stone.call(&"setup", Vector2i(0, 0), 1, CELL_SIZE)
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks.clear()
+	blocks[Vector2i(0, 0)] = stone
+	watch_signals(EventBus)
+	EventBus.all_seeds_returned.emit(0.0)
+	assert_signal_emitted_with_parameters(EventBus, "level_cleared", ["level_001"])
+	GameManager.start_game()
+
+
+func test_level_cleared_not_emitted_while_a_destructible_block_remains() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("level_001")
+	board.set(&"_level_row_queue", [])
+	board.set(&"_level_queue_index", 0)
+	var totopo: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(totopo)
+	totopo.call(&"setup", Vector2i(0, 0), 5, CELL_SIZE)
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks.clear()
+	blocks[Vector2i(0, 0)] = totopo
+	watch_signals(EventBus)
+	EventBus.all_seeds_returned.emit(0.0)
+	assert_signal_not_emitted(EventBus, "level_cleared")
+	GameManager.start_game()
+
+
+## --- row_queue: revelado progresivo (dificultad estándar, sin RNG en runtime) ---
+
+
+func test_game_started_in_level_mode_reveals_only_the_first_queued_row() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("level_001")
+	var queue_index: int = int(board.get(&"_level_queue_index"))
+	assert_eq(queue_index, 1, "solo la primera fila de la cola se revela al iniciar")
+	GameManager.start_game()
+
+
+func test_all_seeds_returned_in_level_mode_reveals_the_next_queued_row() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("level_001")
+	EventBus.all_seeds_returned.emit(0.0)
+	var queue_index: int = int(board.get(&"_level_queue_index"))
+	assert_eq(queue_index, 2, "cada turno exitoso consume una fila más de la cola")
+	GameManager.start_game()
+
+
+func test_level_cleared_only_fires_once_the_queue_is_exhausted() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("level_001")
+	board.set(&"_level_row_queue", [[{"col": 0, "kind": "totopo", "hp": 1}]])
+	board.set(&"_level_queue_index", 0)
+	board.get(&"_blocks").clear()
+	board.get(&"_icons").clear()
+	watch_signals(EventBus)
+	EventBus.all_seeds_returned.emit(0.0)
+	assert_eq(
+		int(board.get(&"_level_queue_index")), 1, "arreglo del test: la única fila debe consumirse"
+	)
+	assert_signal_not_emitted(
+		EventBus, "level_cleared", "el bloque recién revelado sigue destructible"
+	)
+	GameManager.start_game()
 
 
 func test_block_destroyed_removes_it_from_the_grid() -> void:

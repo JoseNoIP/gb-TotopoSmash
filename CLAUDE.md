@@ -182,6 +182,9 @@ func _exit_tree() -> void:
 43. **Un nodo que se autodestruye con `queue_free()` (ej. un power-up/ítem recogido) debe borrarse también de cualquier `Dictionary`/`Array` tipado que lo referencie, en el mismo callback que lo libera.** Si no, la próxima vez que ese diccionario se copie o reasigne (ej. desplazar una grilla una fila) se intenta insertar una referencia ya liberada en un `Dictionary[K, V]` tipado, y Godot lo rechaza en tiempo de ejecución con `"previously freed object"` — un crash real, no una falla silenciosa. Al recorrer y reconstruir un diccionario tipado que puede contener nodos, comprobar `is_instance_valid(node)` **antes** de insertar en el nuevo diccionario (`continue` si es inválido), nunca insertar primero y validar después.
 44. **`CanvasItem` (la clase base compartida por `Node2D` y `Control`) NO declara `position`/`rotation`/`scale`** — cada rama los declara por separado con su propio sistema de transform. `modulate`/`self_modulate` sí viven en `CanvasItem` y son seguros de usar directo. Esto importa cuando una variable puede apuntar a un `ColorRect` (fallback sin asset) O a un `Sprite2D` (con textura real) según si el asset existe todavía — típico patrón "placeholder → sprite real" en este proyecto. Si la variable está tipada `CanvasItem` (o cualquier tipo que no garantice `scale`), usar `.set(&"scale", valor)` en vez de `variable.scale = valor` (regla #15 aplicada a este caso concreto). `Tween.tween_property(objeto, ^"scale", ...)` SÍ es seguro con acceso directo sin importar el tipo estático, porque resuelve la propiedad en runtime vía `NodePath`, no en tiempo de compilación.
 45. **Para SFX cortos generados con Python stdlib, usar `.wav`, no `.ogg`** — no hay encoder OGG en la stdlib, y `wave`/`struct` producen `.wav` sin dependencias. Godot reproduce `.wav` igual de bien para sonidos cortos (sin la latencia de decodificación de un códec comprimido). Si `AudioManager` asume `.ogg` por defecto sin haber generado ningún asset todavía, verificar contra el patrón real ya probado en otro juego del estudio antes de asumir la extensión.
+46. **`JSON.parse_string()` SIEMPRE devuelve los números como `float`, nunca `int`** — incluso `"col": 3` en el archivo se convierte en `3.0` al parsear. Un chequeo `valor is int` sobre datos que vinieron de JSON da `false` aunque el archivo tenga un entero limpio, y rechaza datos perfectamente válidos (detectado por los tests reales del catálogo de niveles, que fallaban contra JSON generado correctamente). Al validar/leer datos parseados de JSON, comprobar "es un número entero" con `valor is int or (valor is float and valor == floor(valor))` (ver `_is_whole_number()` en `level_loader.gd`), nunca `is int` a secas. `int(valor)` para convertir sí funciona igual en ambos casos.
+47. **Un nodo hijo instanciado dentro de `_build_scene()` (llamado desde `_ready()` de la escena raíz) NO debe leer el estado de un autoload que esa MISMA escena raíz actualiza recién DESPUÉS de `_build_scene()`** (ej. `GameManager.start_game(level_id)` llamado después de construir la escena) — su `_ready()` corre antes de que ese estado se actualice, así que lee el valor de la partida ANTERIOR (o el default). Si otros sistemas de la escena (`BoardManager`, `TurnManager`) ya reaccionan correctamente al evento `game_started` para leer ese mismo estado, cualquier nodo nuevo que necesite el mismo dato debe escuchar esa señal también — nunca leerlo de forma síncrona en su propio `_ready()`. Detectado con una captura de pantalla real mostrando el número de nivel de la partida anterior, no la actual.
+48. **`get_viewport().get_texture().get_image()` (técnica de captura de pantalla real para verificación visual) devuelve `null` bajo `--headless`** — ese modo usa el `RenderingServer` "dummy" (sin textura real detrás del viewport), y llamar `.get_image()` sobre él tira `ERROR: Parameter "t" is null` seguido de un `SCRIPT ERROR` que aborta la función a mitad de camino (si el script sigue con `await`/`get_tree().quit()` después, esas líneas nunca corren y el proceso de Godot se queda colgado para siempre, sin exit code, sin más output — parece un hang de lógica pero es este bug). Para el patrón de "instanciar escena real + esperar frames + guardar PNG del viewport" (usado para verificar bugs visuales que ningún test headless puede atrapar, ver regla #42), correr el proceso probe SIN `--headless` (`godot --path . probe.tscn`, ventana real aunque no se vea en pantalla) — ahí `get_texture()` sí devuelve una textura válida.
 
 ---
 
@@ -242,17 +245,19 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 
 ### Estado Actual del Juego
 
-**Totopo Smash** — puzzle/arcade de física de rebotes (brick breaker), progresión infinita por oleadas, sin condición de victoria.
+**Totopo Smash** — puzzle/arcade de física de rebotes (brick breaker). Dos modos: **Modo Nivel** (principal — niveles finitos y deterministas, mismo tablero para todos, victoria al despejar todo lo destructible) y **Modo Infinito** (el diseño original: progresión infinita y aleatoria por oleadas, sin condición de victoria, se juega por score).
 
-- **Mecánica core:** arrastrar el dedo para apuntar (cono "hacia arriba", nunca horizontal/abajo) → soltar dispara TODAS las semillas del inventario en ráfaga continua (`SEED_FIRE_INTERVAL = 0.06s` entre disparos) → rebote elástico perfecto (e=1.0) contra paredes/techo/bloques → la primera semilla en tocar el suelo reposiciona el molcajete → al volver la última, el tablero baja 1 fila y aparece una fila nueva arriba.
-- **Derrota:** un bloque toca la fila del molcajete (`Constants.MOLCAJETE_ROW`) al terminar un turno.
-- **Victoria:** no existe — se juega por score / oleada máxima alcanzada (persistidos en `SaveManager`).
+- **Mecánica core:** arrastrar el dedo para apuntar (cono "hacia arriba", nunca horizontal/abajo) → soltar dispara TODAS las semillas del inventario en ráfaga continua (`SEED_FIRE_INTERVAL = 0.06s` entre disparos) → rebote elástico perfecto (e=1.0) contra paredes/techo/bloques → la primera semilla en tocar el suelo reposiciona el molcajete → al volver la última, el tablero baja 1 fila (en ambos modos) y, solo en Modo Infinito, aparece una fila nueva arriba.
+- **Acelerar semillas:** mantener presionada la pantalla fuera de la fase de apuntado multiplica el delta físico de cada semilla por `Constants.SEED_BOOST_MULTIPLIER` (`EventBus.seed_boost_changed`, ver `mortar.gd`/`seed.gd`) — no usa `Engine.time_scale` (aceleraría tweens/timers que deben seguir normales).
+- **Derrota (ambos modos):** un bloque toca la fila del molcajete (`Constants.MOLCAJETE_ROW`) al terminar un turno — marcado visualmente por `danger_line.gd` (v2: banda de degradado rojo + chevrones de "cinta de peligro" + línea sólida, todo pulsante vía `_process`/`queue_redraw`, sin collider).
+- **Victoria — Modo Nivel:** destruir todos los bloques destructibles (piedra no cuenta) antes de que el tablero llegue a la fila del molcajete. **Modo Infinito:** no existe — se juega por score/oleada máxima (persistidos en `SaveManager`).
 - **Controles:** solo `Mortar` (molcajete) escucha input; no hay "Player" que se mueva por drag (a diferencia del template genérico) — el molcajete se reposiciona automáticamente, nunca por el jugador directamente.
-- **Escenas jugables:** `MainMenu.tscn` → `TutorialGame.tscn` (primera vez) o `Game.tscn`. Ambas instancian los mismos sistemas (`BoardManager`, `TurnManager`, `Mortar`, `VFXSpawner`, `HUD`).
-- **Sin metagame** — no hay oro ni upgrades (ver Pendientes en `idea-base.md`).
+- **Escenas jugables:** `MainMenu.tscn` (botones NIVELES / MODO INFINITO / CONFIGURACIÓN) → `LevelSelectScreen.tscn` (Modo Nivel) o directo → `TutorialGame.tscn` (primera vez, cualquier modo) / `Game.tscn`. `Game.tscn` sirve ambos modos — el modo lo decide `LevelManager.get_pending_level()` (buzón no destructivo) leído en `Game.gd._ready()` justo antes de `GameManager.start_game(level_id)`.
+- **Niveles:** `data/levels/*.json` + `data/levels/manifest.json` (orden de juego). Un nivel define su contenido con `cells` (celdas absolutas, visibles desde el inicio — usado por las figuras) y/o `row_queue` (filas que se revelan de a una por turno, contenido fijo pero mecánica igual a Modo Infinito — usado por los niveles de dificultad progresiva; el nivel se gana solo cuando la cola se agota Y no queda ningún destructible). 20 niveles iniciales (`tools/gen_levels.py`: 14 procedurales vía `row_queue`, nivel 1 = 10 filas totales y +2 filas por nivel siguiente [`total_rows_for_level()`], + 6 figuras vía `cells` — Cruz/Corazón/Botella/Estrella/Diamante/Carita Feliz). Ampliable con la skill `/level-designer`.
+- **Sin metagame de oro/mejoras** — decisión de alcance explícita, fuera de esta sesión (ver Pendientes en `idea-base.md`). `highest_level_unlocked` en `SaveManager` sí persiste el avance de Modo Nivel.
 - **Multi-idioma:** es/en/pt_BR/fr vía `/mobile-i18n` — `LocalizationManager` + `assets/translations/translations.txt`. `MainMenu` redirige a `LanguageSelectScreen` en la primera ejecución.
 - **Assets:** sprites reales (bloques, molcajete, semilla, íconos — procedurales) + fondo de menú por IA (`tools/gen_assets.py` / `tools/fetch_ai_assets.py`) + SFX reales (`.wav`, `AudioManager`). Ver sección Assets en `idea-base.md`.
-- **Build:** `gdlint` 0 errores · GUT 85/85 tests · `--export-debug Android` genera APK válido · `deploy-playstore.yml` probado (subió a Play Store Internal Testing).
+- **Build:** `gdlint` 0 errores · GUT 137/137 tests · `--export-debug Android` genera APK válido · `deploy-playstore.yml` probado (subió a Play Store Internal Testing).
 
 ### Señales clave en EventBus
 
@@ -276,6 +281,9 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 | `seed_bounced(block_type)` | `Seed._handle_collision()` en cada rebote | `AudioManager` (tono de rebote o crunch/thud según el material) |
 | `lemon_triggered` / `seed_extra_touched` / `seed_extra_collected` | `LemonIcon` / `SeedExtraIcon` / `TurnManager` | `TurnManager` (split real vía señal privada `Seed.split_requested`, no EventBus) / `HUD` |
 | `score_changed` / `high_score_updated` | `GameManager` | `HUD` / `GameOverScreen` |
+| `level_cleared(level_id)` | `BoardManager` (sin destructibles + Modo Nivel) | `GameManager` (persiste desbloqueo, emite `level_completed`) |
+| `level_completed(level_id, score)` | `GameManager` | `LevelCompleteScreen` |
+| `seed_boost_changed(active)` | `Mortar` fuera de AIMING (mantener presionado) | `Seed` (multiplica su delta efectivo) |
 
 ### Referencia Rápida del GDD
 
@@ -291,15 +299,16 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 |---|---|---|
 | `Constants` | `src/core/Constants.gd` | Constantes tipadas (GDD como fuente de verdad) |
 | `EventBus` | `src/core/EventBus.gd` | Bus de señales cross-feature |
-| `GameManager` | `src/core/GameManager.gd` | Estados `MENU/PLAYING/PAUSED/GAME_OVER`, score, oleada, pausa real del `SceneTree` |
+| `GameManager` | `src/core/GameManager.gd` | Estados `MENU/PLAYING/PAUSED/GAME_OVER/LEVEL_COMPLETE`, score, oleada/nivel activo, pausa real del `SceneTree` |
 | `SaveManager` | `src/core/SaveManager.gd` | Persistencia `user://save.json` |
+| `LevelManager` | `src/core/LevelManager.gd` | Cache de niveles cargados, buzón de nivel pendiente (no destructivo), manifiesto |
 | `LocalizationManager` | `src/core/LocalizationManager.gd` | Carga `translations.txt`, aplica locale (es/en/pt_BR/fr) |
 | `AudioManager` | `src/features/audio/AudioManager.gd` | Stub de SFX/música (no crashea sin `.ogg`) |
 | `HapticManager` | `src/features/audio/HapticManager.gd` | Vibración sutil solo en destrucción/explosión |
 
 ### Skills y Agentes Disponibles
 
-Todos los del template (`/gen-ai-art`, `/mobile-i18n`, `/feature`, `/android-deploy`, `/new-game`, `/doc`, `/validate`) + agentes `game-designer`, `game-feel`, `godot-architect`, `godot-qa`. Ninguno es específico de Totopo Smash todavía.
+Del template (`/gen-ai-art`, `/mobile-i18n`, `/feature`, `/android-deploy`, `/new-game`, `/doc`, `/validate`) + agentes `game-designer`, `game-feel`, `godot-architect`, `godot-qa` + **`/level-designer`** (propia de Totopo Smash — diseña niveles nuevos en lenguaje natural, ver `.claude/skills/level-designer/SKILL.md`).
 
 ### Pendientes Documentados
 

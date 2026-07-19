@@ -10,17 +10,17 @@
 **Estudio:** GuacamoleBit
 **Plataforma:** iOS 14+ / Android API 24+
 **Control:** Touch drag para apuntar (1 dedo) + soltar para disparar — sin autofire, sin movimiento de jugador
-**Sesión target:** 2–5 minutos por run (progresión infinita por oleadas, sin condición de victoria)
+**Sesión target:** 2–5 minutos por run/nivel
 **Propuesta de valor:** Docenas de semillas rebotando en pantalla a la vez, con física elástica perfecta y feedback "crujiente" (migajas, sonidos ASMR) — caos controlado en vez de puntería 1:1.
 
 ---
 
 ## Mecánicas Core
 
-- **Bucle:** Apuntar (arrastrar) → Disparar (ráfaga continua de semillas) → Rebote elástico → Retorno automático (la primera semilla en tocar el suelo reposiciona el molcajete) → Avance (bloques bajan 1 fila, aparece fila nueva).
-- **Victoria:** No existe — progresión infinita por oleadas, se juega por puntaje/oleada máxima.
-- **Derrota:** Cualquier bloque toca la fila del molcajete (fila `MOLCAJETE_ROW = GRID_ROWS - 1 = 8`) al final de un turno.
-- **Controles:** `InputEventScreenTouch`/`InputEventScreenDrag` en `Mortar` — la dirección de disparo va del molcajete hacia el dedo, clampeada a un cono "hacia arriba" (nunca horizontal/abajo).
+- **Bucle:** Apuntar (arrastrar) → Disparar (ráfaga continua de semillas) → Rebote elástico (mantener presionado acelera las semillas) → Retorno automático (la primera semilla en tocar el suelo reposiciona el molcajete) → Avance (bloques bajan 1 fila; en Modo Infinito además aparece fila nueva).
+- **Dos modos:** **Modo Nivel** (principal) — tablero finito y determinista (`data/levels/*.json`), se gana al destruir todo lo destructible. **Modo Infinito** — el diseño original: progresión infinita y aleatoria por oleadas, sin condición de victoria, se juega por puntaje/oleada máxima.
+- **Derrota (ambos modos):** Cualquier bloque toca la fila del molcajete (fila `MOLCAJETE_ROW = GRID_ROWS - 1 = 8`) al final de un turno — marcada con una línea de peligro animada en pantalla (degradado + chevrones + pulso, ver `danger_line.gd`).
+- **Controles:** `InputEventScreenTouch`/`InputEventScreenDrag` en `Mortar` — la dirección de disparo va del molcajete hacia el dedo, clampeada a un cono "hacia arriba" (nunca horizontal/abajo). Fuera de la fase de apuntado, mantener presionado acelera las semillas.
 
 ---
 
@@ -70,7 +70,7 @@
 - `set_tutorial_shown(true)` solo se llama al presionar JUGAR en el paso COMPLETE.
 - Si el jugador muere durante el tutorial, se reinicia `TutorialGame.tscn` (no marca `tutorial_shown`).
 
-## Tests GUT (85 tests, 0 fallos) ✅
+## Tests GUT (137 tests, 0 fallos) ✅
 - `test_physics_math.gd`, `test_grid_math.gd`, `test_wave_scaling.gd` — funciones puras, casos normal/borde/inválido.
 - `test_game_manager.gd`, `test_save_manager.gd` — máquina de estados y persistencia (autoloads reales), incluye `language`.
 - `test_block_base.gd` — daño, destrucción, indestructibilidad, doble daño de queso, explosión de salsa, geometría de triángulo.
@@ -113,10 +113,34 @@ El build inicial pasaba los 3 gates (lint/tests/export) pero el juego no era jug
 - **Audio real** (GDD sección 5): `AudioManager` reescrito para usar `.wav` (no `.ogg` — sin encoder OGG en la stdlib de Python; mismo patrón ya probado en GuacBlaster) y se suscribe directo a `EventBus` (`seed_bounced` nueva señal, `salsa_exploded`) igual que `HapticManager`, en vez de que cada feature llame `play_sfx()` a mano. Rebote genérico usa un solo tono con `pitch_scale` creciente por rebote dentro de la ráfaga (efecto "escala ascendente" del GDD sin necesitar varios archivos).
 - Verificado con captura real del viewport (no solo boot headless): bloques, molcajete e íconos se ven con sus sprites nuevos; el menú con el fondo IA es legible.
 
+## Niveles finitos + acelerar semillas + skill de diseño ✅
+
+Cambio de fondo pedido por el usuario: el diseño original del GDD (progresión infinita
+por oleadas) se conserva como **Modo Infinito**, y se agrega **Modo Nivel** como
+experiencia principal — tableros finitos y deterministas (mismo contenido para todos
+los jugadores), con victoria real.
+
+- **`data/levels/*.json` + `manifest.json`** — un archivo por nivel, el manifiesto define el orden de juego. Un nivel define su contenido con `cells` (col/row/kind/hp/corner, absolutas, visibles desde el inicio) y/o `row_queue` (filas sin `row` explícito que se revelan una por turno, igual mecánica que Modo Infinito pero con contenido fijo). **Corrección de diseño post-implementación:** la primera versión colocaba todo el contenido de un nivel de una sola vez (`cells` únicamente) — el usuario aclaró que un nivel debe sentirse como el Modo Infinito en miniatura: arrancar mostrando 1 fila y revelar el resto de a poco hasta agotar un total fijo de filas (nivel 1 = 10 filas), venciendo solo cuando la cola se agota Y no queda ningún destructible. De ahí nace `row_queue`; `cells` se conservó tal cual para los niveles-figura, donde SÍ se quiere ver toda la forma de una vez. **20 niveles iniciales** (`tools/gen_levels.py`): 14 procedurales vía `row_queue` (porta las fórmulas de `wave_scaling.gd` a Python, sin RNG en runtime; `total_rows_for_level()` = 10 + 2×(nivel-1)) + 6 niveles-figura vía `cells` hechos a mano (Cruz, Corazón, Botella, Estrella, Diamante, Carita Feliz — 3 en silueta + 3 rellenos).
+- **`src/features/board/cell_factory.gd`** (nuevo) — única fábrica "kind → nodo", compartida por Modo Infinito y Modo Nivel. Es el único lugar que hay que tocar para agregar un power-up/bonus nuevo a futuro.
+- **`src/features/levels/level_loader.gd`** — parseo + validación pura de JSON (mismo estilo que `wave_scaling.gd`). **Bug real encontrado por los tests:** `JSON.parse_string()` devuelve los números siempre como `float`, nunca `int` — un chequeo `is int` rechazaba niveles perfectamente válidos. Ver regla CLAUDE.md #46.
+- **`LevelManager`** (autoload nuevo, después de `SaveManager`) — cachea niveles ya cargados, guarda el manifiesto, y expone un "buzón" de nivel pendiente de **lectura no destructiva** (crítico: si se vaciara al leerlo, reintentar un nivel tras perder volvería a Modo Infinito en silencio).
+- **`GameManager`** — `start_game(level_id: String = "")`: los dos call-sites existentes (`Game.gd`, `TutorialGame.gd`) no cambiaron y siguen siendo Modo Infinito. Nuevo estado `LEVEL_COMPLETE`.
+- **`BoardManager`/`TurnManager`** — la rama Modo Infinito queda literal (envuelta en `if/else`); Modo Nivel coloca las `cells` del JSON directo (sin `_spawn_row` aleatorio), revela la primera fila de `row_queue` al iniciar y una fila más por cada `all_seeds_returned` (`_spawn_next_queued_row()`), y usa `starting_seeds` del nivel. `_shift_down()`/`_check_game_over()` se llaman igual en ambos modos — el tablero se sigue desplazando cada turno aunque no aparezcan filas nuevas, así que "llegar a la fila del molcajete" sigue siendo derrota real también en un nivel. `level_cleared` solo se emite cuando la cola ya se agotó Y no queda ningún destructible.
+- **Acelerar semillas**: `EventBus.seed_boost_changed` — `Mortar` lo emite fuera de AIMING (mantener presionado), `Seed` multiplica su delta efectivo (`Constants.SEED_BOOST_MULTIPLIER = 2.0`) y duplica su tope de iteraciones de rebote por frame (no `Engine.time_scale`, que afectaría tweens/timers que deben seguir a velocidad normal).
+- **Línea de peligro visual** (`danger_line.gd`, v2) — rediseñada tras feedback de que la primera versión (línea punteada simple) "se veía sin chiste" y no transmitía "no querer cruzarla": ahora es una banda de degradado rojo que se desvanece hacia arriba + chevrones estilo cinta de peligro apuntando hacia abajo + línea sólida, las tres capas pulsando juntas (`_process` + `queue_redraw`, `sin()` sobre el tiempo transcurrido). Sigue sin collider — puramente visual.
+- **Pantallas nuevas**: `LevelSelectScreen.tscn` (grilla de niveles, bloqueados más allá de `SaveManager.get_highest_level_unlocked()`), `LevelCompleteScreen.gd` (calco de `GameOverScreen.gd`, con botón "Siguiente Nivel"). `MainMenu` ahora tiene NIVELES / MODO INFINITO / CONFIGURACIÓN.
+- **Bug real encontrado por captura de pantalla:** `HUD` leía `GameManager.is_level_mode()` en su propio `_ready()`, que corre ANTES de que `Game.gd` llame `GameManager.start_game(level_id)` — mostraba el nivel/oleada de la partida ANTERIOR. Fix: `HUD` reacciona a `EventBus.game_started` (igual que `BoardManager`/`TurnManager`), nunca lee el estado de forma síncrona y temprana. Ver regla CLAUDE.md #47.
+- **Skill nueva `/level-designer`** (`.claude/skills/level-designer/SKILL.md`) — diseña niveles nuevos en lenguaje natural (figuras, packs temáticos), incluye `tools/validate_level.py` (validación en Python sin necesitar Godot) y `tests/unit/test_level_manifest_integrity.gd` como autoridad final (recorre TODO el catálogo real).
+- Verificado con captura real del viewport: nivel procedural, nivel-figura (corazón en silueta), MainMenu con los 3 botones, y LevelSelectScreen con la grilla de 20 niveles.
+- **Corrección post-feedback verificada con captura real:** `level_001` arranca mostrando solo 1 fila (no las 10 completas) y, tras emitir `all_seeds_returned`, revela la fila siguiente de la cola mientras la primera baja — confirma `row_queue` funcionando turno a turno. La misma captura muestra `danger_line.gd` v2 (banda + chevrones) renderizando correctamente. **Nota técnica:** la captura vía `get_viewport().get_texture().get_image()` da `null` bajo `--headless` (usa el `RenderingServer` dummy, sin textura real) — hay que correr el proceso probe SIN `--headless` (ventana real, aunque no se vea) para que la captura funcione.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
 - **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
+- **Sistema de mejoras/oro/personajes** — decisión de alcance explícita, pedido por el usuario pero diferido a otra sesión. `SaveManager` ya persiste cualquier clave nueva en un `Dictionary` a JSON sin fricción, así que agregarlo después no debería requerir cambios estructurales.
+- **Balance de los 20 niveles** — primera pasada razonable (HP/filas/semillas escalados a mano en `tools/gen_levels.py`), no verificada con playtesting real más allá de las pruebas automatizadas y visuales de esta sesión. Ajustar constantes del script y regenerar si algún nivel resulta muy fácil/difícil.
+- **Más niveles** — el roster llega a 20; el objetivo declarado son ~100. Usar `/level-designer` para seguir agregando de a poco (incluye packs temáticos, ej. figuras navideñas).
 
 ---
 

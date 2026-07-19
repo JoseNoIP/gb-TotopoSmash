@@ -70,3 +70,13 @@ func test_total_games_played_increments_by_one() -> void:
 	var before: int = SaveManager.get_total_games_played()
 	SaveManager.increment_total_games_played()
 	assert_eq(SaveManager.get_total_games_played(), before + 1)
+
+
+func test_highest_level_unlocked_only_updates_when_strictly_higher() -> void:
+	var current: int = SaveManager.get_highest_level_unlocked()
+	var lower_or_equal: bool = SaveManager.set_highest_level_unlocked_if_higher(current)
+	assert_false(lower_or_equal, "un valor igual no debe reemplazar el desbloqueo")
+	var higher_value: int = current + 1
+	var higher: bool = SaveManager.set_highest_level_unlocked_if_higher(higher_value)
+	assert_true(higher)
+	assert_eq(SaveManager.get_highest_level_unlocked(), higher_value)

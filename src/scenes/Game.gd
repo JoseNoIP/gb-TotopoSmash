@@ -7,11 +7,13 @@ extends Node2D
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
 const WorldBoundsGd := preload("res://src/features/board/world_bounds.gd")
+const DangerLineGd := preload("res://src/features/board/danger_line.gd")
 const MortarGd := preload("res://src/features/player/mortar.gd")
 const VfxSpawnerGd := preload("res://src/features/vfx/vfx_spawner.gd")
 const HudGd := preload("res://src/features/ui/HUD.gd")
 const PauseScreenGd := preload("res://src/features/ui/PauseScreen.gd")
 const GameOverScreenGd := preload("res://src/features/ui/GameOverScreen.gd")
+const LevelCompleteScreenGd := preload("res://src/features/ui/LevelCompleteScreen.gd")
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
 
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
@@ -20,7 +22,9 @@ const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 
 func _ready() -> void:
 	_build_scene()
-	GameManager.start_game()
+	## LevelManager.get_pending_level() es "" para Modo Infinito (mailbox no destructivo,
+	## ver LevelManager.gd) — start_game("") es idéntico al start_game() de siempre.
+	GameManager.start_game(LevelManager.get_pending_level())
 	EventBus.game_over.connect(_on_game_over)
 
 
@@ -39,6 +43,7 @@ func _build_scene() -> void:
 	add_child(BoardManagerGd.new())
 	add_child(TurnManagerGd.new())
 	add_child(WorldBoundsGd.new())
+	add_child(DangerLineGd.new())
 	add_child(MortarGd.new())
 	add_child(VfxSpawnerGd.new())
 	add_child(HudGd.new())
@@ -53,6 +58,14 @@ func _build_scene() -> void:
 	game_over_screen.connect(&"restart_requested", _on_restart_requested)
 	game_over_screen.connect(&"main_menu_requested", _on_main_menu_requested)
 
+	## Presente siempre, en ambos modos — simplemente nunca dispara en Modo Infinito
+	## (level_completed nunca se emite ahí).
+	var level_complete_screen: CanvasLayer = LevelCompleteScreenGd.new()
+	add_child(level_complete_screen)
+	level_complete_screen.connect(&"restart_requested", _on_restart_requested)
+	level_complete_screen.connect(&"next_level_requested", _on_next_level_requested)
+	level_complete_screen.connect(&"main_menu_requested", _on_main_menu_requested)
+
 	add_child(SettingsScreenGd.new())
 
 
@@ -62,6 +75,14 @@ func _on_game_over(_final_score: int, _wave_reached: int) -> void:
 
 func _on_restart_requested() -> void:
 	get_tree().paused = false
+	get_tree().change_scene_to_file.call_deferred(GAME_SCENE)
+
+
+## LevelManager.set_pending_level() ANTES de recargar — el buzón no se limpia solo
+## (lectura no destructiva), así que hay que escribir explícitamente el siguiente nivel.
+func _on_next_level_requested(next_level_id: String) -> void:
+	get_tree().paused = false
+	LevelManager.set_pending_level(next_level_id)
 	get_tree().change_scene_to_file.call_deferred(GAME_SCENE)
 
 

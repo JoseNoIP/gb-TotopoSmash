@@ -101,6 +101,17 @@ func test_all_seeds_returned_after_landing_resets_phase_to_aiming() -> void:
 	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING)
 
 
+## Modo Nivel: starting_seeds viene del JSON del nivel, no de Constants. Regresión
+## explícita: Modo Infinito no cambia (misma Constants.MOLCAJETE_START_SEEDS de siempre).
+func test_seed_count_uses_level_starting_seeds_when_in_level_mode() -> void:
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	GameManager.start_game("level_001")
+	var expected: int = int(LevelManager.get_level_data("level_001").get("starting_seeds"))
+	assert_eq(turn_manager.call(&"get_seed_count"), expected)
+	GameManager.start_game()  # vuelve a Modo Infinito para no contaminar otros tests
+
+
 func test_wave_advanced_at_game_start_does_not_leave_aiming() -> void:
 	var turn_manager: Node = TurnManagerGd.new()
 	add_child_autofree(turn_manager)

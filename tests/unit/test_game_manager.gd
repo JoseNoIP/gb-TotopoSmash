@@ -81,3 +81,39 @@ func test_board_reached_bottom_updates_best_score_when_higher() -> void:
 	EventBus.board_reached_bottom.emit()
 	assert_eq(SaveManager.get_best_score(), current_best + 50)
 	assert_signal_emitted(EventBus, "high_score_updated")
+
+
+## Regresión explícita (Modo Nivel): start_game() sin argumentos sigue siendo Modo
+## Infinito de siempre — los dos call-sites reales (Game.gd, TutorialGame.gd) no cambian.
+func test_start_game_with_no_args_defaults_to_infinity_mode() -> void:
+	GameManager.start_game()
+	assert_false(GameManager.is_level_mode())
+	assert_eq(GameManager.get_current_level_id(), "")
+
+
+func test_start_game_with_level_id_sets_level_mode() -> void:
+	GameManager.start_game("level_001")
+	assert_true(GameManager.is_level_mode())
+	assert_eq(GameManager.get_current_level_id(), "level_001")
+	GameManager.start_game()  # deja Infinito para no contaminar otros tests
+
+
+func test_level_cleared_sets_level_complete_state_and_emits_level_completed() -> void:
+	GameManager.start_game("level_001")
+	GameManager.add_score(77)
+	watch_signals(EventBus)
+	EventBus.level_cleared.emit("level_001")
+	assert_eq(GameManager.get_state(), GameManager.State.LEVEL_COMPLETE)
+	assert_signal_emitted_with_parameters(EventBus, "level_completed", ["level_001", 77])
+	GameManager.start_game()
+
+
+func test_level_cleared_ignored_when_not_playing() -> void:
+	GameManager.start_game("level_001")
+	EventBus.board_reached_bottom.emit()  # fuerza GAME_OVER
+	var state_before: int = GameManager.get_state()
+	watch_signals(EventBus)
+	EventBus.level_cleared.emit("level_001")
+	assert_eq(GameManager.get_state(), state_before, "level_cleared no debe actuar fuera de PLAYING")
+	assert_signal_not_emitted(EventBus, "level_completed")
+	GameManager.start_game()

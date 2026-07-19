@@ -39,8 +39,15 @@ func get_phase() -> Phase:
 	return _phase
 
 
+## Modo Nivel: starting_seeds viene del JSON del nivel (LevelManager ya lo cacheó, no
+## se re-parsea); Modo Infinito: Constants.MOLCAJETE_START_SEEDS de siempre.
 func _on_game_started() -> void:
-	_seed_count = Constants.MOLCAJETE_START_SEEDS
+	var level_id: String = GameManager.get_current_level_id()
+	if level_id.is_empty():
+		_seed_count = Constants.MOLCAJETE_START_SEEDS
+	else:
+		var data: Dictionary = LevelManager.get_level_data(level_id)
+		_seed_count = int(data.get("starting_seeds", Constants.MOLCAJETE_START_SEEDS))
 	_seeds_to_fire = 0
 	_active_seeds = 0
 	_fire_timer.stop()
