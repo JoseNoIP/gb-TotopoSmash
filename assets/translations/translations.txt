@@ -1,0 +1,37 @@
+keys,es,en,pt_BR,fr
+TITLE_GAME,TOTOPO SMASH,TOTOPO SMASH,TOTOPO SMASH,TOTOPO SMASH
+LABEL_BEST_STATS,Mejor puntaje: %d   Oleada máxima: %d,Best score: %d   Max wave: %d,Melhor pontuação: %d   Onda máxima: %d,Meilleur score : %d   Vague max : %d
+BTN_PLAY,JUGAR,PLAY,JOGAR,JOUER
+TITLE_SETTINGS,CONFIGURACIÓN,SETTINGS,CONFIGURAÇÕES,PARAMÈTRES
+LABEL_SCORE,Puntaje: %d,Score: %d,Pontuação: %d,Score : %d
+LABEL_WAVE,Oleada %d,Wave %d,Onda %d,Vague %d
+LABEL_SEEDS,Semillas: %d,Seeds: %d,Sementes: %d,Graines : %d
+TITLE_PAUSE,PAUSA,PAUSED,PAUSA,PAUSE
+BTN_CONTINUE,CONTINUAR,CONTINUE,CONTINUAR,CONTINUER
+BTN_RESTART,REINICIAR,RESTART,REINICIAR,RECOMMENCER
+BTN_MAIN_MENU,MENU PRINCIPAL,MAIN MENU,MENU PRINCIPAL,MENU PRINCIPAL
+TITLE_GAME_OVER,FIN DE LA PARTIDA,GAME OVER,FIM DE JOGO,FIN DE PARTIE
+LABEL_WAVE_REACHED,Oleada alcanzada: %d,Wave reached: %d,Onda alcançada: %d,Vague atteinte : %d
+LABEL_BEST_SCORE,Mejor puntaje: %d,Best score: %d,Melhor pontuação: %d,Meilleur score : %d
+BTN_RETRY,REINTENTAR,RETRY,TENTAR NOVAMENTE,RÉESSAYER
+SETTINGS_SOUND,Sonido,Sound,Som,Son
+SETTINGS_VIBRATION,Vibración,Vibration,Vibração,Vibration
+SETTINGS_SENSITIVITY,Sensibilidad de apuntado,Aim sensitivity,Sensibilidade de mira,Sensibilité de visée
+SETTINGS_LANGUAGE,Idioma,Language,Idioma,Langue
+BTN_CLOSE,CERRAR,CLOSE,FECHAR,FERMER
+TUTORIAL_WELCOME_TITLE,Bienvenido a Totopo Smash,Welcome to Totopo Smash,Bem-vindo a Totopo Smash,Bienvenue dans Totopo Smash
+TUTORIAL_WELCOME_HINT,Destruye los totopos rebotando semillas antes de que lleguen abajo.,Destroy the totopos by bouncing seeds before they reach the bottom.,Destrua os totopos quicando sementes antes que cheguem embaixo.,Détruis les totopos en faisant rebondir des graines avant qu'ils n'atteignent le bas.
+BTN_START,EMPEZAR,START,COMEÇAR,COMMENCER
+TUTORIAL_AIM_TITLE,Apunta y dispara,Aim and shoot,Mire e atire,Vise et tire
+TUTORIAL_AIM_HINT,Arrastra el dedo hacia arriba y suelta para lanzar tus semillas.,Drag your finger upward and release to launch your seeds.,Arraste o dedo para cima e solte para lançar suas sementes.,Fais glisser ton doigt vers le haut et relâche pour lancer tes graines.
+TUTORIAL_RETURN_TITLE,Las semillas regresan solas,The seeds return on their own,As sementes voltam sozinhas,Les graines reviennent toutes seules
+TUTORIAL_RETURN_HINT,"Rebotan contra bloques y paredes, y vuelven al molcajete.","They bounce off blocks and walls, then return to the mortar.","Elas quicam em blocos e paredes, e voltam para o pilão.","Elles rebondissent sur les blocs et les murs, puis reviennent au mortier."
+TUTORIAL_ADVANCE_TITLE,¡Cuidado con la fila inferior!,Watch the bottom row!,Cuidado com a fileira inferior!,Attention à la rangée du bas !
+TUTORIAL_ADVANCE_HINT,Cada turno los bloques bajan. ¡No dejes que lleguen al molcajete!,Every turn the blocks move down. Don't let them reach the mortar!,A cada turno os blocos descem. Não deixe que cheguem ao pilão!,"Chaque tour, les blocs descendent. Ne les laisse pas atteindre le mortier !"
+TUTORIAL_COMPLETE_TITLE,¡Listo!,Ready!,Pronto!,Prêt !
+TUTORIAL_COMPLETE_HINT,A jugar de verdad.,Time for the real game.,Hora de jogar de verdade.,C'est parti pour de vrai.
+LANGSELECT_TITLE,Elige tu idioma,Choose your language,Escolha seu idioma,Choisis ta langue
+LANG_NAME_ES,Español,Español,Español,Español
+LANG_NAME_EN,English,English,English,English
+LANG_NAME_PT_BR,Português,Português,Português,Português
+LANG_NAME_FR,Français,Français,Français,Français

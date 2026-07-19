@@ -13,3 +13,7 @@ func _ready() -> void:
 
 func _get_color() -> Color:
 	return Constants.COLOR_STONE
+
+
+func _get_texture_path() -> String:
+	return "res://assets/sprites/blocks/stone.png"

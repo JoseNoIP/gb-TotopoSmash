@@ -21,14 +21,13 @@ func _update_visual() -> void:
 
 
 func _start_warning_blink() -> void:
-	var visual: ColorRect = _visual as ColorRect
-	if visual == null:
+	if _visual == null:
 		return
 	_is_warning = true
 	_blink_tween = create_tween()
 	_blink_tween.set_loops()
-	_blink_tween.tween_property(visual, ^"modulate", Color(2.2, 2.2, 2.2), 0.15)
-	_blink_tween.tween_property(visual, ^"modulate", Color.WHITE, 0.15)
+	_blink_tween.tween_property(_visual, ^"modulate", Color(2.2, 2.2, 2.2), 0.15)
+	_blink_tween.tween_property(_visual, ^"modulate", Color.WHITE, 0.15)
 
 
 func _die() -> void:
@@ -40,3 +39,7 @@ func _die() -> void:
 
 func _get_color() -> Color:
 	return Constants.COLOR_SALSA
+
+
+func _get_texture_path() -> String:
+	return "res://assets/sprites/blocks/salsa.png"

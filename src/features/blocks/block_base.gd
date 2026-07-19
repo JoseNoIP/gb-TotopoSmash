@@ -13,7 +13,7 @@ var is_indestructible: bool = false
 var block_type: String = "totopo"
 
 var _hp_label: Label = Label.new()
-var _visual: Node = null
+var _visual: CanvasItem = null
 
 
 ## Board llama esto justo después de instanciar el bloque.
@@ -69,17 +69,29 @@ func _build_shape(cell_size: float) -> void:
 	add_child(col_shape)
 
 
+## Sprite2D con textura real si existe (ver tools/gen_assets.py); si no, cae al
+## ColorRect plano de siempre — nunca crashea si falta el asset todavía.
 func _build_visual(cell_size: float) -> void:
 	var visual_size: float = cell_size * 0.92
-	var rect: ColorRect = ColorRect.new()
-	rect.size = Vector2(visual_size, visual_size)
-	rect.position = Vector2(visual_size, visual_size) * -0.5
-	rect.color = _get_color()
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.pivot_offset = rect.size * 0.5  ## para que scale/rotation (squish, blink) pivoteen al centro
-	rect.name = &"Visual"
-	add_child(rect)
-	_visual = rect
+	var texture_path: String = _get_texture_path()
+	if not texture_path.is_empty() and ResourceLoader.exists(texture_path):
+		var sprite: Sprite2D = Sprite2D.new()
+		sprite.texture = load(texture_path)
+		var tex_size: Vector2 = sprite.texture.get_size()
+		sprite.scale = Vector2(visual_size / tex_size.x, visual_size / tex_size.y)
+		sprite.name = &"Visual"
+		add_child(sprite)
+		_visual = sprite
+	else:
+		var rect: ColorRect = ColorRect.new()
+		rect.size = Vector2(visual_size, visual_size)
+		rect.position = Vector2(visual_size, visual_size) * -0.5
+		rect.color = _get_color()
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rect.pivot_offset = rect.size * 0.5  ## para que scale/rotation pivoteen al centro
+		rect.name = &"Visual"
+		add_child(rect)
+		_visual = rect
 
 	_build_hp_label(cell_size, Vector2.ZERO)
 
@@ -102,7 +114,13 @@ func _update_visual() -> void:
 	_hp_label.text = "" if is_indestructible else str(current_hp)
 
 
-## Hook de color — cada subtipo lo sobreescribe para pintar su propio material.
-## Vive en la base para que _build_visual() no se duplique en cada subtipo.
+## Hook de color — usado como fallback si _get_texture_path() no existe todavía,
+## y como base para el tinte de "agrietado" en subtipos que lo necesitan.
 func _get_color() -> Color:
 	return Constants.COLOR_TOTOPO
+
+
+## Hook de textura — cada subtipo lo sobreescribe apuntando a su sprite en
+## assets/sprites/blocks/. "" (default) = usar el ColorRect + _get_color().
+func _get_texture_path() -> String:
+	return ""

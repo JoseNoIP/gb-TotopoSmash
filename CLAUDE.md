@@ -180,6 +180,8 @@ func _exit_tree() -> void:
 41. **Definir una physics layer en `Constants` (`LAYER_WORLD`, etc.) y usarla en `collision_mask` NO crea ningún cuerpo físico en esa capa.** Si el diseño requiere paredes/techo/piso como colliders (cualquier juego con rebote tipo Arkanoid/Brick Breaker), hay que instanciar explícitamente un `StaticBody2D` con `collision_layer` en esa capa — si no, cualquier proyectil que no golpee otra cosa en el juego (ej. un bloque) sale disparado fuera de pantalla para siempre y la máquina de estados que espera su retorno (`TurnManager` aquí) se queda trabada sin ningún error en consola. Verificar con `grep -rn "collision_layer = Constants.LAYER_X"` que cada layer referenciada como `collision_mask` tiene al menos un emisor real.
 42. **Un `ColorRect`/nodo de fondo metido dentro de un `CanvasLayer` se dibuja SIEMPRE por encima de los `Node2D` normales de la escena** (bloques, personajes, proyectiles), sin importar el valor de `layer` que se le ponga (ni `layer = 0`). `CanvasLayer` no es "una capa más entre las demás dentro del mismo canvas" — es un canvas de composición aparte que Godot dibuja por encima del contenido 2D que no está envuelto en ningún `CanvasLayer`. Si necesitas un fondo detrás del gameplay, agrégalo como `Node2D`/`ColorRect` normal (primer hijo, para quedar atrás por orden de árbol) — nunca dentro de un `CanvasLayer`, aunque sea `layer = 0`. Síntoma si se hace mal: el juego "no muestra nada" (pantalla del color de fondo, sin errores), pero la lógica de turnos/física sigue corriendo perfectamente por debajo — muy fácil de confundir con un bug de lógica cuando es puramente un problema de orden de dibujado.
 43. **Un nodo que se autodestruye con `queue_free()` (ej. un power-up/ítem recogido) debe borrarse también de cualquier `Dictionary`/`Array` tipado que lo referencie, en el mismo callback que lo libera.** Si no, la próxima vez que ese diccionario se copie o reasigne (ej. desplazar una grilla una fila) se intenta insertar una referencia ya liberada en un `Dictionary[K, V]` tipado, y Godot lo rechaza en tiempo de ejecución con `"previously freed object"` — un crash real, no una falla silenciosa. Al recorrer y reconstruir un diccionario tipado que puede contener nodos, comprobar `is_instance_valid(node)` **antes** de insertar en el nuevo diccionario (`continue` si es inválido), nunca insertar primero y validar después.
+44. **`CanvasItem` (la clase base compartida por `Node2D` y `Control`) NO declara `position`/`rotation`/`scale`** — cada rama los declara por separado con su propio sistema de transform. `modulate`/`self_modulate` sí viven en `CanvasItem` y son seguros de usar directo. Esto importa cuando una variable puede apuntar a un `ColorRect` (fallback sin asset) O a un `Sprite2D` (con textura real) según si el asset existe todavía — típico patrón "placeholder → sprite real" en este proyecto. Si la variable está tipada `CanvasItem` (o cualquier tipo que no garantice `scale`), usar `.set(&"scale", valor)` en vez de `variable.scale = valor` (regla #15 aplicada a este caso concreto). `Tween.tween_property(objeto, ^"scale", ...)` SÍ es seguro con acceso directo sin importar el tipo estático, porque resuelve la propiedad en runtime vía `NodePath`, no en tiempo de compilación.
+45. **Para SFX cortos generados con Python stdlib, usar `.wav`, no `.ogg`** — no hay encoder OGG en la stdlib, y `wave`/`struct` producen `.wav` sin dependencias. Godot reproduce `.wav` igual de bien para sonidos cortos (sin la latencia de decodificación de un códec comprimido). Si `AudioManager` asume `.ogg` por defecto sin haber generado ningún asset todavía, verificar contra el patrón real ya probado en otro juego del estudio antes de asumir la extensión.
 
 ---
 
@@ -247,8 +249,10 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 - **Victoria:** no existe — se juega por score / oleada máxima alcanzada (persistidos en `SaveManager`).
 - **Controles:** solo `Mortar` (molcajete) escucha input; no hay "Player" que se mueva por drag (a diferencia del template genérico) — el molcajete se reposiciona automáticamente, nunca por el jugador directamente.
 - **Escenas jugables:** `MainMenu.tscn` → `TutorialGame.tscn` (primera vez) o `Game.tscn`. Ambas instancian los mismos sistemas (`BoardManager`, `TurnManager`, `Mortar`, `VFXSpawner`, `HUD`).
-- **Sin metagame** — no hay oro, upgrades, ni multi-idioma en esta versión (ver Pendientes en `idea-base.md`).
-- **Build:** `gdlint` 0 errores · GUT 78/78 tests · `--export-debug Android` genera APK válido.
+- **Sin metagame** — no hay oro ni upgrades (ver Pendientes en `idea-base.md`).
+- **Multi-idioma:** es/en/pt_BR/fr vía `/mobile-i18n` — `LocalizationManager` + `assets/translations/translations.txt`. `MainMenu` redirige a `LanguageSelectScreen` en la primera ejecución.
+- **Assets:** sprites reales (bloques, molcajete, semilla, íconos — procedurales) + fondo de menú por IA (`tools/gen_assets.py` / `tools/fetch_ai_assets.py`) + SFX reales (`.wav`, `AudioManager`). Ver sección Assets en `idea-base.md`.
+- **Build:** `gdlint` 0 errores · GUT 85/85 tests · `--export-debug Android` genera APK válido · `deploy-playstore.yml` probado (subió a Play Store Internal Testing).
 
 ### Señales clave en EventBus
 
@@ -269,6 +273,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 | `block_destroyed(pos, type, score)` | `block_base._die()` | `GameManager` (score), `BoardManager` (borra de la grilla), `VFXSpawner`, `HapticManager` |
 | `salsa_exploded(pos)` | `salsa_jar_block._die()` | `BoardManager` (daño en cruz), `VFXSpawner`, `HapticManager` |
 | `board_reached_bottom` | `BoardManager` (game over) | `GameManager` |
+| `seed_bounced(block_type)` | `Seed._handle_collision()` en cada rebote | `AudioManager` (tono de rebote o crunch/thud según el material) |
 | `lemon_triggered` / `seed_extra_touched` / `seed_extra_collected` | `LemonIcon` / `SeedExtraIcon` / `TurnManager` | `TurnManager` (split real vía señal privada `Seed.split_requested`, no EventBus) / `HUD` |
 | `score_changed` / `high_score_updated` | `GameManager` | `HUD` / `GameOverScreen` |
 
@@ -288,6 +293,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 | `EventBus` | `src/core/EventBus.gd` | Bus de señales cross-feature |
 | `GameManager` | `src/core/GameManager.gd` | Estados `MENU/PLAYING/PAUSED/GAME_OVER`, score, oleada, pausa real del `SceneTree` |
 | `SaveManager` | `src/core/SaveManager.gd` | Persistencia `user://save.json` |
+| `LocalizationManager` | `src/core/LocalizationManager.gd` | Carga `translations.txt`, aplica locale (es/en/pt_BR/fr) |
 | `AudioManager` | `src/features/audio/AudioManager.gd` | Stub de SFX/música (no crashea sin `.ogg`) |
 | `HapticManager` | `src/features/audio/HapticManager.gd` | Vibración sutil solo en destrucción/explosión |
 

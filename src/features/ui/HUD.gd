@@ -31,7 +31,7 @@ func _build_ui() -> void:
 	_style_label(_wave_label, Constants.COLOR_HUD_TEXT)
 	add_child(_wave_label)
 
-	_seed_label.text = "Semillas: %d" % Constants.MOLCAJETE_START_SEEDS
+	_seed_label.text = tr(&"LABEL_SEEDS") % Constants.MOLCAJETE_START_SEEDS
 	_seed_label.position = Vector2(Constants.DESIGN_WIDTH - 166.0, 40.0)
 	_seed_label.set_size(Vector2(150.0, 26.0))
 	_seed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -51,15 +51,15 @@ func _style_label(label: Label, color: Color) -> void:
 
 
 func _on_score_changed(new_score: int) -> void:
-	_score_label.text = "Score: %d" % new_score
+	_score_label.text = tr(&"LABEL_SCORE") % new_score
 
 
 func _on_wave_advanced(wave_number: int) -> void:
-	_wave_label.text = "Oleada %d" % wave_number
+	_wave_label.text = tr(&"LABEL_WAVE") % wave_number
 
 
 func _on_seed_count_changed(new_count: int) -> void:
-	_seed_label.text = "Semillas: %d" % new_count
+	_seed_label.text = tr(&"LABEL_SEEDS") % new_count
 
 
 func _on_pause_pressed() -> void:

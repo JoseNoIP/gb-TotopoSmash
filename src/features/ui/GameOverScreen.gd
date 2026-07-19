@@ -33,8 +33,9 @@ func _build_ui() -> void:
 	vbox.add_theme_constant_override(&"separation", 10)
 	_panel.add_child(vbox)
 
+	## KEY cruda (no tr()) en título/botones — auto-translate nativo (ver MainMenu.gd).
 	var title: Label = Label.new()
-	title.text = "FIN DE LA PARTIDA"
+	title.text = "TITLE_GAME_OVER"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override(&"font_size", 20)
 	vbox.add_child(title)
@@ -45,22 +46,22 @@ func _build_ui() -> void:
 		vbox.add_child(label)
 
 	var retry_btn: Button = Button.new()
-	retry_btn.text = "REINTENTAR"
+	retry_btn.text = "BTN_RETRY"
 	retry_btn.custom_minimum_size = Vector2(0.0, 44.0)
 	retry_btn.pressed.connect(_on_retry_pressed)
 	vbox.add_child(retry_btn)
 
 	var menu_btn: Button = Button.new()
-	menu_btn.text = "MENU PRINCIPAL"
+	menu_btn.text = "BTN_MAIN_MENU"
 	menu_btn.custom_minimum_size = Vector2(0.0, 44.0)
 	menu_btn.pressed.connect(_on_menu_pressed)
 	vbox.add_child(menu_btn)
 
 
 func _on_game_over(final_score: int, wave_reached: int) -> void:
-	_score_label.text = "Puntaje: %d" % final_score
-	_wave_label.text = "Oleada alcanzada: %d" % wave_reached
-	_best_label.text = "Mejor puntaje: %d" % SaveManager.get_best_score()
+	_score_label.text = tr(&"LABEL_SCORE") % final_score
+	_wave_label.text = tr(&"LABEL_WAVE_REACHED") % wave_reached
+	_best_label.text = tr(&"LABEL_BEST_SCORE") % SaveManager.get_best_score()
 	_panel.show()
 
 

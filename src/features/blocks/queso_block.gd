@@ -21,15 +21,21 @@ func on_seed_bounce(seed_node: Node) -> void:
 
 
 func _play_squish() -> void:
-	var visual: ColorRect = _visual as ColorRect
-	if visual == null:
+	if _visual == null:
 		return
 	if _squish_tween and _squish_tween.is_valid():
 		_squish_tween.kill()
-	visual.scale = Vector2(1.15, 0.85)
+	## .set(&"scale", ...) en vez de _visual.scale =: "scale" no vive en CanvasItem (lo
+	## declaran Node2D y Control por separado) — regla CLAUDE.md #15. tween_property() sí
+	## es seguro con acceso directo porque resuelve la propiedad en runtime, no en estático.
+	_visual.set(&"scale", Vector2(1.15, 0.85))
 	_squish_tween = create_tween()
-	_squish_tween.tween_property(visual, ^"scale", Vector2.ONE, 0.18).set_ease(Tween.EASE_OUT)
+	_squish_tween.tween_property(_visual, ^"scale", Vector2.ONE, 0.18).set_ease(Tween.EASE_OUT)
 
 
 func _get_color() -> Color:
 	return Constants.COLOR_QUESO
+
+
+func _get_texture_path() -> String:
+	return "res://assets/sprites/blocks/queso.png"

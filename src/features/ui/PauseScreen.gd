@@ -32,20 +32,23 @@ func _build_ui() -> void:
 	vbox.add_theme_constant_override(&"separation", 12)
 	_panel.add_child(vbox)
 
+	## KEY cruda (no tr()): esta pantalla se construye una vez en _ready() y solo se
+	## muestra/oculta — con la key cruda, el auto-translate nativo de Control re-traduce
+	## sola si el idioma cambia mientras el overlay ya existe (ver nota en MainMenu.gd).
 	var title: Label = Label.new()
-	title.text = "PAUSA"
+	title.text = "TITLE_PAUSE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override(&"font_size", 22)
 	vbox.add_child(title)
 
-	vbox.add_child(_make_button("CONTINUAR", _on_resume_pressed))
-	vbox.add_child(_make_button("REINICIAR", _on_restart_pressed))
-	vbox.add_child(_make_button("MENU PRINCIPAL", _on_menu_pressed))
+	vbox.add_child(_make_button("BTN_CONTINUE", _on_resume_pressed))
+	vbox.add_child(_make_button("BTN_RESTART", _on_restart_pressed))
+	vbox.add_child(_make_button("BTN_MAIN_MENU", _on_menu_pressed))
 
 
-func _make_button(text: String, handler: Callable) -> Button:
+func _make_button(text_key: String, handler: Callable) -> Button:
 	var button: Button = Button.new()
-	button.text = text
+	button.text = text_key
 	button.custom_minimum_size = Vector2(0.0, 44.0)
 	button.pressed.connect(handler)
 	return button

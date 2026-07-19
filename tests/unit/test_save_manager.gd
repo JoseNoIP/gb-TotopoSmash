@@ -59,6 +59,13 @@ func test_max_wave_only_updates_when_strictly_higher() -> void:
 	assert_false(not_higher, "0 nunca debe superar una oleada máxima ya alcanzada")
 
 
+func test_language_roundtrip() -> void:
+	var original: String = SaveManager.get_language()
+	SaveManager.set_language("en")
+	assert_eq(SaveManager.get_language(), "en")
+	SaveManager.set_language(original)
+
+
 func test_total_games_played_increments_by_one() -> void:
 	var before: int = SaveManager.get_total_games_played()
 	SaveManager.increment_total_games_played()

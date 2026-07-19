@@ -14,6 +14,7 @@ signal split_requested(mirrored_velocity: Vector2)
 
 const PhysicsMathGd := preload("res://src/shared/physics_math.gd")
 const MAX_ITERATIONS_PER_FRAME: int = 4
+const TEXTURE_PATH: String = "res://assets/sprites/seed.png"
 
 ## `velocity` NO se redeclara aquí: CharacterBody2D ya expone `velocity: Vector2` de forma
 ## nativa. Declarar `var velocity` propio causa "Member velocity redefined" en tiempo de
@@ -25,6 +26,7 @@ var _base_speed: float = Constants.SEED_SPEED
 var _floor_y: float = 0.0
 var _landed: bool = false
 var _bounce_count: int = 0
+var _has_sprite: bool = false
 
 
 func _ready() -> void:
@@ -37,6 +39,19 @@ func _ready() -> void:
 	col.name = &"CollisionShape2D"
 	col.shape = shape
 	add_child(col)
+	_build_sprite()
+
+
+func _build_sprite() -> void:
+	if not ResourceLoader.exists(TEXTURE_PATH):
+		return
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = load(TEXTURE_PATH)
+	var diameter: float = Constants.SEED_RADIUS * 2.0
+	var tex_size: Vector2 = sprite.texture.get_size()
+	sprite.scale = Vector2(diameter / tex_size.x, diameter / tex_size.y)
+	add_child(sprite)
+	_has_sprite = true
 
 
 ## Debe llamarse justo después de instanciar (antes o después de add_child, ambos
@@ -71,6 +86,10 @@ func _handle_collision(collision: KinematicCollision2D) -> void:
 		_land()
 		return
 	var collider: Object = collision.get_collider()
+	## block_type es "" para paredes/techo (WorldBounds no tiene esa propiedad); Object.get()
+	## de una propiedad inexistente devuelve null sin error, así que es seguro sin has_method.
+	var type_value: Variant = collider.get(&"block_type") if collider != null else null
+	EventBus.seed_bounced.emit(type_value if type_value is String else "")
 	if collider == null:
 		return
 	if collider.has_method(&"on_seed_bounce"):
@@ -105,5 +124,7 @@ func _land() -> void:
 
 
 func _draw() -> void:
+	if _has_sprite:
+		return
 	draw_circle(Vector2.ZERO, Constants.SEED_RADIUS, Constants.COLOR_SEED_TRAIL)
 	draw_circle(Vector2(-1.5, -1.5), Constants.SEED_RADIUS * 0.35, Color(1.0, 1.0, 1.0, 0.8))

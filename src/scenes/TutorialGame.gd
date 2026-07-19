@@ -95,32 +95,35 @@ func _build_overlay() -> void:
 	vbox.add_child(_action_button)
 
 
+## tr(&"KEY") explícito (no key cruda): a diferencia de los overlays persistentes
+## (SettingsScreen/PauseScreen), estos labels se reasignan en cada transición de paso, y
+## no hay forma de cambiar de idioma durante el tutorial (no instancia SettingsScreen).
 func _advance_to(step: Step) -> void:
 	_step = step
 	match step:
 		Step.WELCOME:
-			_title_label.text = "Bienvenido a Totopo Smash"
-			_hint_label.text = "Destruye los totopos rebotando semillas antes de que lleguen abajo."
-			_action_button.text = "EMPEZAR"
+			_title_label.text = tr(&"TUTORIAL_WELCOME_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_WELCOME_HINT")
+			_action_button.text = tr(&"BTN_START")
 			_action_button.show()
 		Step.AIM_SHOOT:
-			_title_label.text = "Apunta y dispara"
-			_hint_label.text = "Arrastra el dedo hacia arriba y suelta para lanzar tus semillas."
+			_title_label.text = tr(&"TUTORIAL_AIM_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_AIM_HINT")
 			_action_button.hide()
 			EventBus.burst_fired.connect(_on_burst_fired, CONNECT_ONE_SHOT)
 		Step.WATCH_RETURN:
-			_title_label.text = "Las semillas regresan solas"
-			_hint_label.text = "Rebotan contra bloques y paredes, y vuelven al molcajete."
+			_title_label.text = tr(&"TUTORIAL_RETURN_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_RETURN_HINT")
 			EventBus.all_seeds_returned.connect(_on_all_seeds_returned, CONNECT_ONE_SHOT)
 		Step.ADVANCE:
-			_title_label.text = "¡Cuidado con la fila inferior!"
-			_hint_label.text = "Cada turno los bloques bajan. ¡No dejes que lleguen al molcajete!"
-			_action_button.text = "ENTENDIDO"
+			_title_label.text = tr(&"TUTORIAL_ADVANCE_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_ADVANCE_HINT")
+			_action_button.text = tr(&"BTN_UNDERSTOOD")
 			_action_button.show()
 		Step.COMPLETE:
-			_title_label.text = "¡Listo!"
-			_hint_label.text = "A jugar de verdad."
-			_action_button.text = "JUGAR"
+			_title_label.text = tr(&"TUTORIAL_COMPLETE_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_COMPLETE_HINT")
+			_action_button.text = tr(&"BTN_PLAY")
 			_action_button.show()
 
 
