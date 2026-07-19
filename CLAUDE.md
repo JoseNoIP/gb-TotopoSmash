@@ -172,6 +172,10 @@ func _exit_tree() -> void:
     ```
 37. **Siempre consultar `/gen-ai-art` antes de tocar archivos de imagen** — el skill documenta el pipeline, los bugs de Pollinations.ai y el proceso de reimport en Godot.
 
+### Reglas de tipado descubiertas construyendo Totopo Smash
+38. **`var velocity: Vector2` en un script que `extends CharacterBody2D`** → error de compilación "Member velocity redefined" (`velocity` ya es nativo de `CharacterBody2D`, usado por `move_and_slide()`). Si el script implementa su propio movimiento a mano (ej. rebote con `move_and_collide()`), NO redeclarar la propiedad — usar directamente el `velocity` heredado.
+39. **`Dictionary[K, V]` tipada + `.set(&"campo", {...nuevo...})` con un diccionario literal** → falla en silencio (el campo queda vacío; ni error ni warning). Pasa tanto en producción como en tests que intentan inyectar estado. Para reemplazar el contenido desde fuera del objeto: obtener la referencia con `.get(&"campo")` y mutarla in-place (`d.clear(); d[key] = value`) — `Dictionary` es tipo por referencia en GDScript, así que la mutación se refleja en el objeto real sin pasar por `.set()`.
+
 ---
 
 ## Auto-detección de Skills (OBLIGATORIO)
@@ -230,19 +234,62 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 > Las siguientes secciones están vacías en el template. Rellenarlas al correr `/new-game`.
 
 ### Estado Actual del Juego
-<!-- Mecánicas implementadas, condición de victoria/derrota, controles -->
+
+**Totopo Smash** — puzzle/arcade de física de rebotes (brick breaker), progresión infinita por oleadas, sin condición de victoria.
+
+- **Mecánica core:** arrastrar el dedo para apuntar (cono "hacia arriba", nunca horizontal/abajo) → soltar dispara TODAS las semillas del inventario en ráfaga continua (`SEED_FIRE_INTERVAL = 0.06s` entre disparos) → rebote elástico perfecto (e=1.0) contra paredes/techo/bloques → la primera semilla en tocar el suelo reposiciona el molcajete → al volver la última, el tablero baja 1 fila y aparece una fila nueva arriba.
+- **Derrota:** un bloque toca la fila del molcajete (`Constants.MOLCAJETE_ROW`) al terminar un turno.
+- **Victoria:** no existe — se juega por score / oleada máxima alcanzada (persistidos en `SaveManager`).
+- **Controles:** solo `Mortar` (molcajete) escucha input; no hay "Player" que se mueva por drag (a diferencia del template genérico) — el molcajete se reposiciona automáticamente, nunca por el jugador directamente.
+- **Escenas jugables:** `MainMenu.tscn` → `TutorialGame.tscn` (primera vez) o `Game.tscn`. Ambas instancian los mismos sistemas (`BoardManager`, `TurnManager`, `Mortar`, `VFXSpawner`, `HUD`).
+- **Sin metagame** — no hay oro, upgrades, ni multi-idioma en esta versión (ver Pendientes en `idea-base.md`).
+- **Build:** `gdlint` 0 errores · GUT 78/78 tests · `--export-debug Android` genera APK válido.
 
 ### Señales clave en EventBus
-<!-- Tabla: Señal | Emisor | Receptores -->
+
+| Señal | Emisor | Receptores |
+|---|---|---|
+| `game_started` | `GameManager.start_game()` | `BoardManager`, `TurnManager` (reset de estado) |
+| `game_over(score, wave)` | `GameManager` (vía `board_reached_bottom`) | `GameOverScreen`, `Game.gd` |
+| `game_paused` / `game_resumed` | `GameManager.pause_game()/resume_game()` | `PauseScreen` (show/hide) |
+| `wave_advanced(wave_number)` | `BoardManager` (fila inicial y cada avance) | `GameManager` (bono de score), `HUD`, `TurnManager` (guard ADVANCING→AIMING) |
+| `turn_phase_changed(phase)` | `TurnManager._set_phase()` | `Mortar` (gatea el input de apuntado) |
+| `aim_updated` / `aim_cancelled` | `Mortar` | (feedback visual propio) |
+| `fire_requested(direction, origin)` | `Mortar` al soltar el dedo | `TurnManager` (inicia la ráfaga) |
+| `burst_fired(seed_count)` | `TurnManager` | `HUD` / tutorial |
+| `all_seeds_returned(landing_x)` | `TurnManager` (última semilla aterriza) | `BoardManager` (avanza el tablero) |
+| `molcajete_position_changed(x)` | `TurnManager` (primera semilla aterriza) | `Mortar` (tween a la nueva posición) |
+| `seed_count_changed(n)` | `TurnManager` | `HUD` |
+| `block_damaged(pos, hp, max_hp)` | `block_base._apply_damage()` | (feedback visual propio del bloque) |
+| `block_destroyed(pos, type, score)` | `block_base._die()` | `GameManager` (score), `BoardManager` (borra de la grilla), `VFXSpawner`, `HapticManager` |
+| `salsa_exploded(pos)` | `salsa_jar_block._die()` | `BoardManager` (daño en cruz), `VFXSpawner`, `HapticManager` |
+| `board_reached_bottom` | `BoardManager` (game over) | `GameManager` |
+| `lemon_triggered` / `seed_extra_touched` / `seed_extra_collected` | `LemonIcon` / `SeedExtraIcon` / `TurnManager` | `TurnManager` (split real vía señal privada `Seed.split_requested`, no EventBus) / `HUD` |
+| `score_changed` / `high_score_updated` | `GameManager` | `HUD` / `GameOverScreen` |
 
 ### Referencia Rápida del GDD
-<!-- Valores base del jugador, enemigos, power-ups, metagame -->
+
+- **Molcajete:** 10 semillas iniciales, velocidad 640px/s, ráfaga cada 0.06s, cono de apuntado ±15° respecto a la horizontal.
+- **Totopo:** `HP = oleada`. **Queso:** `HP = ceil(oleada * 1.5)`, daño x2, -15% velocidad de semilla al rebotar (piso `SEED_MIN_SPEED_RATIO = 0.35`). **Salsa:** 10 de daño en cruz al morir. **Piedra:** indestructible.
+- **Oleadas:** 1–5 introducción (solo totopo) · 6–15 geometría (triángulo + queso + salsa) · 16–30 piedra · 31+ espaciado ajustado.
+- **Grid:** 7 columnas × 9 filas (`Constants.GRID_COLS/GRID_ROWS`), diseño base 390×844.
+- **Sin metagame de oro/upgrades** — el GDD no lo define; `SaveManager` solo persiste settings + best_score/max_wave/tutorial_shown.
 
 ### Autoloads registrados en project.godot
-<!-- Tabla: Nombre | Archivo | Rol -->
+
+| Nombre | Archivo | Rol |
+|---|---|---|
+| `Constants` | `src/core/Constants.gd` | Constantes tipadas (GDD como fuente de verdad) |
+| `EventBus` | `src/core/EventBus.gd` | Bus de señales cross-feature |
+| `GameManager` | `src/core/GameManager.gd` | Estados `MENU/PLAYING/PAUSED/GAME_OVER`, score, oleada, pausa real del `SceneTree` |
+| `SaveManager` | `src/core/SaveManager.gd` | Persistencia `user://save.json` |
+| `AudioManager` | `src/features/audio/AudioManager.gd` | Stub de SFX/música (no crashea sin `.ogg`) |
+| `HapticManager` | `src/features/audio/HapticManager.gd` | Vibración sutil solo en destrucción/explosión |
 
 ### Skills y Agentes Disponibles
-<!-- Lista de skills activos para este juego -->
+
+Todos los del template (`/gen-ai-art`, `/mobile-i18n`, `/feature`, `/android-deploy`, `/new-game`, `/doc`, `/validate`) + agentes `game-designer`, `game-feel`, `godot-architect`, `godot-qa`. Ninguno es específico de Totopo Smash todavía.
 
 ### Pendientes Documentados
-<!-- Features por implementar -->
+
+Ver sección **Pendientes** en `idea-base.md` (assets visuales/SFX reales, CI/CD con credenciales reales, balance fino de probabilidades de spawn). Resumen: el juego es 100% jugable y testeado, pero 100% procedural (sin arte/audio finales) y sin pipeline de publicación configurado con secrets reales.

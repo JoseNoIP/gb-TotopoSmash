@@ -1,11 +1,101 @@
 extends Node
-## Typed game constants. All magic numbers live here.
-## Autoloaded FIRST so all other scripts resolve Constants.VALUE at parse time.
-## TEMPLATE: Replace all values with game-specific numbers from your GDD.
+## Constantes tipadas de Totopo Smash. Autoload PRIMERO — todo lo demás depende de esto.
+## Fuente de verdad: totopo-smash-gdd.md
 
-# --- Player ---
-const PLAYER_BASE_HEALTH: int = 3
-const PLAYER_BASE_SPEED: float = 200.0
-const PLAYER_BASE_DAMAGE: float = 10.0
-const PLAYER_AUTOFIRE_INTERVAL: float = 0.4
-const PLAYER_AUTOFIRE_MIN: float = 0.05
+# --- Capas de física (deben coincidir con [layer_names] en project.godot) ---
+const LAYER_WORLD: int = 1  ## paredes, techo, piso
+const LAYER_BLOCKS: int = 2
+const LAYER_MOLCAJETE: int = 4
+const LAYER_SEEDS: int = 8
+const LAYER_PICKUPS: int = 16  ## íconos: limón, semilla extra
+
+# --- Grid del tablero (GDD sección 2, "Game Over") ---
+const GRID_COLS: int = 7
+const GRID_ROWS: int = 9
+const MOLCAJETE_ROW: int = GRID_ROWS - 1  ## fila del molcajete; bloque aquí = game over
+
+# --- Geometría / layout (390x844 portrait, debe calzar con project.godot [display]) ---
+const DESIGN_WIDTH: float = 390.0
+const DESIGN_HEIGHT: float = 844.0
+const BOARD_TOP_MARGIN: float = 96.0
+const MOLCAJETE_BOTTOM_MARGIN: float = 72.0
+
+# --- Molcajete ---
+const MOLCAJETE_START_SEEDS: int = 10
+const MOLCAJETE_START_X_RATIO: float = 0.5  ## centrado antes de que caiga la 1ra semilla
+const MOLCAJETE_MOVE_DURATION: float = 0.22
+const MOLCAJETE_SPRITE_RADIUS: float = 26.0
+const MORTAR_AIM_MARGIN_DEG: float = 15.0  ## cono de apuntado: nunca horizontal/abajo
+const AIM_PREVIEW_LENGTH: float = 260.0  ## largo del primer tramo si no golpea nada
+const AIM_BOUNCE_PREVIEW_LENGTH: float = 90.0  ## largo del tramo tras el primer rebote
+const AIM_DOT_SPACING: float = 14.0
+const AIM_DOT_RADIUS: float = 2.5
+
+# --- Semillas ---
+const SEED_SPEED: float = 640.0
+const SEED_RADIUS: float = 7.0
+const SEED_FIRE_INTERVAL: float = 0.06  ## separación entre disparos de la ráfaga (no todas juntas)
+const SEED_MAX_BOUNCES_SAFETY: int = 600  ## failsafe: fuerza retorno si se cuelga rebotando
+const SEED_QUESO_SLOWDOWN_RATIO: float = 0.85  ## -15% velocidad al rebotar en queso
+const SEED_MIN_SPEED_RATIO: float = 0.35  ## piso de velocidad tras varios rebotes en queso
+const LEMON_SPLIT_ANGLE_DEG: float = 20.0  ## separación de cada rama respecto al rumbo original
+
+# --- Bloques: vida y daño (GDD sección 3 y 4.1) ---
+const BLOCK_NORMAL_DAMAGE_PER_HIT: int = 1
+const BLOCK_QUESO_DAMAGE_PER_HIT: int = 2  ## "absorbe el doble de daño por impacto"
+const BLOCK_SALSA_EXPLOSION_DAMAGE: int = 10
+const BLOCK_SALSA_WARNING_HP: int = 1  ## HP en el que empieza a parpadear antes de estallar
+const WAVE_TOTOPO_HP_MULTIPLIER: float = 1.0  ## N = O
+const WAVE_QUESO_HP_MULTIPLIER: float = 1.5  ## N = ceil(O * 1.5)
+
+# --- Introducción de complejidad por oleada (GDD sección 4.2) ---
+const WAVE_INTRO_END: int = 5  ## 1-5: solo totopos, vida 1-5
+const WAVE_GEOMETRY_START: int = 6  ## 6-15: triángulos + primeros quesos
+const WAVE_GEOMETRY_END: int = 15
+const WAVE_STATIC_OBSTACLES_START: int = 16  ## 16-30: piedra de molcajete indestructible
+const WAVE_STATIC_OBSTACLES_END: int = 30
+const WAVE_TIGHT_SPACING_START: int = 31  ## 31+: menos huecos libres
+
+# --- Spawn de fila: probabilidades por celda (documentado, ajustable) ---
+const ROW_EMPTY_CHANCE_EARLY: float = 0.30  ## oleadas 1-5
+const ROW_EMPTY_CHANCE_MID: float = 0.20  ## oleadas 6-30
+const ROW_EMPTY_CHANCE_LATE: float = 0.08  ## oleadas 31+ ("estrangulamiento del espacio")
+const ROW_SEED_EXTRA_CHANCE_EARLY: float = 0.22  ## "abundantes íconos de semilla extra"
+const ROW_SEED_EXTRA_CHANCE_LATE: float = 0.05
+const ROW_LEMON_CHANCE: float = 0.05
+const ROW_TRIANGLE_CHANCE: float = 0.18  ## dentro del rango de oleadas 6+
+const ROW_QUESO_CHANCE: float = 0.18  ## dentro del rango de oleadas 6+
+const ROW_STONE_CHANCE: float = 0.10  ## dentro del rango de oleadas 16+
+
+# --- Power-ups en tablero ---
+const SEED_EXTRA_AMOUNT: int = 1
+
+# --- Score ---
+const SCORE_PER_DAMAGE_POINT: int = 10
+const SCORE_PER_WAVE_CLEARED: int = 50
+
+# --- Feedback háptico (GDD sección 5 — sutil, solo en destrucción/explosión) ---
+const HAPTIC_BLOCK_DESTROYED_MS: int = 15
+const HAPTIC_SALSA_EXPLOSION_MS: int = 30
+
+# --- UI / Colores (GDD sección 5) ---
+const COLOR_BG_BOARD: Color = Color(0.086, 0.106, 0.145)  ## azul noche / gris pizarra
+const COLOR_TOTOPO: Color = Color(0.976, 0.663, 0.157)  ## amarillo/naranja crujiente
+const COLOR_QUESO: Color = Color(0.949, 0.878, 0.663)  ## amarillo pastel viscoso
+const COLOR_SALSA: Color = Color(0.831, 0.129, 0.129)  ## rojo brillante
+const COLOR_STONE: Color = Color(0.42, 0.42, 0.45)  ## piedra de molcajete
+const COLOR_LEMON: Color = Color(0.667, 0.925, 0.239)  ## verde brillante
+const COLOR_SEED_EXTRA: Color = Color(1.0, 0.878, 0.313)  ## semilla brillante
+const COLOR_SEED_TRAIL: Color = Color(0.31, 0.86, 0.44)  ## semillas verdes
+const COLOR_MOLCAJETE: Color = Color(0.35, 0.24, 0.16)  ## piedra volcánica
+const COLOR_HUD_TEXT: Color = Color(0.95, 0.95, 0.95)
+const COLOR_AIM_GUIDE: Color = Color(1.0, 1.0, 1.0, 0.55)
+
+# --- UI: tamaños mínimos ---
+const UI_MIN_FONT_SIZE: int = 18
+
+# --- VFX (migajas / salpicadura, sin assets — GPUParticles2D procedural) ---
+const VFX_CRUMB_AMOUNT: int = 14
+const VFX_CRUMB_LIFETIME: float = 0.5
+const VFX_SAUCE_AMOUNT: int = 24
+const VFX_SAUCE_LIFETIME: float = 0.6
