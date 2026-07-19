@@ -12,12 +12,14 @@ const GridMathGd := preload("res://src/shared/grid_math.gd")
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
 
 const BODY_RADIUS: float = 26.0
+const TEXTURE_PATH: String = "res://assets/sprites/molcajete.png"
 
 var _phase: int = TurnManagerGd.Phase.AIMING
 var _is_aiming: bool = false
 var _locked_direction: Vector2 = Vector2.UP
 var _aim_preview_points: PackedVector2Array = PackedVector2Array()
 var _move_tween: Tween = null
+var _has_sprite: bool = false
 
 
 func _ready() -> void:
@@ -27,6 +29,22 @@ func _ready() -> void:
 	)
 	EventBus.turn_phase_changed.connect(_on_turn_phase_changed)
 	EventBus.molcajete_position_changed.connect(_on_molcajete_position_changed)
+	_build_sprite()
+
+
+## Sprite2D con textura real si existe; si no, _draw() sigue dibujando los dos círculos
+## de siempre (ver el early-out en _draw()). La guía de apuntado punteada siempre se
+## dibuja con _draw(), tenga sprite o no — es procedural por diseño, no un sprite fijo.
+func _build_sprite() -> void:
+	if not ResourceLoader.exists(TEXTURE_PATH):
+		return
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = load(TEXTURE_PATH)
+	var diameter: float = BODY_RADIUS * 2.0
+	var tex_size: Vector2 = sprite.texture.get_size()
+	sprite.scale = Vector2(diameter / tex_size.x, diameter / tex_size.y)
+	add_child(sprite)
+	_has_sprite = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -104,8 +122,9 @@ func _on_molcajete_position_changed(new_x: float) -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, BODY_RADIUS, Constants.COLOR_MOLCAJETE)
-	draw_circle(Vector2.ZERO, BODY_RADIUS * 0.62, Constants.COLOR_MOLCAJETE.darkened(0.35))
+	if not _has_sprite:
+		draw_circle(Vector2.ZERO, BODY_RADIUS, Constants.COLOR_MOLCAJETE)
+		draw_circle(Vector2.ZERO, BODY_RADIUS * 0.62, Constants.COLOR_MOLCAJETE.darkened(0.35))
 	if _is_aiming and _aim_preview_points.size() >= 2:
 		_draw_dotted_line(_aim_preview_points)
 

@@ -23,6 +23,12 @@ signal all_seeds_returned(landing_x: float)
 signal molcajete_position_changed(new_x: float)
 signal seed_count_changed(new_count: int)
 
+# --- Audio (GDD sección 5) ---
+## Emitida por Seed en cada colisión (pared o bloque). `block_type` es "" si rebotó contra
+## el mundo (pared/techo) o el `block_type` del bloque golpeado (para elegir el SFX
+## correcto: crujido de totopo, thud de queso, etc. — ver AudioManager).
+signal seed_bounced(block_type: String)
+
 # --- Bloques ---
 signal block_damaged(grid_pos: Vector2i, current_hp: int, max_hp: int)
 signal block_destroyed(grid_pos: Vector2i, block_type: String, score_value: int)

@@ -55,18 +55,27 @@
 - `Game.tscn/.gd` — escena raíz: instancia BoardManager, TurnManager, Mortar, VFXSpawner, HUD, PauseScreen, GameOverScreen, SettingsScreen. Auto-pausa en `NOTIFICATION_APPLICATION_FOCUS_OUT`.
 - `HUD.gd` — score, oleada, semillas disponibles, botón de pausa.
 - `PauseScreen.gd` / `GameOverScreen.gd` / `SettingsScreen.gd` — overlays `CanvasLayer` con `PROCESS_MODE_ALWAYS`, construidos 100% por código (sin `.tscn` propio), igual que el resto del proyecto.
-- Todo el texto está en español, literal (sin `tr()`) — el juego es mono-idioma en esta versión (ver sección Pendientes).
+- Todo el texto usa `tr()`/auto-translate — ver sección Multi-idioma abajo.
+
+## Multi-idioma ✅ (`/mobile-i18n`) — es / en / pt_BR / fr
+- `assets/translations/translations.txt` (CSV real, extensión `.txt` por el bug #38957 de Godot) con 36 keys.
+- `src/core/LocalizationManager.gd` (autoload, sin `class_name`, registrado después de `SaveManager`) — parsea el CSV en runtime y aplica el locale guardado (o `es` por defecto).
+- `src/scenes/LanguageSelectScreen.tscn/.gd` — selector de primera ejecución; `MainMenu.gd._ready()` redirige aquí si `SaveManager.get_language()` está vacío.
+- `SettingsScreen` — fila de idioma con botón cíclico (`_on_lang_next_pressed()`).
+- **Dos convenciones de texto, según si el nodo se reconstruye o no:** títulos/botones estáticos de overlays que solo se muestran/ocultan (`SettingsScreen`, `PauseScreen`, `GameOverScreen`, `MainMenu`) usan la **key cruda** (`title.text = "TITLE_SETTINGS"`, sin `tr()`) para aprovechar el auto-translate nativo de `Control` — así se retraducen solos si el jugador cambia de idioma sin que la escena se recargue. Labels con valores interpolados (`score`, `oleada`, pasos del tutorial) usan `tr(&"KEY") % valor` explícito en el punto donde ya se recalculan. **Verificado con captura de pantalla real:** cambiar el idioma con `SettingsScreen` ya abierto retradujo título/checkboxes/botones sin volver a construir nada.
+- Bono: se corrigió `HUD`/`GameOverScreen`, que mezclaban "Score:" (inglés) con el resto del texto en español — ahora `LABEL_SCORE` es consistente por locale.
 
 ## Tutorial interactivo (FTUE) ✅
 - `TutorialGame.tscn/.gd` — escena separada (nunca overlay sobre `Game.tscn`), reutiliza los sistemas reales del juego. Pasos: `WELCOME → AIM_SHOOT → WATCH_RETURN → ADVANCE → COMPLETE`, adaptados a la mecánica real de apuntar-y-soltar (no al flujo genérico de drag-mover/autofire del template).
 - `set_tutorial_shown(true)` solo se llama al presionar JUGAR en el paso COMPLETE.
 - Si el jugador muere durante el tutorial, se reinicia `TutorialGame.tscn` (no marca `tutorial_shown`).
 
-## Tests GUT (78 tests, 0 fallos) ✅
+## Tests GUT (85 tests, 0 fallos) ✅
 - `test_physics_math.gd`, `test_grid_math.gd`, `test_wave_scaling.gd` — funciones puras, casos normal/borde/inválido.
-- `test_game_manager.gd`, `test_save_manager.gd` — máquina de estados y persistencia (autoloads reales).
+- `test_game_manager.gd`, `test_save_manager.gd` — máquina de estados y persistencia (autoloads reales), incluye `language`.
 - `test_block_base.gd` — daño, destrucción, indestructibilidad, doble daño de queso, explosión de salsa, geometría de triángulo.
-- `test_board_manager.gd`, `test_turn_manager.gd` — spawn de filas, avance de turno, Game Over, explosión en cruz, inventario de semillas, transiciones de fase.
+- `test_board_manager.gd`, `test_turn_manager.gd` — spawn de filas, avance de turno, Game Over, explosión en cruz, inventario de semillas, transiciones de fase, ícono liberado (regresión).
+- `test_localization_manager.gd` — carga de CSV, cambio de locale, persistencia, locale no soportado ignorado, las 4 traducciones existen para la misma key.
 - `test_gut_smoke.gd` — verifica que GUT y los autoloads core están disponibles.
 
 ## Configuración corregida ✅
@@ -74,14 +83,40 @@
 
 ---
 
+## Bugs reales encontrados y corregidos jugando (post-build) ✅
+
+El build inicial pasaba los 3 gates (lint/tests/export) pero el juego no era jugable — ningún gate automático detecta bugs de render/física que solo aparecen jugando de verdad. Corregidos en esta sesión, con test de regresión donde aplicaba:
+- **Paredes/techo inexistentes** (`Constants.LAYER_WORLD` sin ningún `StaticBody2D` real) — las semillas que no golpeaban un bloque salían disparadas fuera de pantalla para siempre; `TurnManager` quedaba trabado en `RESOLVING`. Fix: `src/features/board/world_bounds.gd`.
+- **Fondo dentro de un `CanvasLayer`** en `Game.gd`/`TutorialGame.gd` — tapaba todo el gameplay (bloques, molcajete, semillas) sin ningún error; la lógica de turnos corría perfecta por debajo (llegamos a oleada 7 sin ver nada en pantalla). Fix: fondo agregado directo, sin `CanvasLayer`.
+- **Ícono recogido (Limón/Semilla Extra) nunca se borraba de `BoardManager._icons`** — al desplazar el tablero, insertar la referencia ya liberada en el `Dictionary` tipado crasheaba con "previously freed object". Fix + test de regresión en `test_board_manager.gd`.
+- **Split del Limón crasheaba la física** — creaba una semilla nueva con `add_child()` síncrono desde dentro de `Area2D.body_entered` (callback de física), tocando `collision_layer` mientras el motor seguía "flushing queries". Fix: `call_deferred(&"add_child", ...)` en `TurnManager._spawn_seed()`.
+- Además: input táctil no emulado en escritorio (`pointing/emulate_touch_from_mouse`), placeholders de `export_presets.cfg` sin llenar, `.gitignore` sin proteger `*.keystore`.
+
+**Lección para el proceso:** verificar visualmente con una captura de pantalla real (no solo boot headless) antes de dar por bueno un build — headless nunca renderiza nada, así que no atrapa ninguno de estos 5 bugs.
+
+## CI/CD Android ✅ — funcional de punta a punta
+- `.github/workflows/build-android.yml` — build de APK + subida a Dropbox en cada push a `main`/`staging`. **Confirmado corriendo en verde**, APK instalado y probado en Android real.
+- `.github/workflows/deploy-playstore.yml` — placeholders reemplazados por valores reales (`com.guacamolebit.totoposmash`). Sin probar de punta a punta todavía (solo dispara con push a `main` o tag `v*.*.*`; hasta ahora solo se probó el flujo de `staging`).
+- Secrets ya configurados en el repo: keystore de Android (uno nuevo, propio de este juego — no reusa el de GuacBlaster), `GOOGLE_PLAY_JSON` (reutilizado de la cuenta de servicio de Guacamole Bit, con permiso agregado para esta app en Play Console), y los 3 de Dropbox.
+- **`deploy-playstore.yml` probado de punta a punta** ✅ — subió la app a Google Play Store como Internal Testing exitosamente.
+
+## Decisiones de diseño confirmadas (sin cambios de código, solo documentación) ✅
+- **Balance de spawn** — simulación Monte Carlo (20k filas/oleada, oleadas 1-60) confirmó que los saltos de dificultad caen donde el GDD los describe y no hay tableros imposibles (fila 100% piedra <0.02% de las veces). Ver comentario en `wave_scaling.gd`. No se cambió ningún valor — ya estaban bien calibrados.
+- **Corner de triángulos** — se confirmó como decisión de diseño intencional (no un placeholder): la esquina se randomiza una vez por instancia en el spawn, visible antes de cualquier rebote, así que nunca es información oculta o injusta. Ver comentario en `triangle_block.gd`.
+
+## Assets visuales y de audio reales ✅
+- `tools/gen_assets.py` reescrito para Totopo Smash (se quitó todo lo específico de GuacBlaster Survivor: personajes, enemigos, íconos de power-up, 5 biomas de fondo). Genera procedural: `totopo.png`, `queso.png`, `salsa.png`, `stone.png` (`assets/sprites/blocks/`), `molcajete.png`, `seed.png`, `lemon.png`/`seed_extra.png` (`assets/sprites/powerup_icons/`) — todos ≤96px, por eso procedural y no IA (ver `/gen-ai-art` paso 4: a esos tamaños la IA sale borrosa y no comunica la mecánica).
+- `tools/fetch_ai_assets.py` reescrito: un solo fondo de menú vía Pollinations.ai (`assets/sprites/backgrounds/menu_bg.png`, 390×844 — el único asset ≥128px, por eso sí usa IA). El fondo del tablero de juego (`Game.tscn`) se queda plano a propósito (GDD sección 5: oscuro para resaltar las trayectorias de las semillas).
+- `block_base.gd` ahora intenta `Sprite2D` con textura real primero, cae a `ColorRect`+color si el asset no existe (nunca crashea). Los subtipos con efectos (`totopo_block.gd` agrietado, `queso_block.gd` squish, `salsa_jar_block.gd` parpadeo) se generalizaron de `ColorRect` a `CanvasItem` — ver regla CLAUDE.md #44 sobre `.scale` y `CanvasItem`.
+- `mortar.gd`, `seed.gd`, `lemon_icon.gd`, `seed_extra_icon.gd` — mismo patrón (Sprite2D si existe, `_draw()` de respaldo si no).
+- `MainMenu.gd`/`LanguageSelectScreen.gd` — fondo real + scrim oscuro semitransparente para legibilidad del texto encima.
+- **Audio real** (GDD sección 5): `AudioManager` reescrito para usar `.wav` (no `.ogg` — sin encoder OGG en la stdlib de Python; mismo patrón ya probado en GuacBlaster) y se suscribe directo a `EventBus` (`seed_bounced` nueva señal, `salsa_exploded`) igual que `HapticManager`, en vez de que cada feature llame `play_sfx()` a mano. Rebote genérico usa un solo tono con `pitch_scale` creciente por rebote dentro de la ráfaga (efecto "escala ascendente" del GDD sin necesitar varios archivos).
+- Verificado con captura real del viewport (no solo boot headless): bloques, molcajete e íconos se ven con sus sprites nuevos; el menú con el fondo IA es legible.
+
 ## Pendientes
 
-- **Assets visuales reales** (sprites, íconos, fondos, `assets/icon.png` / `assets/splash.png`) — todo el juego usa `_draw()` procedural por ahora (mismo enfoque que bloques/semillas/íconos existentes). Requiere correr `/gen-ai-art`. `tools/gen_assets.py` / `tools/fetch_ai_assets.py` son del template genérico (GuacBlaster Survivor) y NO aplican a Totopo Smash — hay que reescribirlos con prompts/formas propias antes de usarlos.
-- **SFX / música reales** — `AudioManager` es un stub funcional que no crashea sin archivos `.ogg`; faltan los assets de audio (rebotes tipo xilófono, crunch de totopo, thud de queso, splash de salsa).
-- **CI/CD Android** — `.github/workflows/deploy-playstore.yml` sigue con placeholders del template (`PLACEHOLDER_COMPANY`, `PLACEHOLDER_GAME_NAME`) y requiere secrets reales (keystore, cuenta de servicio de Google) antes de poder usarse. Ejecutar `/android-deploy` cuando se vaya a publicar.
-- **Multi-idioma** — no implementado (decisión de alcance: el GDD y el estudio son en español, sin mercado angloparlante mencionado). Si se necesita, correr `/mobile-i18n`.
-- **Balance fino** — varias probabilidades de spawn (`ROW_STONE_CHANCE`, `ROW_QUESO_CHANCE`, chance fija de salsa 0.10 hardcodeada en `wave_scaling.pick_cell_kind()`, etc.) son valores razonables documentados en `Constants.gd` pero no verificados con playtesting real. Revisar con el agente `game-designer` tras las primeras partidas.
-- **Corner de triángulos** — el GDD no especifica cómo se elige la esquina cortada; se randomiza (`BoardManager._spawn_cell`). Documentado como supuesto en `triangle_block.gd`.
+- **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
+- **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
 
 ---
 

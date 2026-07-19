@@ -14,6 +14,15 @@ extends "res://src/features/blocks/block_base.gd"
 ## porque _build_shape()/_build_visual() (invocados desde dentro de setup()) lo leen
 ## para elegir la orientación. `corner` = esquina "cortada" del cuadrado de la celda:
 ## 0=arriba-izq, 1=arriba-der, 2=abajo-der, 3=abajo-izq.
+##
+## DECISIÓN DE DISEÑO CONFIRMADA (el GDD no especifica el criterio): la esquina se elige
+## uniforme al azar en BoardManager._spawn_cell(), UNA vez por instancia, en el momento del
+## spawn — no en cada rebote. Esto es intencional y no un placeholder: la forma resultante
+## es 100% visible antes de que cualquier semilla la toque, y el rebote lo determina la
+## física normal (physics_math.gd) según qué cara golpee. El jugador siempre puede leer el
+## ángulo de rebote con solo mirar el triángulo — la variedad es puramente geométrica/visual
+## entre instancias distintas del tablero, nunca información oculta o injusta para una
+## instancia ya visible. Coincide con el pilar de diseño del GDD ("Cálculo de Ángulos").
 
 var corner: int = 0
 

@@ -85,9 +85,14 @@ func _fire_one_seed() -> void:
 			_set_phase(Phase.AIMING)
 
 
+## El split del Limón llega desde Area2D.body_entered (callback de física, GDD sección 3)
+## — un add_child() directo ahí dispara _ready() de Seed sincrónicamente, que toca
+## collision_layer/mask mientras el motor todavía está "flushing queries" de ese mismo
+## paso de física (regla CLAUDE.md #17). call_deferred() es seguro también para el disparo
+## normal (Timer / input), así que se usa siempre, sin importar el origen de la llamada.
 func _spawn_seed(origin: Vector2, direction: Vector2, speed: float) -> void:
 	var seed_node: CharacterBody2D = SeedGd.new()
-	add_child(seed_node)
+	call_deferred(&"add_child", seed_node)
 	var floor_y: float = GridMathGd.molcajete_y(Constants.DESIGN_HEIGHT)
 	seed_node.call(&"launch", origin, direction, speed, floor_y)
 	seed_node.connect(&"landed", _on_seed_landed)

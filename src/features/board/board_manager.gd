@@ -67,24 +67,33 @@ func _clear_board() -> void:
 	_icons.clear()
 
 
+## `is_instance_valid()` se revisa ANTES de insertar en el Dictionary tipado, nunca
+## después: un ícono recogido (LemonIcon/SeedExtraIcon) se autodestruye con queue_free()
+## sin que BoardManager borre su entrada de _icons, así que para el siguiente turno esa
+## referencia ya está liberada — asignarla a un Dictionary[Vector2i, Area2D] tipado
+## revienta en tiempo de ejecución ("previously freed object"). Los bloques nunca quedan
+## inválidos aquí (block_destroyed los borra de _blocks de forma síncrona), pero se
+## revisa igual por si acaso.
 func _shift_down() -> void:
 	var new_blocks: Dictionary[Vector2i, StaticBody2D] = {}
 	for key: Vector2i in _blocks.keys():
 		var node: StaticBody2D = _blocks[key]
+		if not is_instance_valid(node):
+			continue
 		var new_key: Vector2i = Vector2i(key.x, key.y + 1)
 		new_blocks[new_key] = node
-		if is_instance_valid(node):
-			node.set(&"grid_pos", new_key)
-			_tween_to_row(node, new_key.y)
+		node.set(&"grid_pos", new_key)
+		_tween_to_row(node, new_key.y)
 	_blocks = new_blocks
 
 	var new_icons: Dictionary[Vector2i, Area2D] = {}
 	for key: Vector2i in _icons.keys():
 		var node: Area2D = _icons[key]
+		if not is_instance_valid(node):
+			continue
 		var new_key: Vector2i = Vector2i(key.x, key.y + 1)
 		new_icons[new_key] = node
-		if is_instance_valid(node):
-			_tween_to_row(node, new_key.y)
+		_tween_to_row(node, new_key.y)
 	_icons = new_icons
 
 

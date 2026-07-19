@@ -25,15 +25,16 @@ func _ready() -> void:
 
 
 func _build_scene() -> void:
-	var bg_layer: CanvasLayer = CanvasLayer.new()
-	bg_layer.layer = 0
-	add_child(bg_layer)
+	## Sin CanvasLayer: cualquier nodo dentro de un CanvasLayer se dibuja SIEMPRE por
+	## encima de los Node2D normales (BoardManager, Mortar, semillas), sin importar su
+	## valor de `layer` — un ColorRect de fondo ahí adentro tapa todo el juego. Se agrega
+	## primero para quedar detrás por orden de árbol, igual que en MainMenu.gd.
 	var bg: ColorRect = ColorRect.new()
 	bg.color = Constants.COLOR_BG_BOARD
 	bg.position = Vector2.ZERO
 	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg_layer.add_child(bg)
+	add_child(bg)
 
 	add_child(BoardManagerGd.new())
 	add_child(TurnManagerGd.new())

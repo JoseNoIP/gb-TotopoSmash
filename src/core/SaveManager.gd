@@ -64,6 +64,17 @@ func set_swipe_sensitivity(value: float) -> void:
 	save()
 
 
+## "" significa "sin elegir todavía" — LocalizationManager usa esto para decidir si
+## mostrar LanguageSelectScreen en la primera ejecución (regla /mobile-i18n).
+func get_language() -> String:
+	return _data.get("language", "") as String
+
+
+func set_language(value: String) -> void:
+	_data["language"] = value
+	save()
+
+
 # --- Puntuación / progreso (Totopo Smash no tiene metagame de oro/upgrades: el GDD
 # solo define progresión infinita por oleadas dentro de una run — ver GDD sección 4) ---
 func get_best_score() -> int:
