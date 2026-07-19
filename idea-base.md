@@ -62,7 +62,7 @@
 - `set_tutorial_shown(true)` solo se llama al presionar JUGAR en el paso COMPLETE.
 - Si el jugador muere durante el tutorial, se reinicia `TutorialGame.tscn` (no marca `tutorial_shown`).
 
-## Tests GUT (78 tests, 0 fallos) ✅
+## Tests GUT (79 tests, 0 fallos) ✅
 - `test_physics_math.gd`, `test_grid_math.gd`, `test_wave_scaling.gd` — funciones puras, casos normal/borde/inválido.
 - `test_game_manager.gd`, `test_save_manager.gd` — máquina de estados y persistencia (autoloads reales).
 - `test_block_base.gd` — daño, destrucción, indestructibilidad, doble daño de queso, explosión de salsa, geometría de triángulo.
@@ -74,13 +74,30 @@
 
 ---
 
+## Bugs reales encontrados y corregidos jugando (post-build) ✅
+
+El build inicial pasaba los 3 gates (lint/tests/export) pero el juego no era jugable — ningún gate automático detecta bugs de render/física que solo aparecen jugando de verdad. Corregidos en esta sesión, con test de regresión donde aplicaba:
+- **Paredes/techo inexistentes** (`Constants.LAYER_WORLD` sin ningún `StaticBody2D` real) — las semillas que no golpeaban un bloque salían disparadas fuera de pantalla para siempre; `TurnManager` quedaba trabado en `RESOLVING`. Fix: `src/features/board/world_bounds.gd`.
+- **Fondo dentro de un `CanvasLayer`** en `Game.gd`/`TutorialGame.gd` — tapaba todo el gameplay (bloques, molcajete, semillas) sin ningún error; la lógica de turnos corría perfecta por debajo (llegamos a oleada 7 sin ver nada en pantalla). Fix: fondo agregado directo, sin `CanvasLayer`.
+- **Ícono recogido (Limón/Semilla Extra) nunca se borraba de `BoardManager._icons`** — al desplazar el tablero, insertar la referencia ya liberada en el `Dictionary` tipado crasheaba con "previously freed object". Fix + test de regresión en `test_board_manager.gd`.
+- **Split del Limón crasheaba la física** — creaba una semilla nueva con `add_child()` síncrono desde dentro de `Area2D.body_entered` (callback de física), tocando `collision_layer` mientras el motor seguía "flushing queries". Fix: `call_deferred(&"add_child", ...)` en `TurnManager._spawn_seed()`.
+- Además: input táctil no emulado en escritorio (`pointing/emulate_touch_from_mouse`), placeholders de `export_presets.cfg` sin llenar, `.gitignore` sin proteger `*.keystore`.
+
+**Lección para el proceso:** verificar visualmente con una captura de pantalla real (no solo boot headless) antes de dar por bueno un build — headless nunca renderiza nada, así que no atrapa ninguno de estos 5 bugs.
+
+## CI/CD Android ✅ — funcional de punta a punta
+- `.github/workflows/build-android.yml` — build de APK + subida a Dropbox en cada push a `main`/`staging`. **Confirmado corriendo en verde**, APK instalado y probado en Android real.
+- `.github/workflows/deploy-playstore.yml` — placeholders reemplazados por valores reales (`com.guacamolebit.totoposmash`). Sin probar de punta a punta todavía (solo dispara con push a `main` o tag `v*.*.*`; hasta ahora solo se probó el flujo de `staging`).
+- Secrets ya configurados en el repo: keystore de Android (uno nuevo, propio de este juego — no reusa el de GuacBlaster), `GOOGLE_PLAY_JSON` (reutilizado de la cuenta de servicio de Guacamole Bit, con permiso agregado para esta app en Play Console), y los 3 de Dropbox.
+
 ## Pendientes
 
-- **Assets visuales reales** (sprites, íconos, fondos, `assets/icon.png` / `assets/splash.png`) — todo el juego usa `_draw()` procedural por ahora (mismo enfoque que bloques/semillas/íconos existentes). Requiere correr `/gen-ai-art`. `tools/gen_assets.py` / `tools/fetch_ai_assets.py` son del template genérico (GuacBlaster Survivor) y NO aplican a Totopo Smash — hay que reescribirlos con prompts/formas propias antes de usarlos.
+- **Assets visuales reales** (sprites, íconos, fondos) — todo el juego usa `_draw()` procedural (bloques, semillas, molcajete, íconos). `assets/icon.png`/`assets/splash.png` ya existen (procedurales, temáticos de Totopo Smash). Requiere correr `/gen-ai-art`. `tools/gen_assets.py`/`tools/fetch_ai_assets.py` son del template genérico (GuacBlaster Survivor) y NO aplican tal cual — hay que reescribirlos con prompts/formas propias.
 - **SFX / música reales** — `AudioManager` es un stub funcional que no crashea sin archivos `.ogg`; faltan los assets de audio (rebotes tipo xilófono, crunch de totopo, thud de queso, splash de salsa).
-- **CI/CD Android** — `.github/workflows/deploy-playstore.yml` sigue con placeholders del template (`PLACEHOLDER_COMPANY`, `PLACEHOLDER_GAME_NAME`) y requiere secrets reales (keystore, cuenta de servicio de Google) antes de poder usarse. Ejecutar `/android-deploy` cuando se vaya a publicar.
-- **Multi-idioma** — no implementado (decisión de alcance: el GDD y el estudio son en español, sin mercado angloparlante mencionado). Si se necesita, correr `/mobile-i18n`.
-- **Balance fino** — varias probabilidades de spawn (`ROW_STONE_CHANCE`, `ROW_QUESO_CHANCE`, chance fija de salsa 0.10 hardcodeada en `wave_scaling.pick_cell_kind()`, etc.) son valores razonables documentados en `Constants.gd` pero no verificados con playtesting real. Revisar con el agente `game-designer` tras las primeras partidas.
+- **Probar `deploy-playstore.yml` de punta a punta** — nunca se ha ejecutado (solo dispara con push a `main` o un tag `v*.*.*`). La primera subida a Play Store debe hacerse manual desde Play Console antes de que el pipeline automático funcione; la ficha de la app también debe existir ya creada ahí.
+- **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
+- **Multi-idioma** — no implementado (decisión de alcance: GDD y estudio en español, sin mercado angloparlante mencionado). Si se necesita, correr `/mobile-i18n`.
+- **Balance fino** — varias probabilidades de spawn (`ROW_STONE_CHANCE`, `ROW_QUESO_CHANCE`, chance fija de salsa 0.10 hardcodeada en `wave_scaling.pick_cell_kind()`, etc.) son valores razonables documentados en `Constants.gd` pero no verificados con playtesting extenso, más allá de las pruebas manuales de esta sesión.
 - **Corner de triángulos** — el GDD no especifica cómo se elige la esquina cortada; se randomiza (`BoardManager._spawn_cell`). Documentado como supuesto en `triangle_block.gd`.
 
 ---
