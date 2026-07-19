@@ -1,0 +1,137 @@
+extends Node
+## Orquesta el turno completo (GDD sección 2: Apuntado -> Disparo -> Rebote -> Retorno ->
+## Avance). Dueño del inventario de semillas y de cada instancia de Seed que dispara.
+## BoardManager es dueño EXCLUSIVO de la matriz de bloques — este nodo nunca la toca
+## directamente, solo se comunican por EventBus (fire_requested / all_seeds_returned /
+## wave_advanced). Instanciado por Game.tscn y TutorialGame.tscn.
+
+enum Phase { AIMING, FIRING, RESOLVING, RETURNING, ADVANCING }
+
+const SeedGd := preload("res://src/features/projectiles/seed.gd")
+const GridMathGd := preload("res://src/shared/grid_math.gd")
+
+var _phase: Phase = Phase.AIMING
+var _seed_count: int = Constants.MOLCAJETE_START_SEEDS
+var _origin: Vector2 = Vector2.ZERO
+var _fire_direction: Vector2 = Vector2.UP
+var _seeds_to_fire: int = 0
+var _active_seeds: int = 0
+var _first_landed_this_turn: bool = false
+var _fire_timer: Timer = Timer.new()
+
+
+func _ready() -> void:
+	_fire_timer.wait_time = Constants.SEED_FIRE_INTERVAL
+	_fire_timer.one_shot = false
+	_fire_timer.timeout.connect(_on_fire_timer_timeout)
+	add_child(_fire_timer)
+	EventBus.game_started.connect(_on_game_started)
+	EventBus.fire_requested.connect(_on_fire_requested)
+	EventBus.seed_extra_touched.connect(_on_seed_extra_touched)
+	EventBus.wave_advanced.connect(_on_wave_advanced)
+
+
+func get_seed_count() -> int:
+	return _seed_count
+
+
+func get_phase() -> Phase:
+	return _phase
+
+
+func _on_game_started() -> void:
+	_seed_count = Constants.MOLCAJETE_START_SEEDS
+	_seeds_to_fire = 0
+	_active_seeds = 0
+	_fire_timer.stop()
+	_set_phase(Phase.AIMING)
+	EventBus.seed_count_changed.emit(_seed_count)
+
+
+func _on_fire_requested(direction: Vector2, origin: Vector2) -> void:
+	if _phase != Phase.AIMING or not GameManager.is_playing():
+		return
+	_origin = origin
+	_fire_direction = direction
+	_seeds_to_fire = _seed_count
+	_active_seeds = 0
+	_first_landed_this_turn = false
+	_set_phase(Phase.FIRING)
+	EventBus.burst_fired.emit(_seeds_to_fire)
+	_fire_one_seed()
+	if _seeds_to_fire > 0:
+		_fire_timer.start()
+
+
+func _on_fire_timer_timeout() -> void:
+	_fire_one_seed()
+
+
+## Dispara una semilla del cupo restante de esta ráfaga. Si es la última, detiene el
+## Timer y pasa a RESOLVING (las semillas siguen rebotando, ninguna ha regresado aún).
+func _fire_one_seed() -> void:
+	if _seeds_to_fire <= 0:
+		_fire_timer.stop()
+		return
+	_seeds_to_fire -= 1
+	_spawn_seed(_origin, _fire_direction, Constants.SEED_SPEED)
+	if _seeds_to_fire <= 0:
+		_fire_timer.stop()
+		if _active_seeds > 0:
+			_set_phase(Phase.RESOLVING)
+		else:
+			# Failsafe: no debería ocurrir (seed_count siempre >= 1), pero evita quedar
+			# trabado en FIRING para siempre si por algún motivo no se creó ninguna semilla.
+			_set_phase(Phase.AIMING)
+
+
+func _spawn_seed(origin: Vector2, direction: Vector2, speed: float) -> void:
+	var seed_node: CharacterBody2D = SeedGd.new()
+	add_child(seed_node)
+	var floor_y: float = GridMathGd.molcajete_y(Constants.DESIGN_HEIGHT)
+	seed_node.call(&"launch", origin, direction, speed, floor_y)
+	seed_node.connect(&"landed", _on_seed_landed)
+	seed_node.connect(&"split_requested", _on_split_requested.bind(seed_node))
+	_active_seeds += 1
+
+
+## Limón Ácido (GDD sección 3): la semilla que lo toca se duplica en dos ángulos
+## opuestos. `source_seed` (bind) da la posición donde ocurrió el split.
+func _on_split_requested(mirrored_velocity: Vector2, source_seed: Node2D) -> void:
+	if not is_instance_valid(source_seed):
+		return
+	var direction: Vector2 = mirrored_velocity.normalized()
+	_spawn_seed(source_seed.global_position, direction, mirrored_velocity.length())
+
+
+func _on_seed_landed(_seed_node: Node2D, x_position: float) -> void:
+	if not _first_landed_this_turn:
+		_first_landed_this_turn = true
+		EventBus.molcajete_position_changed.emit(x_position)
+		if _phase == Phase.RESOLVING:
+			_set_phase(Phase.RETURNING)
+	_active_seeds -= 1
+	if _active_seeds <= 0 and _seeds_to_fire <= 0:
+		_set_phase(Phase.ADVANCING)
+		# BoardManager escucha esta señal y responde de forma síncrona (desplaza el
+		# tablero, spawnea la fila nueva y emite wave_advanced), lo cual dispara
+		# _on_wave_advanced() más abajo antes de que este emit() retorne.
+		EventBus.all_seeds_returned.emit(x_position)
+
+
+func _on_seed_extra_touched(_origin: Vector2) -> void:
+	_seed_count += Constants.SEED_EXTRA_AMOUNT
+	EventBus.seed_extra_collected.emit(_seed_count)
+	EventBus.seed_count_changed.emit(_seed_count)
+
+
+func _on_wave_advanced(_wave_number: int) -> void:
+	## También se emite una vez al armar el tablero inicial (wave 1, fase ya AIMING);
+	## el guard evita una transición espuria en ese caso.
+	if _phase == Phase.ADVANCING:
+		_set_phase(Phase.AIMING)
+
+
+func _set_phase(phase: Phase) -> void:
+	_phase = phase
+	EventBus.turn_phase_changed.emit(phase)

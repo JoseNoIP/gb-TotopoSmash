@@ -5,22 +5,20 @@
 ; Format:
 ;   [section] ; section goes in []
 ;   param=value ; assign values to parameters
-;
-; TEMPLATE: Replace all PLACEHOLDER_* values before using.
 
 config_version=5
 
 [application]
 
-config/name="PLACEHOLDER_GAME_NAME"
-config/description="PLACEHOLDER_DESCRIPTION"
+config/name="Totopo Smash"
+config/description="Lanza ráfagas de semillas desde tu molcajete y destruye filas de totopos y comida chatarra en este arcade de física hipercasual."
 config/version="0.1.0"
-run/main_scene="res://src/scenes/Main.tscn"
+run/main_scene="res://src/scenes/MainMenu.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://assets/icon.png"
 boot_splash/image="res://assets/splash.png"
-boot_splash/bg_color=Color(0.031, 0.051, 0.031, 1)
+boot_splash/bg_color=Color(0.086, 0.106, 0.145, 1)
 boot_splash/fullsize=false
 boot_splash/use_filter=false
 
@@ -31,13 +29,12 @@ Constants="*res://src/core/Constants.gd"
 EventBus="*res://src/core/EventBus.gd"
 GameManager="*res://src/core/GameManager.gd"
 SaveManager="*res://src/core/SaveManager.gd"
-; Optional — uncomment when implemented:
-; LocalizationManager="*res://src/core/LocalizationManager.gd"
-; AudioManager="*res://src/features/audio/AudioManager.gd"
-; HapticManager="*res://src/features/audio/HapticManager.gd"
-; AchievementManager="*res://src/features/meta/AchievementManager.gd"
-; DailyMissionsManager="*res://src/features/meta/DailyMissionsManager.gd"
-; WeeklyChallengeManager="*res://src/features/meta/WeeklyChallengeManager.gd"
+AudioManager="*res://src/features/audio/AudioManager.gd"
+HapticManager="*res://src/features/audio/HapticManager.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [display]
 
@@ -56,13 +53,20 @@ ui_accept={
 ]
 }
 
+[input_devices]
+
+; El Mortar solo escucha InputEventScreenTouch/Drag (GDD: control táctil de 1 dedo).
+; Sin esto, mouse/trackpad en el editor de escritorio no generan esos eventos y
+; apuntar/disparar no responde a nada (Godot no emula touch desde mouse por defecto).
+pointing/emulate_touch_from_mouse=true
+
 [layer_names]
 
 ; Physics layer naming (matches collision_mask usage in code)
 2d_physics/layer_1="world"
-2d_physics/layer_2="enemies"
-2d_physics/layer_3="player"
-2d_physics/layer_4="projectiles"
+2d_physics/layer_2="blocks"
+2d_physics/layer_3="molcajete"
+2d_physics/layer_4="seeds"
 2d_physics/layer_5="pickups"
 
 [rendering]
