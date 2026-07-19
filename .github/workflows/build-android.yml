@@ -23,6 +23,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
       - name: Determinar entorno
         id: ctx
         run: |
@@ -70,10 +76,18 @@ jobs:
           sed -i "s|keystore/debug_user=\"[^\"]*\"|keystore/debug_user=\"$KEYSTORE_ALIAS\"|" export_presets.cfg
           sed -i "s|keystore/debug_password=\"[^\"]*\"|keystore/debug_password=\"$KEYSTORE_PASS\"|" export_presets.cfg
 
+      - name: Pre-heat Godot cache
+        run: godot --headless --editor --quit || true
+
       - name: Exportar APK
         run: |
           mkdir -p builds/
+          # gradle_build/use_gradle_build=true (requerido para el pipeline de AAB de
+          # deploy-playstore.yml) hace que CUALQUIER export de Android, incluido este
+          # debug APK, pase por Gradle — sin --install-android-build-template falla con
+          # "Android build template not installed" (regla CLAUDE.md #19).
           godot --headless \
+            --install-android-build-template \
             --export-debug "${{ env.EXPORT_PRESET }}" \
             "builds/${{ steps.ctx.outputs.apk }}"
 

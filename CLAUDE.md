@@ -141,6 +141,7 @@ func _exit_tree() -> void:
 ### Reglas Android CI/CD
 18. **Godot 4.7 no exporta `.aab` directamente** → exportar `.apk` primero, luego `./gradlew bundleRelease`.
 19. **`--install-android-build-template`** extrae `android_source.zip` y escribe `.build_version`.
+19b. **`gradle_build/use_gradle_build=true` en `export_presets.cfg` afecta TODOS los exports de Android, no solo el AAB de release** — si está activado (necesario para el pipeline de AAB), un simple `--export-debug` en un workflow de CI también falla con `"Android build template not installed"` a menos que ese mismo job corra `--install-android-build-template` (y tenga Java 17 configurado, ya que el export invoca Gradle). Un workflow de "build APK de prueba" separado del de release necesita los mismos pasos de Java + template que `deploy-playstore.yml`, no una versión simplificada.
 20. **`shouldSign()` es `false` por defecto** → pasar `-Pperform_signing=true` + keystore props a `bundleRelease`.
 20b. **`export_version_code` default=1** → pasar `-Pexport_version_code=N` a `bundleRelease`. Usar `$(( ($(date +%s) - 1704067200) / 60 ))` (minutos desde 2024-01-01).
 21. **Package name default es `com.godot.game`** → pasar `-Pexport_package_name=com.tuempresa.tujuego`.
