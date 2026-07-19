@@ -13,5 +13,12 @@ __pycache__/
 *.pyc
 /tmp/
 
+# Signing keys — nunca deben llegar al repo
+*.keystore
+*.jks
+*.p12
+*.pem
+keystore.properties
+
 # macOS
 .DS_Store
