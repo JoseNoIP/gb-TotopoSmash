@@ -134,6 +134,27 @@ los jugadores), con victoria real.
 - Verificado con captura real del viewport: nivel procedural, nivel-figura (corazón en silueta), MainMenu con los 3 botones, y LevelSelectScreen con la grilla de 20 niveles.
 - **Corrección post-feedback verificada con captura real:** `level_001` arranca mostrando solo 1 fila (no las 10 completas) y, tras emitir `all_seeds_returned`, revela la fila siguiente de la cola mientras la primera baja — confirma `row_queue` funcionando turno a turno. La misma captura muestra `danger_line.gd` v2 (banda + chevrones) renderizando correctamente. **Nota técnica:** la captura vía `get_viewport().get_texture().get_image()` da `null` bajo `--headless` (usa el `RenderingServer` dummy, sin textura real) — hay que correr el proceso probe SIN `--headless` (ventana real, aunque no se vea) para que la captura funcione.
 
+## Ícono de Android rediseñado ✅
+
+El ícono anterior (`assets/icon.png`, `config/icon` en `project.godot` — usado por Android
+al no haber `launcher_icons/*` configurados en `export_presets.cfg`) era un placeholder
+procedural muy básico: un triángulo plano con puntos oscuros simulando manchas. Reemplazado
+por una mascota vectorial "toony" del totopo (ver skill `/gen-ai-art`, 512×512 ≥ umbral de
+128px para usar IA en vez de procedural):
+- Generado vía Pollinations.ai (Flux), prompt "cute cartoon tortilla chip character mascot,
+  big expressive eyes, golden crispy corn chip triangle body, tiny red salsa splash,
+  playful toony vector style, thick black outlines, flat vibrant colors, dark navy circular
+  background, mobile game app icon, centered, no text", seed `7734`.
+- El personaje llegaba casi hasta los bordes del canvas — riesgo real en Android, donde
+  varios launchers (Samsung/Pixel, etc.) aplican máscara "adaptive icon" incluso a un ícono
+  plano sin capas foreground/background configuradas, recortando ~25-33% del borde. Se le
+  aplicó chroma-key contra su propio fondo oscuro (mismo patrón que `chroma_key()` del
+  skill, pero sobre fondo oscuro en vez de blanco) y se recompuso al 72% de escala,
+  centrado, sobre un canvas plano del mismo tono que `Constants.COLOR_BG_BOARD` — deja
+  margen de seguridad real sin dejar ninguna costura visible.
+- `assets/icon.png.import` no cambió (mismo archivo/UID, Godot reimporta solo). Confirmado
+  con `godot --headless --editor --quit` (reimport limpio) + `gdlint`/GUT sin regresiones.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
