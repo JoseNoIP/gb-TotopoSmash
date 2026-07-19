@@ -14,12 +14,11 @@ on:
         type: boolean
         default: false
 
-# TEMPLATE: Reemplazar estos valores antes de usar
 env:
   GODOT_VERSION: "4.7"
   EXPORT_PRESET: "Android"
-  PACKAGE_NAME: "com.PLACEHOLDER_COMPANY.PLACEHOLDER_GAME"
-  GAME_NAME: "PLACEHOLDER_GAME_NAME"
+  PACKAGE_NAME: "com.guacamolebit.totoposmash"
+  GAME_NAME: "TotopoSmash"
 
 jobs:
   deploy:

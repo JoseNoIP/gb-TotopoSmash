@@ -1,0 +1,161 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7"
+  EXPORT_PRESET: "Android"
+  # Raíz de todos los compilados de Guacamole Bit en Dropbox
+  DROPBOX_ROOT: "/Guacamole Bit/TotopoSmash"
+
+jobs:
+  # ══════════════════════════════════════════
+  # JOB 1 — Compilar APK
+  # ══════════════════════════════════════════
+  build:
+    name: "① Compilar APK (${{ github.ref_name }})"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determinar entorno
+        id: ctx
+        run: |
+          BUILD="${{ github.run_number }}"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "env=prod"                            >> $GITHUB_OUTPUT
+            echo "apk=TotopoSmash-prod-${BUILD}.apk"    >> $GITHUB_OUTPUT
+          else
+            echo "env=stg"                              >> $GITHUB_OUTPUT
+            echo "apk=TotopoSmash-stg-${BUILD}.apk"     >> $GITHUB_OUTPUT
+          fi
+
+      - name: Instalar Godot ${{ env.GODOT_VERSION }}
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" \
+            -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          godot --version
+
+      - name: Instalar export templates de Android
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz" \
+            -O templates.tpz
+          TEMPLATES_DIR="$HOME/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable"
+          mkdir -p "$TEMPLATES_DIR"
+          unzip -q templates.tpz -d templates_tmp
+          mv templates_tmp/templates/* "$TEMPLATES_DIR/"
+          rm -rf templates_tmp templates.tpz godot.zip
+
+      - name: Verificar Android SDK
+        run: echo "ANDROID_HOME=$ANDROID_HOME"
+
+      - name: Configurar keystore de firma
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEYSTORE_ALIAS }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > /tmp/totoposmash.keystore
+          sed -i "s|keystore/debug=\"[^\"]*\"|keystore/debug=\"/tmp/totoposmash.keystore\"|" export_presets.cfg
+          sed -i "s|keystore/debug_user=\"[^\"]*\"|keystore/debug_user=\"$KEYSTORE_ALIAS\"|" export_presets.cfg
+          sed -i "s|keystore/debug_password=\"[^\"]*\"|keystore/debug_password=\"$KEYSTORE_PASS\"|" export_presets.cfg
+
+      - name: Exportar APK
+        run: |
+          mkdir -p builds/
+          godot --headless \
+            --export-debug "${{ env.EXPORT_PRESET }}" \
+            "builds/${{ steps.ctx.outputs.apk }}"
+
+      - name: Verificar APK generado
+        run: ls -lh builds/
+
+      - name: Guardar artefacto en GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ steps.ctx.outputs.env }}
+          path: "builds/${{ steps.ctx.outputs.apk }}"
+          retention-days: 14
+
+  # ══════════════════════════════════════════
+  # JOB 2 — Subir APK a Dropbox
+  # Secrets requeridos: DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN
+  # ══════════════════════════════════════════
+  upload-dropbox:
+    name: "② Subir a Dropbox (${{ github.ref_name }})"
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determinar entorno
+        id: ctx
+        run: |
+          BUILD="${{ github.run_number }}"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "env=prod"                            >> $GITHUB_OUTPUT
+            echo "apk=TotopoSmash-prod-${BUILD}.apk"    >> $GITHUB_OUTPUT
+          else
+            echo "env=stg"                              >> $GITHUB_OUTPUT
+            echo "apk=TotopoSmash-stg-${BUILD}.apk"     >> $GITHUB_OUTPUT
+          fi
+
+      - name: Descargar APK del artefacto
+        uses: actions/download-artifact@v4
+        with:
+          name: apk-${{ steps.ctx.outputs.env }}
+          path: dist/
+
+      - name: Obtener access token de Dropbox
+        id: dbx-token
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.dropbox.com/oauth2/token \
+            -d grant_type=refresh_token \
+            -d "refresh_token=${{ secrets.DROPBOX_REFRESH_TOKEN }}" \
+            -u "${{ secrets.DROPBOX_APP_KEY }}:${{ secrets.DROPBOX_APP_SECRET }}")
+          TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "ERROR al obtener token de Dropbox:"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+          echo "access_token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Subir APK a Dropbox
+        env:
+          DBX_TOKEN: ${{ steps.dbx-token.outputs.access_token }}
+          APK_FILE: ${{ steps.ctx.outputs.apk }}
+          DBX_ENV: ${{ steps.ctx.outputs.env }}
+        run: |
+          DEST_PATH="${{ env.DROPBOX_ROOT }}/${DBX_ENV}/${APK_FILE}"
+          echo "Subiendo a: $DEST_PATH"
+
+          # -cn: compact (una sola línea) + null input — requerido para headers HTTP
+          DBX_ARG=$(jq -cn \
+            --arg path "$DEST_PATH" \
+            '{"path":$path,"mode":"add","autorename":false,"mute":false}')
+
+          RESULT=$(curl -s -X POST https://content.dropboxapi.com/2/files/upload \
+            --header "Authorization: Bearer $DBX_TOKEN" \
+            --header "Dropbox-API-Arg: $DBX_ARG" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary @"dist/${APK_FILE}")
+
+          echo "Respuesta de Dropbox: $RESULT"
+
+          if echo "$RESULT" | jq -e '.path_display' > /dev/null 2>&1; then
+            echo "$RESULT" | jq '{name: .name, path: .path_display, size: .size}'
+          else
+            echo "Error de Dropbox:"
+            echo "$RESULT" | jq . 2>/dev/null || echo "$RESULT"
+            exit 1
+          fi

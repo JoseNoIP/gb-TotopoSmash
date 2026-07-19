@@ -15,6 +15,7 @@ enum Step { WELCOME, AIM_SHOOT, WATCH_RETURN, ADVANCE, COMPLETE }
 
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
+const WorldBoundsGd := preload("res://src/features/board/world_bounds.gd")
 const MortarGd := preload("res://src/features/player/mortar.gd")
 const VfxSpawnerGd := preload("res://src/features/vfx/vfx_spawner.gd")
 const HudGd := preload("res://src/features/ui/HUD.gd")
@@ -52,6 +53,7 @@ func _build_scene() -> void:
 
 	add_child(BoardManagerGd.new())
 	add_child(TurnManagerGd.new())
+	add_child(WorldBoundsGd.new())
 	add_child(MortarGd.new())
 	add_child(VfxSpawnerGd.new())
 	add_child(HudGd.new())
