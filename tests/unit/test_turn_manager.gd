@@ -53,6 +53,10 @@ func test_fire_requested_while_aiming_fires_first_seed_immediately() -> void:
 	GameManager.start_game()
 	watch_signals(EventBus)
 	EventBus.fire_requested.emit(Vector2.UP, Vector2(100.0, 700.0))
+	# _spawn_seed usa call_deferred(&"add_child", ...) (regla CLAUDE.md #17 — el split del
+	# Limón dispara semillas nuevas desde un callback de física). Sin este frame, la semilla
+	# nunca llega a entrar al árbol y add_child_autofree no la puede limpiar (orphan).
+	await get_tree().process_frame
 	# GDD: la ráfaga sale "una detrás de otra rápidamente, no todas juntas" — solo la
 	# primera semilla sale en el mismo frame que fire_requested; el resto llega por Timer
 	# (SEED_FIRE_INTERVAL), por eso la fase sigue en FIRING y no salta directo a RESOLVING.
@@ -89,6 +93,7 @@ func test_all_seeds_returned_after_landing_resets_phase_to_aiming() -> void:
 	add_child_autofree(turn_manager)
 	GameManager.start_game()
 	EventBus.fire_requested.emit(Vector2.UP, Vector2(100.0, 700.0))
+	await get_tree().process_frame  # deja que el add_child deferido de la semilla entre al árbol
 	turn_manager.set(&"_active_seeds", 0)
 	turn_manager.set(&"_seeds_to_fire", 0)
 	turn_manager.call(&"_set_phase", TurnManagerGd.Phase.ADVANCING)
