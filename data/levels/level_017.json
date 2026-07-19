@@ -1,0 +1,194 @@
+{
+  "id": "level_017",
+  "name": "LEVEL_NAME_017",
+  "starting_seeds": 16,
+  "cells": [
+    {
+      "col": 2,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 3,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 4,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 2,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 3,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 4,
+      "row": 1,
+      "kind": "lemon"
+    },
+    {
+      "col": 1,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 2,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 3,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 4,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 5,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 0,
+      "row": 3,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 1,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 2,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 3,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 4,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 5,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 6,
+      "row": 3,
+      "kind": "lemon"
+    },
+    {
+      "col": 0,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 1,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 2,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 3,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 5,
+      "row": 4,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 0,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 1,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 2,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 3,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 4,
+      "row": 5,
+      "kind": "lemon"
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 1
+    },
+    {
+      "col": 6,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 1
+    }
+  ]
+}

@@ -47,8 +47,13 @@ func _build_sprite() -> void:
 	_has_sprite = true
 
 
+## Fuera de AIMING, mantener presionada la pantalla acelera las semillas mientras rebotan
+## (EventBus.seed_boost_changed, ver seed.gd). El "return" fuera de AIMING antes no hacía
+## nada útil — ahora tiene esta única responsabilidad nueva.
 func _unhandled_input(event: InputEvent) -> void:
 	if _phase != TurnManagerGd.Phase.AIMING:
+		if event is InputEventScreenTouch:
+			EventBus.seed_boost_changed.emit((event as InputEventScreenTouch).pressed)
 		return
 	if event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event as InputEventScreenTouch
@@ -108,6 +113,10 @@ func _on_turn_phase_changed(phase: int) -> void:
 		_is_aiming = false
 		_aim_preview_points = PackedVector2Array()
 		queue_redraw()
+	else:
+		## Cubre soltar el dedo justo cuando termina la ráfaga, mientras aún se
+		## consideraba "boost" — sin esto, el boost podría quedarse pegado en true.
+		EventBus.seed_boost_changed.emit(false)
 
 
 func _on_molcajete_position_changed(new_x: float) -> void:

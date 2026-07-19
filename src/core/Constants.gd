@@ -39,6 +39,7 @@ const SEED_MAX_BOUNCES_SAFETY: int = 600  ## failsafe: fuerza retorno si se cuel
 const SEED_QUESO_SLOWDOWN_RATIO: float = 0.85  ## -15% velocidad al rebotar en queso
 const SEED_MIN_SPEED_RATIO: float = 0.35  ## piso de velocidad tras varios rebotes en queso
 const LEMON_SPLIT_ANGLE_DEG: float = 20.0  ## separación de cada rama respecto al rumbo original
+const SEED_BOOST_MULTIPLIER: float = 2.0  ## acelerar semillas: mantener presionado fuera de AIMING
 
 # --- Bloques: vida y daño (GDD sección 3 y 4.1) ---
 const BLOCK_NORMAL_DAMAGE_PER_HIT: int = 1
@@ -90,6 +91,7 @@ const COLOR_SEED_TRAIL: Color = Color(0.31, 0.86, 0.44)  ## semillas verdes
 const COLOR_MOLCAJETE: Color = Color(0.35, 0.24, 0.16)  ## piedra volcánica
 const COLOR_HUD_TEXT: Color = Color(0.95, 0.95, 0.95)
 const COLOR_AIM_GUIDE: Color = Color(1.0, 1.0, 1.0, 0.55)
+const COLOR_DANGER_LINE: Color = Color(0.9, 0.2, 0.2, 0.8)  ## línea de la fila del molcajete
 
 # --- UI: tamaños mínimos ---
 const UI_MIN_FONT_SIZE: int = 18

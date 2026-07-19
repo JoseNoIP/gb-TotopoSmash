@@ -6,6 +6,7 @@ extends Control
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const TUTORIAL_SCENE: String = "res://src/scenes/TutorialGame.tscn"
 const LANGUAGE_SELECT_SCENE: String = "res://src/scenes/LanguageSelectScreen.tscn"
+const LEVEL_SELECT_SCENE: String = "res://src/scenes/LevelSelectScreen.tscn"
 const MENU_BG_PATH: String = "res://assets/sprites/backgrounds/menu_bg.png"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
 
@@ -55,12 +56,18 @@ func _build_ui() -> void:
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override(&"separation", 16)
-	vbox.position = Vector2((Constants.DESIGN_WIDTH - 220.0) * 0.5, 420.0)
-	vbox.set_size(Vector2(220.0, 140.0))
+	vbox.position = Vector2((Constants.DESIGN_WIDTH - 220.0) * 0.5, 400.0)
+	vbox.set_size(Vector2(220.0, 200.0))
 	add_child(vbox)
 
+	var levels_btn: Button = Button.new()
+	levels_btn.text = "BTN_LEVELS"
+	levels_btn.custom_minimum_size = Vector2(0.0, 52.0)
+	levels_btn.pressed.connect(_on_levels_pressed)
+	vbox.add_child(levels_btn)
+
 	var play_btn: Button = Button.new()
-	play_btn.text = "BTN_PLAY"
+	play_btn.text = "BTN_INFINITY_MODE"
 	play_btn.custom_minimum_size = Vector2(0.0, 52.0)
 	play_btn.pressed.connect(_on_play_pressed)
 	vbox.add_child(play_btn)
@@ -105,9 +112,19 @@ func _build_background() -> void:
 	add_child(scrim)
 
 
+## Modo Infinito (progresión al azar de siempre). Limpia el buzón de LevelManager antes
+## de rutear — si no, un nivel elegido en una sesión anterior "sobreviviría" y este botón
+## terminaría cargando ese nivel en vez de Modo Infinito.
 func _on_play_pressed() -> void:
+	LevelManager.set_pending_level("")
 	var dest: String = GAME_SCENE if SaveManager.get_tutorial_shown() else TUTORIAL_SCENE
 	get_tree().change_scene_to_file.call_deferred(dest)
+
+
+## Entrar al selector de niveles NO está gateado por el tutorial (solo elegir un nivel
+## ahí sí lo está, igual que "JUGAR" aquí) — es solo navegación, no intención de jugar.
+func _on_levels_pressed() -> void:
+	get_tree().change_scene_to_file.call_deferred(LEVEL_SELECT_SCENE)
 
 
 func _on_settings_pressed() -> void:
