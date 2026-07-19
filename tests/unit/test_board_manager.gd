@@ -104,6 +104,26 @@ func test_salsa_explosion_damages_only_cross_neighbors() -> void:
 	assert_eq(int(far_block.get(&"current_hp")), 50, "un bloque lejano no debe recibir daño")
 
 
+## Regresión: LemonIcon/SeedExtraIcon se autodestruyen (queue_free) al ser tocados por una
+## semilla, pero BoardManager nunca borraba esa entrada de _icons. Para el siguiente
+## avance, _shift_down() intentaba copiar la referencia ya liberada a un
+## Dictionary[Vector2i, Area2D] tipado, lo cual revienta en tiempo de ejecución
+## ("previously freed object") en vez de fallar en silencio.
+func test_shift_down_drops_a_freed_icon_without_crashing() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game()
+	var icon: Area2D = Area2D.new()
+	var icons: Dictionary = board.get(&"_icons")
+	icons[Vector2i(3, 0)] = icon
+	icon.free()  # simula el ícono ya recogido (referencia inválida antes del avance)
+	EventBus.all_seeds_returned.emit(0.0)
+	var new_icons: Dictionary = board.get(&"_icons")
+	assert_false(
+		new_icons.has(Vector2i(3, 1)), "un ícono liberado no debe sobrevivir al desplazamiento"
+	)
+
+
 func test_block_destroyed_removes_it_from_the_grid() -> void:
 	var board: Node2D = BoardManagerGd.new()
 	add_child_autofree(board)
