@@ -5,115 +5,115 @@
   "grid_cols": 18,
   "grid_rows": 24,
   "starting_seeds": 50,
-  "par_turns": 43,
+  "par_turns": 40,
   "cells": [
     {
       "col": 7,
       "row": 4,
       "kind": "totopo",
-      "hp": 167
+      "hp": 258
     },
     {
       "col": 7,
       "row": 6,
       "kind": "totopo",
-      "hp": 216
+      "hp": 234
     },
     {
       "col": 7,
       "row": 7,
       "kind": "totopo",
-      "hp": 166
+      "hp": 99
     },
     {
       "col": 7,
       "row": 8,
       "kind": "totopo",
-      "hp": 300
+      "hp": 73
     },
     {
       "col": 7,
       "row": 9,
       "kind": "totopo",
-      "hp": 169
+      "hp": 173
     },
     {
       "col": 7,
       "row": 10,
       "kind": "totopo",
-      "hp": 299
+      "hp": 66
     },
     {
       "col": 7,
       "row": 11,
       "kind": "totopo",
-      "hp": 124
+      "hp": 77
     },
     {
       "col": 7,
       "row": 12,
       "kind": "totopo",
-      "hp": 68
+      "hp": 224
     },
     {
       "col": 7,
       "row": 13,
       "kind": "totopo",
-      "hp": 194
+      "hp": 224
     },
     {
       "col": 7,
       "row": 14,
       "kind": "totopo",
-      "hp": 122
+      "hp": 105
     },
     {
       "col": 7,
       "row": 15,
       "kind": "totopo",
-      "hp": 270
+      "hp": 220
     },
     {
       "col": 7,
       "row": 16,
       "kind": "totopo",
-      "hp": 109
+      "hp": 198
     },
     {
       "col": 7,
       "row": 17,
       "kind": "totopo",
-      "hp": 284
+      "hp": 274
     },
     {
       "col": 7,
       "row": 18,
       "kind": "totopo",
-      "hp": 259
+      "hp": 189
     },
     {
       "col": 7,
       "row": 19,
       "kind": "totopo",
-      "hp": 260
+      "hp": 182
     },
     {
       "col": 8,
       "row": 3,
       "kind": "totopo",
-      "hp": 103
+      "hp": 86
     },
     {
       "col": 8,
       "row": 4,
       "kind": "totopo",
-      "hp": 67
+      "hp": 217
     },
     {
       "col": 8,
       "row": 5,
       "kind": "totopo",
-      "hp": 83
+      "hp": 122
     },
     {
       "col": 8,
@@ -124,119 +124,121 @@
       "col": 8,
       "row": 7,
       "kind": "totopo",
-      "hp": 267
+      "hp": 97
     },
     {
       "col": 8,
       "row": 8,
       "kind": "totopo",
-      "hp": 242
+      "hp": 293
     },
     {
       "col": 8,
       "row": 9,
-      "kind": "seed_extra"
+      "kind": "seed_extra",
+      "amount": 20
     },
     {
       "col": 8,
       "row": 10,
       "kind": "totopo",
-      "hp": 118
+      "hp": 223
     },
     {
       "col": 8,
       "row": 11,
       "kind": "totopo",
-      "hp": 144
+      "hp": 185
     },
     {
       "col": 8,
       "row": 12,
       "kind": "totopo",
-      "hp": 157
+      "hp": 153
     },
     {
       "col": 8,
       "row": 13,
       "kind": "totopo",
-      "hp": 179
+      "hp": 120
     },
     {
       "col": 8,
       "row": 14,
       "kind": "totopo",
-      "hp": 144
+      "hp": 98
     },
     {
       "col": 8,
       "row": 15,
       "kind": "totopo",
-      "hp": 211
+      "hp": 172
     },
     {
       "col": 8,
       "row": 16,
       "kind": "totopo",
-      "hp": 223
+      "hp": 138
     },
     {
       "col": 8,
       "row": 17,
       "kind": "totopo",
-      "hp": 157
+      "hp": 264
     },
     {
       "col": 8,
       "row": 18,
       "kind": "totopo",
-      "hp": 259
+      "hp": 183
     },
     {
       "col": 8,
       "row": 19,
       "kind": "totopo",
-      "hp": 255
+      "hp": 223
     },
     {
       "col": 9,
       "row": 3,
       "kind": "totopo",
-      "hp": 161
+      "hp": 128
     },
     {
       "col": 9,
       "row": 4,
       "kind": "totopo",
-      "hp": 128
+      "hp": 102
     },
     {
       "col": 9,
       "row": 5,
-      "kind": "seed_extra"
+      "kind": "seed_extra",
+      "amount": 20
     },
     {
       "col": 9,
       "row": 6,
       "kind": "totopo",
-      "hp": 192
+      "hp": 257
     },
     {
       "col": 9,
       "row": 7,
       "kind": "totopo",
-      "hp": 270
+      "hp": 156
     },
     {
       "col": 9,
       "row": 8,
       "kind": "totopo",
-      "hp": 145
+      "hp": 155
     },
     {
       "col": 9,
       "row": 9,
       "kind": "totopo",
-      "hp": 184
+      "hp": 78
     },
     {
       "col": 9,
@@ -248,139 +250,139 @@
       "col": 9,
       "row": 11,
       "kind": "totopo",
-      "hp": 195
+      "hp": 138
     },
     {
       "col": 9,
       "row": 12,
       "kind": "totopo",
-      "hp": 212
+      "hp": 89
     },
     {
       "col": 9,
       "row": 13,
       "kind": "totopo",
-      "hp": 180
+      "hp": 93
     },
     {
       "col": 10,
       "row": 3,
       "kind": "totopo",
-      "hp": 257
+      "hp": 254
     },
     {
       "col": 10,
       "row": 4,
       "kind": "totopo",
-      "hp": 238
+      "hp": 300
     },
     {
       "col": 10,
       "row": 5,
       "kind": "totopo",
-      "hp": 217
+      "hp": 158
     },
     {
       "col": 10,
       "row": 6,
       "kind": "totopo",
-      "hp": 205
+      "hp": 278
     },
     {
       "col": 10,
       "row": 7,
       "kind": "totopo",
-      "hp": 236
+      "hp": 60
     },
     {
       "col": 10,
       "row": 8,
       "kind": "totopo",
-      "hp": 257
+      "hp": 165
     },
     {
       "col": 10,
       "row": 9,
       "kind": "totopo",
-      "hp": 247
+      "hp": 110
     },
     {
       "col": 10,
       "row": 10,
       "kind": "totopo",
-      "hp": 135
+      "hp": 185
     },
     {
       "col": 10,
       "row": 11,
       "kind": "totopo",
-      "hp": 144
+      "hp": 266
     },
     {
       "col": 10,
       "row": 12,
       "kind": "totopo",
-      "hp": 142
+      "hp": 267
     },
     {
       "col": 10,
       "row": 13,
       "kind": "totopo",
-      "hp": 229
+      "hp": 161
     },
     {
       "col": 10,
       "row": 14,
       "kind": "totopo",
-      "hp": 179
+      "hp": 199
     },
     {
       "col": 10,
       "row": 15,
       "kind": "totopo",
-      "hp": 288
+      "hp": 201
     },
     {
       "col": 11,
       "row": 4,
       "kind": "totopo",
-      "hp": 109
+      "hp": 277
     },
     {
       "col": 11,
       "row": 13,
       "kind": "totopo",
-      "hp": 194
+      "hp": 288
     },
     {
       "col": 11,
       "row": 14,
       "kind": "totopo",
-      "hp": 86
+      "hp": 279
     },
     {
       "col": 11,
       "row": 15,
       "kind": "totopo",
-      "hp": 263
+      "hp": 67
     },
     {
       "col": 11,
       "row": 16,
       "kind": "totopo",
-      "hp": 134
+      "hp": 118
     },
     {
       "col": 12,
       "row": 14,
       "kind": "totopo",
-      "hp": 108
+      "hp": 272
     },
     {
       "col": 12,
       "row": 15,
       "kind": "totopo",
-      "hp": 161
+      "hp": 85
     },
     {
       "col": 12,
@@ -391,55 +393,127 @@
       "col": 12,
       "row": 17,
       "kind": "totopo",
-      "hp": 254
+      "hp": 154
     },
     {
       "col": 13,
       "row": 16,
       "kind": "totopo",
-      "hp": 83
+      "hp": 77
     },
     {
       "col": 13,
       "row": 17,
       "kind": "totopo",
-      "hp": 117
+      "hp": 254
     },
     {
       "col": 14,
       "row": 17,
       "kind": "totopo",
-      "hp": 239
+      "hp": 293
     },
     {
       "col": 11,
       "row": 12,
       "kind": "totopo",
-      "hp": 88
+      "hp": 159
     },
     {
       "col": 12,
       "row": 11,
       "kind": "totopo",
-      "hp": 290
+      "hp": 238
     },
     {
       "col": 12,
       "row": 12,
       "kind": "totopo",
-      "hp": 272
+      "hp": 69
     },
     {
       "col": 12,
       "row": 13,
       "kind": "totopo",
-      "hp": 166
+      "hp": 123
     },
     {
       "col": 13,
       "row": 12,
       "kind": "totopo",
-      "hp": 231
+      "hp": 269
+    },
+    {
+      "col": 3,
+      "row": 19,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 4,
+      "row": 10,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 4,
+      "row": 12,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 5,
+      "row": 3,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 5,
+      "row": 18,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 6,
+      "row": 9,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 6,
+      "row": 15,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 6,
+      "row": 19,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 9,
+      "row": 16,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 11,
+      "row": 18,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 14,
+      "row": 6,
+      "kind": "seed_extra",
+      "amount": 20
+    },
+    {
+      "col": 14,
+      "row": 12,
+      "kind": "seed_extra",
+      "amount": 20
     }
   ]
 }

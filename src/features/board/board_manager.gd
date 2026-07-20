@@ -296,6 +296,8 @@ func _spawn_static_cell(cell: Dictionary) -> void:
 		node.set(&"corner", int(cell.get("corner", 0)))
 	if kind == WaveScalingGd.KIND_LASER:
 		node.set(&"is_horizontal", cell.get("orientation", "horizontal") != "vertical")
+	if kind == WaveScalingGd.KIND_SEED_EXTRA and cell.has("amount"):
+		node.set(&"amount", int(cell.get("amount")))
 	if CellFactoryGd.is_icon_kind(kind):
 		_spawn_icon(node as Area2D, grid_pos, pos, _static_cell_size)
 		return

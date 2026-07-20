@@ -107,6 +107,27 @@ func test_validate_level_accepts_laser_without_orientation() -> void:
 	assert_eq(errors, [], "'orientation' es opcional (BoardManager usa horizontal por default)")
 
 
+func test_validate_level_accepts_seed_extra_with_valid_amount() -> void:
+	var data: Dictionary = _valid_static_level()
+	data["cells"] = [{"col": 0, "row": 0, "kind": "seed_extra", "amount": 25}]
+	var errors: Array = LevelLoaderGd.validate_level(data, "level_test")
+	assert_eq(errors, [])
+
+
+func test_validate_level_rejects_seed_extra_with_invalid_amount() -> void:
+	var data: Dictionary = _valid_static_level()
+	data["cells"] = [{"col": 0, "row": 0, "kind": "seed_extra", "amount": 0}]
+	var errors: Array = LevelLoaderGd.validate_level(data, "level_test")
+	assert_true(errors.size() > 0)
+
+
+func test_validate_level_accepts_seed_extra_without_amount() -> void:
+	var data: Dictionary = _valid_static_level()
+	data["cells"] = [{"col": 0, "row": 0, "kind": "seed_extra"}]
+	var errors: Array = LevelLoaderGd.validate_level(data, "level_test")
+	assert_eq(errors, [], "'amount' es opcional (default Constants.SEED_EXTRA_AMOUNT)")
+
+
 func test_is_static_level_reads_the_static_field() -> void:
 	assert_true(LevelLoaderGd.is_static_level({"static": true}))
 	assert_false(LevelLoaderGd.is_static_level({"static": false}))

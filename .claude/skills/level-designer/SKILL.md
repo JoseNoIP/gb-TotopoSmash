@@ -114,6 +114,7 @@ Incompatible con `row_queue`.
 | `cells[].row` (en `static`) | Entero en `[0, grid_rows-1]` — NO limitado a `Constants.MOLCAJETE_ROW` (no hay fila de molcajete prohibida, no hay condición de derrota), pero SÍ acotado por `grid_rows` de este nivel. |
 | `par_turns` | Opcional. Si se limpia el nivel en <= este número de turnos, el score final se multiplica por `Constants.STATIC_LEVEL_PAR_BONUS_MULTIPLIER`. |
 | `cells[].kind: "laser"` | Power-up — al tocarlo, daña TODA la fila (`"orientation": "horizontal"`, default) o columna (`"vertical"`) donde está. Sin `hp`. |
+| `cells[].kind: "seed_extra"` + `"amount"` | Opcional, entero > 0. Cuántas semillas otorga ESE ícono en particular — default `Constants.SEED_EXTRA_AMOUNT` (+1, pensado para Modo Infinito/campaña numérica) si se omite. Niveles `static` de exhibición (sin presión de tiempo, muchas celdas) pueden pedir bonos grandes (ej. 20-25) para que una partida completa acumule varios cientos de semillas — ver "Semillas extra abundantes" más abajo. |
 
 **Tamaño proporcional (pedido explícito del usuario — corrige un error real de la v1 de
 `gen_worldcup_pack.py`, que usaba 22-50 columnas por nivel sin relación entre sí, dando

@@ -155,6 +155,11 @@ def _validate_cell(
         if orientation not in ("horizontal", "vertical"):
             errors.append(f"{label}: 'orientation' de laser debe ser 'horizontal' o 'vertical'")
 
+    if kind == "seed_extra" and "amount" in cell:
+        amount = cell.get("amount")
+        if not _is_whole_number(amount) or int(amount) <= 0:
+            errors.append(f"{label}: 'amount' de seed_extra debe ser un entero > 0 si está presente")
+
     return errors
 
 

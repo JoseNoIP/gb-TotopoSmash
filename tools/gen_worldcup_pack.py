@@ -24,6 +24,13 @@ v3, corrige feedback real del usuario sobre v2:
    adentro") — algunas celdas INTERIORES (rodeadas por otros bloques en las 4 direcciones,
    no accesibles directo desde afuera) se reemplazan por power-ups en vez de bloques, así
    que acertarle a ese punto exacto "abre" un camino hacia el interior de la figura.
+6. **Semillas extra abundantes** (pedido explícito tras jugar el pack: "en una partida de
+   exhibición deberíamos poder llegar por lo menos a unas 300 semillas al finalizar el
+   nivel") — `SEED_BOUNTY_COUNT` (12) íconos `seed_extra` sembrados en el fondo de cada
+   nivel (fáciles de alcanzar, no requieren abrirse paso) más los que caigan en puntos de
+   entrada, cada uno con `"amount": SEED_EXTRA_ICON_AMOUNT` (20) en vez del +1 de
+   `Constants.SEED_EXTRA_AMOUNT` (pensado para Modo Infinito/campaña numérica, sin tocar) —
+   ver el campo opcional `amount` en `seed_extra_icon.gd`/`EventBus.seed_extra_touched`.
 
 Uso: /tmp/gb_venv/bin/python3 tools/gen_worldcup_pack.py
 (usa Pillow solo para el texto "GOL" — el resto es geometría pura, sin dependencias)
@@ -44,6 +51,14 @@ STARTING_SEEDS = 50
 MARGIN_CELLS = 2  # padding alrededor de la figura, para que quepan los acentos decorativos
 INTERIOR_POWERUP_TARGET = 5  # puntos de entrada dentro de la figura
 DECORATION_COUNT_RANGE = (2, 5)
+# Pedido explícito del usuario: "en una partida de este tipo de exhibición deberíamos poder
+# llegar por lo menos a unas 300 semillas al finalizar el nivel" — con Constants.SEED_EXTRA_AMOUNT
+# (+1, pensado para Modo Infinito/campaña numérica) sembrar suficientes íconos para sumar
+# +250 sería poco práctico (250 íconos en un nivel de ~100-130 celdas). En vez de tocar esa
+# constante global (afectaría el balance ya ajustado de los otros dos modos), cada ícono de
+# este pack pide un bono grande vía el campo opcional "amount" (ver seed_extra_icon.gd).
+SEED_EXTRA_ICON_AMOUNT = 20
+SEED_BOUNTY_COUNT = 12  # sembrados en el fondo, fuera de la silueta — fácil de alcanzar
 
 
 # --- Formas: cada función recibe (cols, rows) — el ESPACIO DE TRABAJO de la figura, SIN
@@ -316,6 +331,22 @@ def _add_decorations(filled: set, cols: int, rows: int, rng: random.Random) -> s
     return decorations
 
 
+def _add_seed_bounties(filled: set, decorations: set, cols: int, rows: int, rng: random.Random) -> set:
+    """Semillas extra sembradas en el fondo (fuera de la silueta, sin necesidad de abrirse
+    paso como los puntos de entrada) — pedido explícito del usuario: una partida de
+    exhibición debe poder acumular varios cientos de semillas para el final del nivel."""
+    occupied = filled | decorations
+    bounties = set()
+    attempts = 0
+    while len(bounties) < SEED_BOUNTY_COUNT and attempts < 400:
+        attempts += 1
+        pos = (rng.randint(1, cols - 2), rng.randint(1, rows - 2))
+        if pos in occupied or pos in bounties:
+            continue
+        bounties.add(pos)
+    return bounties
+
+
 def _interior_entry_points(filled: set, count: int, rng: random.Random) -> set:
     """Celdas rodeadas por bloques en las 4 direcciones (no alcanzables directo desde
     afuera) — reemplazarlas por power-ups crea "puntos de entrada": el jugador tiene que
@@ -335,6 +366,7 @@ def build_static_level(level_id: str, name_key: str, shape_fn, work_cols: int, w
     filled_raw = shape_fn(work_cols, work_rows)
     decorations_raw = _add_decorations(filled_raw, work_cols, work_rows, rng)
     entry_points_raw = _interior_entry_points(filled_raw, INTERIOR_POWERUP_TARGET, rng)
+    seed_bounties_raw = _add_seed_bounties(filled_raw, decorations_raw, work_cols, work_rows, rng)
 
     grid_cols = work_cols + MARGIN_CELLS * 2
     grid_rows = work_rows + MARGIN_CELLS * 2
@@ -345,6 +377,7 @@ def build_static_level(level_id: str, name_key: str, shape_fn, work_cols: int, w
     filled = {offset(p) for p in filled_raw}
     decorations = {offset(p) for p in decorations_raw}
     entry_points = {offset(p) for p in entry_points_raw}
+    seed_bounties = {offset(p) for p in seed_bounties_raw}
 
     icon_kinds = ["lemon", "seed_extra", "seed_extra", "laser"]
     cells = []
@@ -357,6 +390,8 @@ def build_static_level(level_id: str, name_key: str, shape_fn, work_cols: int, w
             cell = {"col": c, "row": r, "kind": kind}
             if kind == "laser":
                 cell["orientation"] = "horizontal" if rng.random() < 0.5 else "vertical"
+            if kind == "seed_extra":
+                cell["amount"] = SEED_EXTRA_ICON_AMOUNT
             cells.append(cell)
             continue
         hp = rng.randint(HP_MIN, HP_MAX)
@@ -366,6 +401,8 @@ def build_static_level(level_id: str, name_key: str, shape_fn, work_cols: int, w
         hp = rng.randint(HP_MIN, HP_MAX)
         total_hp += hp
         cells.append({"col": c, "row": r, "kind": "totopo", "hp": hp})
+    for (c, r) in sorted(seed_bounties):
+        cells.append({"col": c, "row": r, "kind": "seed_extra", "amount": SEED_EXTRA_ICON_AMOUNT})
 
     hits_per_seed_estimate = 6
     par_turns = max(3, math.ceil(total_hp / (STARTING_SEEDS * hits_per_seed_estimate)))
@@ -419,9 +456,11 @@ def main() -> None:
         new_ids.append(level_id)
         totopo_count = sum(1 for c in level["cells"] if c["kind"] == "totopo")
         icon_count = len(level["cells"]) - totopo_count
+        seed_bonus = sum(c.get("amount", 0) for c in level["cells"] if c["kind"] == "seed_extra")
+        max_seeds = level["starting_seeds"] + seed_bonus
         print(
             f"  + {path} ({level['grid_cols']}x{level['grid_rows']}, {totopo_count} bloques, "
-            f"{icon_count} power-ups, par_turns={level['par_turns']})"
+            f"{icon_count} power-ups, par_turns={level['par_turns']}, semillas max={max_seeds})"
         )
 
     manifest_path = os.path.join(out_dir, "manifest.json")

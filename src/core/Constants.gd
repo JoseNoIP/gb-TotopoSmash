@@ -100,6 +100,13 @@ const UI_MIN_FONT_SIZE: int = 18
 ## Por debajo de esto, el número de HP de un bloque se oculta (niveles `static` de alta
 ## resolución) — a UI_MIN_FONT_SIZE=18 el texto ya no entra legible en un bloque más chico.
 const UI_MIN_READABLE_CELL_SIZE: float = 20.0
+## El label de HP escala su font_size con `_cell_size * UI_HP_FONT_SIZE_RATIO` (capado por
+## UI_MIN_FONT_SIZE arriba, piso UI_HP_FONT_MIN_SIZE abajo) — un font_size FIJO (bug real
+## reportado jugando: en niveles `static`, con celdas de ~20-30px, un HP de 3 dígitos a
+## font_size 18 desbordaba visualmente el cuadro) solo funciona bien al tamaño de celda del
+## tablero normal (~56px); cualquier bloque más chico necesita un número más chico también.
+const UI_HP_FONT_SIZE_RATIO: float = 0.4
+const UI_HP_FONT_MIN_SIZE: int = 8
 
 # --- VFX (migajas / salpicadura, sin assets — GPUParticles2D procedural) ---
 const VFX_CRUMB_AMOUNT: int = 14
