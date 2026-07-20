@@ -54,6 +54,11 @@ func _is_pack_level(level_id: String) -> bool:
 	return not level_id.begins_with("level_")
 
 
+## Los packs temáticos (holiday_00N/worldcup_00N) NO se muestran aquí — pedido explícito
+## del usuario: esta pantalla es solo el roster numérico secuencial; los packs tienen su
+## propia pantalla dedicada (`PackSelectScreen` -> `PackLevelsScreen`, botón "PACKS" en
+## MainMenu). Antes convivían en una sección aparte ("PACKS ESPECIALES") al final del
+## scroll — se quitó por completo, no solo se dejó de resaltar.
 func _build_grid() -> void:
 	var manifest: Array = LevelManager.get_manifest()
 	var highest_unlocked: int = SaveManager.get_highest_level_unlocked()
@@ -73,46 +78,18 @@ func _build_grid() -> void:
 	scroll.set_size(Vector2(grid_w, Constants.DESIGN_HEIGHT - origin_y - 120.0))
 	add_child(scroll)
 
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(grid_w, 0.0)
-	vbox.add_theme_constant_override(&"separation", 18)
-	scroll.add_child(vbox)
-
-	var main_grid: GridContainer = _build_level_grid(vbox)
-	var pack_grid: GridContainer = null
-
-	for i: int in manifest.size():
-		var level_id: String = manifest[i]
-		var level_number: int = i + 1
-		if _is_pack_level(level_id):
-			if pack_grid == null:
-				_build_pack_section_label(vbox, grid_w)
-				pack_grid = _build_level_grid(vbox)
-			## Los packs temáticos son contenido opcional/bonus — SIEMPRE desbloqueados,
-			## sin depender de highest_level_unlocked (el usuario reportó no poder
-			## encontrarlos: quedaban bloqueados detrás de terminar los 100 niveles).
-			_build_level_button(pack_grid, level_id, level_number, true)
-		else:
-			_build_level_button(main_grid, level_id, level_number, level_number <= highest_unlocked)
-
-
-func _build_level_grid(parent: VBoxContainer) -> GridContainer:
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = COLUMNS
 	grid.add_theme_constant_override(&"h_separation", int(BUTTON_GAP))
 	grid.add_theme_constant_override(&"v_separation", int(BUTTON_GAP))
-	parent.add_child(grid)
-	return grid
+	scroll.add_child(grid)
 
-
-func _build_pack_section_label(parent: VBoxContainer, grid_w: float) -> void:
-	var label: Label = Label.new()
-	label.text = "TITLE_LEVEL_PACKS"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override(&"font_size", 18)
-	label.add_theme_color_override(&"font_color", Constants.COLOR_TOTOPO)
-	label.custom_minimum_size = Vector2(grid_w, 0.0)
-	parent.add_child(label)
+	for i: int in manifest.size():
+		var level_id: String = manifest[i]
+		if _is_pack_level(level_id):
+			continue
+		var level_number: int = i + 1
+		_build_level_button(grid, level_id, level_number, level_number <= highest_unlocked)
 
 
 func _build_level_button(

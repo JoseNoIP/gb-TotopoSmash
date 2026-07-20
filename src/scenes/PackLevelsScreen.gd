@@ -89,7 +89,14 @@ func _build_grid(prefix: String) -> void:
 			continue
 		position_in_pack += 1
 		var btn: Button = Button.new()
-		btn.text = _level_button_text(level_id, position_in_pack)
+		## Centrado (default) hacía que el texto de cada botón arrancara en una columna X
+		## distinta según su largo — se veía "desordenado" al leer varios de corrido
+		## (reportado directo por el usuario). Alineado a la izquierda; el espacio inicial
+		## es el margen visual respecto al borde del botón (sin tocar el StyleBox del tema,
+		## que ya trae su propio look de fondo/borde/hover — pisarlo con un StyleBox propio
+		## rompería esos estados visuales sin necesidad).
+		btn.text = "  " + _level_button_text(level_id, position_in_pack)
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.custom_minimum_size = Vector2(BUTTON_WIDTH, BUTTON_HEIGHT)
 		btn.pressed.connect(_on_level_pressed.bind(level_id))
 		grid.add_child(btn)

@@ -237,18 +237,22 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
   fijo aparte. `starting_seeds_for_level()` escala con la misma curva para que la cantidad
   de semillas siga siendo consistente con el HP — un nivel nuevo de este tipo debe usar
   estas funciones juntas, nunca HP alto con semillas bajas a mano.
-- **HP (niveles `static`)**: alto y variado (60-300 por bloque es el precedente del pack
-  Mundial, sorteado — nunca fijo, mismo criterio que `row_queue`) — como no hay condición de
-  derrota, "difícil" solo significa "toma más turnos", no "imposible", así que hay más
-  margen para HP alto que en los otros dos tipos. **Sesgar hacia golpes baratos** (pedido
-  explícito del usuario tras jugar el pack Mundial: "la mayoría de bloques no deberían
-  requerir tantos golpes... si no, cada partida se vuelve larga y tediosa") — NO usar
-  `rng.randint(HP_MIN, HP_MAX)` uniforme; usar una distribución sesgada tipo
-  `_random_hp()` en `tools/gen_worldcup_pack.py` (80% de probabilidad en la mitad BAJA del
-  rango declarado, 20% en la mitad alta) para cualquier nivel `static` nuevo — sin este
-  sesgo, el HP promedio uniforme (~180 en el rango 60-300) hace que una partida sin
-  condición de derrota se sienta larga. El rango declarado (HP_MIN/HP_MAX) sigue siendo el
-  mismo, solo cambia qué tan seguido se sortea cada extremo.
+- **HP (niveles `static`)**: variado, sorteado — nunca fijo, mismo criterio que
+  `row_queue`. **NO usar el rango del nivel 100** (60-300, el tope de la campaña) como
+  default — el pack Mundial lo probó y el usuario pidió bajarlo: "bajemos la complejidad de
+  los packs a un nivel 50" — usar `totopo_hp_min_for_level(50)`/`totopo_hp_max_for_level(50)`
+  de `tools/gen_levels.py` (35-174 al momento de escribir esto) como punto de partida para
+  packs nuevos, no el nivel 100. Como no hay condición de derrota, "difícil" solo significa
+  "toma más turnos", no "imposible" — pedir un nivel de referencia más alto (75, 100) sigue
+  siendo válido si el usuario lo pide explícitamente para un pack más desafiante. **Sesgar
+  hacia golpes baratos** (pedido explícito del usuario tras jugar el pack Mundial: "la
+  mayoría de bloques no deberían requerir tantos golpes... si no, cada partida se vuelve
+  larga y tediosa") — NO usar `rng.randint(HP_MIN, HP_MAX)` uniforme; usar una distribución
+  sesgada tipo `_random_hp()` en `tools/gen_worldcup_pack.py` (80% de probabilidad en la
+  mitad BAJA del rango declarado, 20% en la mitad alta) para cualquier nivel `static` nuevo
+  — sin este sesgo, el HP promedio uniforme hace que una partida sin condición de derrota
+  se sienta larga. El rango declarado (HP_MIN/HP_MAX) sigue siendo el mismo, solo cambia
+  qué tan seguido se sortea cada extremo.
 - **Variedad**: sembrar `lemon`/`seed_extra` en ~10-15% de las celdas destructibles (nunca
   en TODAS — pierden gracia). En niveles `static`, sembrar además en los HUECOS (celdas
   vacías dentro del recuadro de la figura, no parte de la silueta) — incluir algo de
