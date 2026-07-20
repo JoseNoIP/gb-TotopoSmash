@@ -78,6 +78,40 @@ func test_seed_extra_touched_respects_a_custom_amount() -> void:
 	assert_eq(turn_manager.call(&"get_seed_count"), before + 25)
 
 
+## Pedido explícito del usuario: no esperar el recorrido completo de cada semilla. Dispara
+## una ráfaga real (solo alcanza a spawnear la primera semilla en un frame — el resto
+## sigue en cola en _seeds_to_fire, disparadas por el Timer) y confirma que el recall
+## corta la ráfaga pendiente Y aterriza la semilla ya activa en el mismo golpe, avanzando
+## el turno exactamente igual que un aterrizaje 100% natural.
+func test_recall_all_seeds_cancels_pending_burst_and_advances_turn() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	GameManager.start_game()
+	EventBus.fire_requested.emit(Vector2.UP, Vector2(100.0, 700.0))
+	await get_tree().process_frame  ## deja que el add_child deferido de la semilla entre al árbol
+	assert_true(int(turn_manager.get(&"_seeds_to_fire")) > 0, "arreglo del test: ráfaga en curso")
+	watch_signals(EventBus)
+	EventBus.recall_all_seeds_requested.emit()
+	assert_eq(int(turn_manager.get(&"_seeds_to_fire")), 0, "el recall cancela lo que faltaba disparar")
+	assert_signal_emitted(EventBus, "all_seeds_returned")
+	## BoardManager escucha all_seeds_returned de forma síncrona y emite turn_advanced,
+	## que a su vez devuelve la fase a AIMING antes de que este emit() retorne — la cadena
+	## completa se resuelve en el mismo golpe, igual que con un aterrizaje 100% natural.
+	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING)
+
+
+func test_recall_all_seeds_does_nothing_without_an_active_turn() -> void:
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	GameManager.start_game()
+	watch_signals(EventBus)
+	EventBus.recall_all_seeds_requested.emit()
+	assert_signal_not_emitted(EventBus, "all_seeds_returned")
+	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING)
+
+
 func test_fire_requested_ignored_outside_aiming_phase() -> void:
 	var turn_manager: Node = TurnManagerGd.new()
 	add_child_autofree(turn_manager)

@@ -3,10 +3,16 @@ extends CanvasLayer
 ## Instanciado por Game.tscn (construcción 100% programática, sin sprites — ver
 ## CLAUDE.md sección FTUE). Sin lógica de juego: solo refleja EventBus / GameManager.
 
+const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
+
 var _score_label: Label = Label.new()
 var _wave_label: Label = Label.new()
 var _seed_label: Label = Label.new()
 var _pause_button: Button = Button.new()
+## Botón "recoger semillas" (pedido explícito del usuario) — solo visible mientras hay
+## una ráfaga en curso (FIRING/RESOLVING/RETURNING); no tiene sentido en AIMING/ADVANCING,
+## no hay nada que recoger todavía o ya se recogió todo.
+var _recall_button: Button = Button.new()
 
 
 ## NO leer GameManager.is_level_mode()/get_current_level_id() aquí directo: HUD nace
@@ -22,6 +28,7 @@ func _ready() -> void:
 	EventBus.seed_count_changed.connect(_on_seed_count_changed)
 	EventBus.game_started.connect(_on_game_started)
 	EventBus.wave_advanced.connect(_on_wave_advanced)
+	EventBus.turn_phase_changed.connect(_on_turn_phase_changed)
 	_on_score_changed(GameManager.get_score())
 
 
@@ -67,6 +74,15 @@ func _build_ui() -> void:
 	_pause_button.pressed.connect(_on_pause_pressed)
 	add_child(_pause_button)
 
+	## ">>" (símbolo plano, mismo criterio que "II" de pausa arriba — ninguno de los dos
+	## pasa por tr(), son glifos, no texto traducible) a la izquierda del botón de pausa.
+	_recall_button.text = ">>"
+	_recall_button.position = Vector2(Constants.DESIGN_WIDTH - 104.0, 72.0)
+	_recall_button.set_size(Vector2(40.0, 40.0))
+	_recall_button.visible = false
+	_recall_button.pressed.connect(_on_recall_pressed)
+	add_child(_recall_button)
+
 
 func _style_label(label: Label, color: Color) -> void:
 	label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
@@ -86,6 +102,20 @@ func _on_wave_advanced(wave_number: int) -> void:
 
 func _on_seed_count_changed(new_count: int) -> void:
 	_seed_label.text = tr(&"LABEL_SEEDS") % new_count
+
+
+## Visible solo mientras hay una ráfaga en curso — en AIMING (apuntando) o ADVANCING
+## (tablero ya resuelto, a punto de volver a AIMING) no hay ninguna semilla que recoger.
+func _on_turn_phase_changed(phase: int) -> void:
+	_recall_button.visible = (
+		phase == TurnManagerGd.Phase.FIRING
+		or phase == TurnManagerGd.Phase.RESOLVING
+		or phase == TurnManagerGd.Phase.RETURNING
+	)
+
+
+func _on_recall_pressed() -> void:
+	EventBus.recall_all_seeds_requested.emit()
 
 
 func _on_pause_pressed() -> void:

@@ -25,6 +25,11 @@ signal aim_cancelled
 ## Emitida por Mortar al soltar el dedo. TurnManager la escucha para iniciar la ráfaga.
 signal fire_requested(direction: Vector2, origin: Vector2)
 signal burst_fired(seed_count: int)
+## Emitida por el botón de "recoger semillas" del HUD (pedido explícito del usuario: no
+## esperar a que cada semilla termine su recorrido, sobre todo en niveles con cientos de
+## semillas donde ni siquiera el boost de mantener presionado se siente suficiente).
+## TurnManager la escucha y fuerza el aterrizaje de TODAS las semillas activas ya mismo.
+signal recall_all_seeds_requested
 signal all_seeds_returned(landing_x: float)
 signal molcajete_position_changed(new_x: float)
 signal seed_count_changed(new_count: int)
