@@ -31,6 +31,12 @@ v3, corrige feedback real del usuario sobre v2:
    entrada, cada uno con `"amount": SEED_EXTRA_ICON_AMOUNT` (20) en vez del +1 de
    `Constants.SEED_EXTRA_AMOUNT` (pensado para Modo Infinito/campaña numérica, sin tocar) —
    ver el campo opcional `amount` en `seed_extra_icon.gd`/`EventBus.seed_extra_touched`.
+7. **HP sesgado hacia golpes baratos** (pedido explícito tras jugar: "lo ideal sería que la
+   mayoría de bloques no requirieran tantos golpes... el 80% por debajo de la mitad del
+   rango, y solo el 20% por encima") — `_random_hp()` reemplaza el `randint(HP_MIN,HP_MAX)`
+   uniforme: 80% de probabilidad de caer en `[HP_MIN, HP_MID]`, 20% en `[HP_MID, HP_MAX]`
+   (`HP_LOW_HALF_RATIO`). Sigue siendo sorteado (nunca fijo), solo con el sesgo — baja el HP
+   promedio ~20% sin tocar el rango declarado ni la variedad real.
 
 Uso: /tmp/gb_venv/bin/python3 tools/gen_worldcup_pack.py
 (usa Pillow solo para el texto "GOL" — el resto es geometría pura, sin dependencias)
@@ -47,6 +53,15 @@ BASE_COLS = 7  # Constants.GRID_COLS
 
 HP_MIN = 60  # = totopo_hp_min_for_level(100) en gen_levels.py
 HP_MAX = 300  # = totopo_hp_max_for_level(100) en gen_levels.py
+# Pedido explícito del usuario tras jugar: con HP uniforme entre HP_MIN y HP_MAX la partida
+# se sentía larga/tediosa (un nivel `static` no tiene condición de derrota — se gana
+# despejando TODO, así que el HP promedio determina directamente cuánto dura la partida).
+# En vez de uniforme, 80% de los bloques cae en la mitad BAJA del rango y solo 20% en la
+# mitad alta — sigue habiendo variedad real (regla `random_totopo_hp`, nunca un valor fijo)
+# pero la mayoría del nivel se destraba rápido y los golpes "caros" son la excepción, no la
+# norma. Baja el HP promedio ~20% (144 en vez de 180) sin sacrificar el rango declarado.
+HP_MID = (HP_MIN + HP_MAX) / 2
+HP_LOW_HALF_RATIO = 0.8
 STARTING_SEEDS = 50
 MARGIN_CELLS = 2  # padding alrededor de la figura, para que quepan los acentos decorativos
 INTERIOR_POWERUP_TARGET = 5  # puntos de entrada dentro de la figura
@@ -314,6 +329,15 @@ def _mini_star(cx: int, cy: int) -> set:
     return {(cx, cy), (cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)}
 
 
+def _random_hp(rng: random.Random) -> int:
+    """80% de los bloques por debajo de la mitad del rango, 20% por encima (pedido
+    explícito del usuario) — sigue siendo sorteado (nunca un valor fijo), solo con el sesgo
+    hacia golpes baratos para que la mayoría del nivel se destrabe rápido."""
+    if rng.random() < HP_LOW_HALF_RATIO:
+        return rng.randint(HP_MIN, int(HP_MID))
+    return rng.randint(int(HP_MID) + 1, HP_MAX)
+
+
 def _add_decorations(filled: set, cols: int, rows: int, rng: random.Random) -> set:
     """Acentos chicos (mini-estrellas) en el margen alrededor de la figura, pedido
     explícito del usuario ("que no se vean tan vacíos") — nunca se superponen a la
@@ -394,11 +418,11 @@ def build_static_level(level_id: str, name_key: str, shape_fn, work_cols: int, w
                 cell["amount"] = SEED_EXTRA_ICON_AMOUNT
             cells.append(cell)
             continue
-        hp = rng.randint(HP_MIN, HP_MAX)
+        hp = _random_hp(rng)
         total_hp += hp
         cells.append({"col": c, "row": r, "kind": "totopo", "hp": hp})
     for (c, r) in sorted(decorations):
-        hp = rng.randint(HP_MIN, HP_MAX)
+        hp = _random_hp(rng)
         total_hp += hp
         cells.append({"col": c, "row": r, "kind": "totopo", "hp": hp})
     for (c, r) in sorted(seed_bounties):
@@ -454,13 +478,15 @@ def main() -> None:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(level, f, ensure_ascii=False, indent=2)
         new_ids.append(level_id)
-        totopo_count = sum(1 for c in level["cells"] if c["kind"] == "totopo")
-        icon_count = len(level["cells"]) - totopo_count
+        totopo_hps = [c["hp"] for c in level["cells"] if c["kind"] == "totopo"]
+        icon_count = len(level["cells"]) - len(totopo_hps)
         seed_bonus = sum(c.get("amount", 0) for c in level["cells"] if c["kind"] == "seed_extra")
         max_seeds = level["starting_seeds"] + seed_bonus
+        avg_hp = sum(totopo_hps) / len(totopo_hps) if totopo_hps else 0
         print(
-            f"  + {path} ({level['grid_cols']}x{level['grid_rows']}, {totopo_count} bloques, "
-            f"{icon_count} power-ups, par_turns={level['par_turns']}, semillas max={max_seeds})"
+            f"  + {path} ({level['grid_cols']}x{level['grid_rows']}, {len(totopo_hps)} bloques, "
+            f"HP prom={avg_hp:.0f}, {icon_count} power-ups, par_turns={level['par_turns']}, "
+            f"semillas max={max_seeds})"
         )
 
     manifest_path = os.path.join(out_dir, "manifest.json")

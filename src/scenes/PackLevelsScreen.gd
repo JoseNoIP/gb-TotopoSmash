@@ -8,8 +8,12 @@ const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const TUTORIAL_SCENE: String = "res://src/scenes/TutorialGame.tscn"
 const PACK_SELECT_SCENE: String = "res://src/scenes/PackSelectScreen.tscn"
 
-const COLUMNS: int = 4
-const BUTTON_SIZE: float = 64.0
+## 2 columnas de botones anchos (en vez de 4 cuadrados) — hace falta el espacio extra para
+## mostrar el nombre del nivel además del número (pedido explícito del usuario: ayuda a
+## saber qué representa la figura antes de entrar a jugarla, ej. "3. Copa").
+const COLUMNS: int = 2
+const BUTTON_WIDTH: float = 172.0
+const BUTTON_HEIGHT: float = 56.0
 const BUTTON_GAP: float = 14.0
 
 
@@ -63,7 +67,7 @@ func _find_pack(prefix: String) -> Dictionary:
 func _build_grid(prefix: String) -> void:
 	var manifest: Array = LevelManager.get_manifest()
 
-	var grid_w: float = COLUMNS * BUTTON_SIZE + (COLUMNS - 1) * BUTTON_GAP
+	var grid_w: float = COLUMNS * BUTTON_WIDTH + (COLUMNS - 1) * BUTTON_GAP
 	var origin_x: float = (Constants.DESIGN_WIDTH - grid_w) * 0.5
 	var origin_y: float = 140.0
 
@@ -78,15 +82,26 @@ func _build_grid(prefix: String) -> void:
 	grid.add_theme_constant_override(&"v_separation", int(BUTTON_GAP))
 	scroll.add_child(grid)
 
+	var position_in_pack: int = 0
 	for i: int in manifest.size():
 		var level_id: String = manifest[i]
 		if not (level_id as String).begins_with(prefix + "_"):
 			continue
+		position_in_pack += 1
 		var btn: Button = Button.new()
-		btn.text = str(i + 1)
-		btn.custom_minimum_size = Vector2(BUTTON_SIZE, BUTTON_SIZE)
+		btn.text = _level_button_text(level_id, position_in_pack)
+		btn.custom_minimum_size = Vector2(BUTTON_WIDTH, BUTTON_HEIGHT)
 		btn.pressed.connect(_on_level_pressed.bind(level_id))
 		grid.add_child(btn)
+
+
+## El nombre (ej. "Copa") ayuda a relacionar la figura abstracta con lo que representa
+## antes de siquiera entrar a jugarla — mismo objetivo que el label del HUD en partida.
+func _level_button_text(level_id: String, position_in_pack: int) -> String:
+	var name_key: Variant = LevelManager.get_level_data(level_id).get("name")
+	if name_key is String and not (name_key as String).is_empty():
+		return "%d. %s" % [position_in_pack, tr(name_key as String)]
+	return str(position_in_pack)
 
 
 func _on_level_pressed(level_id: String) -> void:

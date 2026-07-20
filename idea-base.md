@@ -377,6 +377,35 @@ inicio". Reemplaza por completo el pack Mundial v1 (10 niveles, baja resolución
 - Verificado con captura real de varios niveles del pack v3 tras todos los fixes de esta
   ronda — ninguno invade el área del molcajete, figuras centradas verticalmente, números de
   HP legibles y variados donde el tamaño de celda lo permite.
+- **Nombre del nivel visible al jugar** (pedido explícito: "poner el nombre de lo que
+  representa la imagen abstracta para ayudar al jugador a relacionar la imagen... por
+  ejemplo, donde está la copa, poner 'Copa'") — `HUD._on_game_started()` ahora arma
+  "Nivel N · Nombre" (`LABEL_LEVEL_NUMBER_NAMED`, nueva key i18n) cuando el nivel trae
+  `name` (niveles-figura del roster numérico y AMBOS packs temáticos); sin `name` (la
+  mayoría de los 100 niveles numéricos) sigue mostrando solo "Nivel N" como antes. Mismo
+  criterio en `PackLevelsScreen`: los botones pasaron de mostrar solo un número a
+  "N. Nombre" (ej. "2. Copa del Mundo") — ayuda a reconocer qué figura es ANTES de entrar a
+  jugarla, no solo durante. Grilla de botones angostos-cuadrados (4 columnas) a
+  botones anchos (2 columnas, `PackLevelsScreen.BUTTON_WIDTH=172`) para que el nombre
+  quepa. La numeración de estos botones es LOCAL al pack (1, 2, 3...), no la posición
+  global en el manifiesto de 115 niveles — más intuitiva para explorar un pack temático
+  como colección propia, aunque no coincida con el "Nivel 107" que se ve una vez adentro
+  (ese número sigue siendo la posición real en el manifiesto, consistente con el resto de
+  la campaña). Verificado con captura real: HUD mostrando "Nivel 107 · Copa del Mundo",
+  grilla del pack con los 10 nombres legibles.
+- **HP sesgado hacia golpes baratos** (pedido explícito tras jugar: "lo ideal sería que la
+  mayoría de bloques no requirieran tantos golpes... el 80% por debajo de la mitad del
+  rango, y solo el 20% por encima, porque si no cada partida se vuelve demasiado larga y
+  tediosa") — antes `hp = rng.randint(HP_MIN, HP_MAX)` uniforme (HP promedio ~180); ahora
+  `_random_hp()` en `tools/gen_worldcup_pack.py`: 80% de probabilidad de caer en la mitad
+  baja del rango (`[HP_MIN, HP_MID]`), 20% en la mitad alta — HP promedio real tras
+  regenerar ~140-150 (~20% menos), con la proporción real medida en un nivel: 85% de los
+  bloques por debajo de la mitad, 78 valores únicos de 106 celdas (sigue siendo sorteado,
+  nunca fijo, solo con el sesgo). `par_turns` (calculado a partir de `total_hp`) bajó en la
+  misma proporción automáticamente, sin tocar esa fórmula. Aplicado solo al pack Mundial
+  (`static`, sin condición de derrota — el HP promedio determina directamente cuánto dura
+  la partida) — no se tocó `gen_levels.py` (roster numérico, `row_queue`, la duración ya
+  está acotada por el número de turnos, no solo por HP).
 
 ## Sistema de mejoras/oro/personajes ✅
 
