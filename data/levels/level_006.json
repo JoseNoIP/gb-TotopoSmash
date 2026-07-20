@@ -525,6 +525,142 @@
         "kind": "totopo",
         "hp": 3
       }
+    ],
+    [
+      {
+        "col": 0,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 2,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 3,
+        "kind": "lemon"
+      },
+      {
+        "col": 4,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 5,
+        "kind": "totopo",
+        "hp": 3
+      }
+    ],
+    [
+      {
+        "col": 0,
+        "kind": "seed_extra"
+      },
+      {
+        "col": 1,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 2,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 3,
+        "kind": "seed_extra"
+      },
+      {
+        "col": 4,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 6,
+        "kind": "totopo",
+        "hp": 3
+      }
+    ],
+    [
+      {
+        "col": 0,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 1,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 3,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 4,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 6,
+        "kind": "totopo",
+        "hp": 3
+      }
+    ],
+    [
+      {
+        "col": 0,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 2,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 4,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 5,
+        "kind": "seed_extra"
+      },
+      {
+        "col": 6,
+        "kind": "totopo",
+        "hp": 3
+      }
+    ],
+    [
+      {
+        "col": 0,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 1,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 3,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 4,
+        "kind": "totopo",
+        "hp": 3
+      },
+      {
+        "col": 6,
+        "kind": "totopo",
+        "hp": 3
+      }
     ]
   ]
 }

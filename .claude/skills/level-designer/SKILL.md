@@ -129,8 +129,10 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
 - **Filas totales (dificultad progresiva, `row_queue`)**: como cada fila se revela recién
   cuando se consume la anterior, el total de filas NO reduce el margen turno a turno —
   define cuánto dura el nivel. `tools/gen_levels.py::total_rows_for_level()` usa nivel 1 =
-  10 filas, +2 por nivel siguiente (pedido explícito del usuario); seguir esa proporción
-  para niveles nuevos de este tipo salvo que se pida otra curva.
+  10 filas, +3 por nivel siguiente, con un TOPE de 50 filas (alcanzado en el nivel 15) —
+  el tope evita que los niveles más altos de un roster grande tomen cientos de turnos; de
+  ahí en adelante la dificultad escala por HP/variedad de bloques (`effective_wave`), no
+  por duración. Seguir esa curva para niveles nuevos de este tipo salvo que se pida otra.
 - **HP**: `totopo`/`salsa`/`triangle` con HP bajo (1-3) para niveles-figura (el objetivo
   es la satisfacción de despejar la forma, no la dificultad) o siguiendo la curva de
   `wave_scaling.gd` (`hp ≈ oleada_efectiva`) para niveles de dificultad progresiva.

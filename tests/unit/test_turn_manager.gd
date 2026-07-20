@@ -10,6 +10,7 @@ extends GutTest
 ## estado solo lo pone start_game() — emitir la señal sola no alcanza.
 
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
+const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 
 
 func before_each() -> void:
@@ -97,7 +98,7 @@ func test_all_seeds_returned_after_landing_resets_phase_to_aiming() -> void:
 	turn_manager.set(&"_active_seeds", 0)
 	turn_manager.set(&"_seeds_to_fire", 0)
 	turn_manager.call(&"_set_phase", TurnManagerGd.Phase.ADVANCING)
-	EventBus.wave_advanced.emit(2)  # BoardManager emitiría esto tras un avance real
+	EventBus.turn_advanced.emit()  # BoardManager emitiría esto tras un avance real
 	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING)
 
 
@@ -112,10 +113,33 @@ func test_seed_count_uses_level_starting_seeds_when_in_level_mode() -> void:
 	GameManager.start_game()  # vuelve a Modo Infinito para no contaminar otros tests
 
 
-func test_wave_advanced_at_game_start_does_not_leave_aiming() -> void:
+func test_turn_advanced_while_already_aiming_does_not_alter_phase() -> void:
 	var turn_manager: Node = TurnManagerGd.new()
 	add_child_autofree(turn_manager)
 	GameManager.start_game()  # deja fase AIMING
-	EventBus.wave_advanced.emit(1)  # BoardManager también emite esto al armar el tablero inicial
-	var msg: String = "wave_advanced inicial no debe alterar la fase"
+	EventBus.turn_advanced.emit()  # no debería llegar en este estado, pero el guard protege igual
+	var msg: String = "turn_advanced fuera de ADVANCING no debe alterar la fase"
 	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING, msg)
+
+
+## Regresión de punta a punta del bug real reportado jugando: en Modo Nivel, después del
+## primer disparo el apuntado dejaba de responder para siempre (TurnManager se quedaba en
+## ADVANCING) porque BoardManager solo emitía `wave_advanced` (específica de Modo Infinito)
+## y TurnManager dependía solo de esa señal para volver a AIMING. Instancia BoardManager Y
+## TurnManager juntos, sin emitir `turn_advanced` a mano, para ejercitar la cadena real de
+## señales (all_seeds_returned -> BoardManager -> turn_advanced -> TurnManager).
+func test_full_turn_cycle_in_level_mode_returns_to_aiming() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	GameManager.start_game("level_001")
+	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING, "arranca apuntando")
+	EventBus.fire_requested.emit(Vector2.UP, Vector2(100.0, 700.0))
+	await get_tree().process_frame  # deja que el add_child deferido de la semilla entre al árbol
+	turn_manager.set(&"_active_seeds", 0)
+	turn_manager.set(&"_seeds_to_fire", 0)
+	turn_manager.call(&"_on_seed_landed", null, 100.0)
+	var msg: String = "tras un turno completo en Modo Nivel, el apuntado debe volver a funcionar"
+	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING, msg)
+	GameManager.start_game()  # vuelve a Modo Infinito para no contaminar otros tests

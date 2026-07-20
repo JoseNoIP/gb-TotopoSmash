@@ -8,14 +8,18 @@ este script regenera sin también actualizar su spec aquí — si no, la próxim
 completa lo pisa. Niveles hechos por la skill /level-designer se editan directo y se
 agregan a mano al manifiesto; ese es el mecanismo pensado para packs temáticos.
 
-Los niveles procedurales (1-14) portan a Python las fórmulas de
+Los niveles procedurales (1-94) portan a Python las fórmulas de
 src/features/board/wave_scaling.gd para producir un `row_queue` totalmente concreto en
-tiempo de generación (nivel 1 = 10 filas, +2 por nivel siguiente — ver
+tiempo de generación (nivel 1 = 10 filas, +2 por nivel hasta un tope de 50 — ver
 total_rows_for_level) — Modo Nivel en runtime no depende de ningún RNG (mismo tablero
-para todos los jugadores) y revela una fila nueva por turno hasta agotar la cola. Los
-niveles-figura (15-20) se dibujan a mano en un grid ASCII de 7 columnas y se convierten a
-`cells` absolutas (toda la forma visible desde el inicio), en SILUETA (solo borde) o
-RELLENO (toda celda).
+para todos los jugadores) y revela una fila nueva por turno hasta agotar la cola. El tope
+existe para respetar la "sesión target: 2-5 minutos" del GDD: dejar crecer las filas sin
+límite (como en la primera versión de este script) habría hecho que un nivel de dificultad
+alta tomara cientos de turnos — la dificultad de los niveles altos escala en cambio por HP
+y variedad de bloques (mismas fórmulas ya validadas por Monte Carlo para Modo Infinito
+hasta oleada 60), no por duración. Los niveles-figura (95-100) se dibujan a mano en un grid
+ASCII de 7 columnas y se convierten a `cells` absolutas (toda la forma visible desde el
+inicio), en SILUETA (solo borde) o RELLENO (toda celda).
 """
 import json
 import math
@@ -72,10 +76,16 @@ def pick_kind(effective_wave: int, rng: random.Random) -> str:
     return "totopo"
 
 
+TOTAL_ROWS_START: int = 10
+TOTAL_ROWS_STEP: int = 3
+TOTAL_ROWS_CAP: int = 50
+
 def total_rows_for_level(level_number: int) -> int:
-    """Nivel 1 = 10 filas totales (pedido explícito del usuario), crece proporcional
-    (+2 filas por nivel) para los siguientes — ajustable aquí sin tocar nada más."""
-    return 10 + (level_number - 1) * 2
+    """Nivel 1 = 10 filas totales (pedido explícito del usuario), crece +3 por nivel
+    hasta un tope de 50 (nivel 14 en adelante) — sin tope, un roster de ~100 niveles
+    llegaría a cientos de filas en los últimos, violando la sesión de 2-5 minutos del GDD.
+    Ajustable aquí sin tocar nada más."""
+    return min(TOTAL_ROWS_START + (level_number - 1) * TOTAL_ROWS_STEP, TOTAL_ROWS_CAP)
 
 
 def generate_procedural_level(level_number: int) -> dict:
@@ -232,14 +242,17 @@ SHAPE_LEVELS = [
 ]
 
 
+PROCEDURAL_COUNT: int = 94  # + 6 niveles-figura = 100 (objetivo del GDD)
+
+
 def main() -> None:
     out_dir = "data/levels"
     os.makedirs(out_dir, exist_ok=True)
 
     level_ids = []
 
-    print("=== Niveles procedurales (1-14) ===")
-    for n in range(1, 15):
+    print(f"=== Niveles procedurales (1-{PROCEDURAL_COUNT}) ===")
+    for n in range(1, PROCEDURAL_COUNT + 1):
         level = generate_procedural_level(n)
         path = os.path.join(out_dir, f"{level['id']}.json")
         with open(path, "w", encoding="utf-8") as f:
@@ -250,9 +263,9 @@ def main() -> None:
             f"{level['starting_seeds']} semillas)"
         )
 
-    print("\n=== Niveles-figura (15-20) ===")
+    print(f"\n=== Niveles-figura ({PROCEDURAL_COUNT + 1}-{PROCEDURAL_COUNT + 6}) ===")
     for i, (shape_id, art, fill) in enumerate(SHAPE_LEVELS):
-        n = 15 + i
+        n = PROCEDURAL_COUNT + 1 + i
         level = generate_shape_level(n, shape_id, art, fill)
         path = os.path.join(out_dir, f"{level['id']}.json")
         with open(path, "w", encoding="utf-8") as f:

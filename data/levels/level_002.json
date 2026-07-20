@@ -330,6 +330,32 @@
         "col": 6,
         "kind": "seed_extra"
       }
+    ],
+    [
+      {
+        "col": 0,
+        "kind": "totopo",
+        "hp": 1
+      },
+      {
+        "col": 1,
+        "kind": "totopo",
+        "hp": 1
+      },
+      {
+        "col": 2,
+        "kind": "totopo",
+        "hp": 1
+      },
+      {
+        "col": 3,
+        "kind": "totopo",
+        "hp": 1
+      },
+      {
+        "col": 6,
+        "kind": "seed_extra"
+      }
     ]
   ]
 }

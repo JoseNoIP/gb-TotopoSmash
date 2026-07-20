@@ -10,6 +10,12 @@ signal game_resumed
 
 # --- Oleadas / Turnos ---
 signal wave_advanced(wave_number: int)
+## Emitida por BoardManager al terminar de procesar un turno SIN que la partida haya
+## terminado (ni game over ni nivel despejado) — en AMBOS modos. Es la señal mode-agnostic
+## que TurnManager escucha para volver de ADVANCING a AIMING; `wave_advanced` de arriba es
+## específica de Modo Infinito (HUD/bono de score) y Modo Nivel nunca la emite, así que
+## TurnManager no puede depender de ella para saber cuándo continuar.
+signal turn_advanced
 ## fase del turno: ver TurnManager.Phase (AIMING, FIRING, RESOLVING, RETURNING, ADVANCING)
 signal turn_phase_changed(phase: int)
 
