@@ -160,24 +160,50 @@ print(f"Opaque: {opaque*100//(w*h)}% (buen sprite: 20-50%)")
 
 ---
 
-### PASO 4 — ÍCONOS DE POWER-UP / UI (procedural mejorado)
+### PASO 4 — ÍCONOS DE POWER-UP / UI Y SPRITES CHICOS (IA vs procedural)
 
-Para íconos pequeños (32×32 a 64×64), **la generación procedural en Python** supera a la IA porque:
-- La IA a esas dimensiones produce imágenes borrosas/ruidosas.
-- Los íconos necesitan comunicar una mecánica específica con claridad.
-- Se pueden ajustar colores y formas exactamente.
+**Corrección importante (verificado en Totopo Smash, ver `tools/fetch_ai_assets.py`):**
+una versión anterior de esta skill afirmaba que a ≤64×64 la IA "sale borrosa/ruidosa" y
+recomendaba procedural SIEMPRE para ese rango. Probado con evidencia real: pedir la
+imagen a **512×512 y reducirla con `Image.LANCZOS` al tamaño final** (la misma técnica de
+PASO 3) da resultados nítidos y legibles incluso a 64×64 o 96×96 — la suposición anterior
+nunca había probado esa técnica, solo asumía que "chico = borroso". **NO descartar IA para
+un sprite chico sin antes probar la técnica de reducción desde 512px.**
+
+Dicho esto, hay casos reales donde procedural sigue ganando:
+- **Íconos que deben comunicar una mecánica exacta con símbolos específicos** (flecha,
+  rayo, escudo) — más fácil garantizar la forma correcta dibujándola a mano que
+  describiéndola en un prompt y esperando que Flux la interprete literal.
+- **Objetos MUY chicos donde el detalle no se alcanza a percibir de todos modos** (ej. un
+  proyectil de 16×16) — en Totopo Smash se intentó IA para el sprite de semilla (pumpkin
+  seed) y, aun pidiendo explícitamente "no face, no character", el modelo devolvió una
+  calabaza completa con cara — el prompt no se respetó para ese objeto/tamaño, y aunque se
+  hubiera respetado, a 16px el resultado no se distinguía de un círculo procedural simple.
+  **Si un intento de IA no respeta una instrucción explícita del prompt (cara/orientación/
+  ausencia de texto), no insistir indefinidamente — verificar 1-2 seeds distintos y, si
+  persiste, quedarse con procedural para ESE sprite puntual.**
+- **Variantes geométricas puras de otro bloque** (ej. `triangle_block.gd`, un
+  `Polygon2D` de color plano derivado del totopo) — no necesitan textura propia en absoluto.
 
 Ver `tools/gen_assets.py` en el proyecto para el sistema de íconos procedurales con:
 - Fondo redondeado con gradiente de color por tipo
 - Formas simbólicas específicas por power-up (flechas, relámpagos, escudos, etc.)
 - Funciones reutilizables: `_arrow_up()`, `_rounded_rect()`, `_icon_base()`, `_poly()`
 
-**Cuándo usar IA vs procedural para sprites:**
-| Tamaño | Enfoque recomendado |
+**Cuándo usar IA vs procedural para sprites (actualizado):**
+| Caso | Enfoque recomendado |
 |---|---|
-| ≥ 128×128 | IA (Pollinations.ai) + chroma key |
-| 64×128 | IA + chroma key, revisar calidad |
-| ≤ 64×64 | Procedural en Python (más control, más nítido) |
+| Cualquier tamaño, buscando estilo/detalle/personaje | IA a 512×512 + chroma key + `Image.LANCZOS` al tamaño final |
+| Símbolo de mecánica exacta (flecha, rayo, orientación que el jugador debe leer sin ambigüedad) | Procedural — control total de la forma |
+| El modelo ignora una instrucción explícita del prompt tras 1-2 intentos | Procedural para ese sprite puntual, no insistir |
+| Variante geométrica de color plano de otro sprite ya existente | Ninguno — reusar la misma textura o un `Polygon2D`/`ColorRect` de color |
+
+**Íconos con múltiples variantes por orientación/estado** (ej. un power-up que dispara
+horizontal o vertical): generar UNA imagen por variante, nunca una sola genérica — el
+sprite es información de gameplay (el jugador debe poder leer la orientación ANTES de
+tocarlo), no solo decoración. Ver `laser_icon.gd`/`laser_horizontal.png`/
+`laser_vertical.png` en Totopo Smash como referencia — el nodo elige la textura en
+runtime según su propiedad de orientación.
 
 ---
 

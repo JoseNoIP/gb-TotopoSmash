@@ -515,10 +515,74 @@ defecto del tema de Godot — el texto se mezclaba visualmente con el fondo real
 - Verificado con captura real: `SettingsScreen` abierto sobre `MainMenu`, texto
   completamente legible (antes se mezclaba con el fondo detrás).
 
+## Pulido de assets (IA + música de fondo) ✅
+
+Pedido explícito del usuario ("continúa con Assets"), alcance decidido con una pregunta
+estructurada: ícono del láser + música de fondo + pulir sprites existentes con IA — las
+tres opciones elegidas.
+
+- **Ícono del power-up láser** — nunca había tenido sprite propio (usaba un `_draw()`
+  procedural en runtime como fallback). Generado con `gen_assets.py::make_laser_icon()`
+  (mismo estilo pixel-art que lemon/seed_extra) en **DOS variantes**
+  (`laser_horizontal.png`/`laser_vertical.png`), nunca una sola imagen genérica — la
+  orientación real del láser es información de gameplay que el jugador debe poder leer
+  ANTES de tocarlo (el `_draw()` que reemplaza ya lo hacía bien, así que el sprite nuevo
+  tenía que preservar esa distinción, no solo "verse mejor"). `laser_icon.gd` elige la
+  textura en runtime según `is_horizontal`.
+- **Música de fondo** — `AudioManager.play_music()` existía desde antes pero nunca se
+  llamaba y no había ningún archivo en `assets/audio/music/`. Se compuso
+  `music_theme()` en `gen_assets.py`: loop de ~7.3s a 132 BPM, melodía pentatónica simple
+  (onda triangular, más suave que cuadrada para no fatigar en loop) + bajo de dos notas +
+  un "shaker" de ruido en el contratiempo (guiño al tema mexicano) — todo sintetizado con
+  la misma stdlib `wave` que ya usan los SFX, sin dependencias nuevas. `edit/loop_mode=1`
+  en el `.import` para que loopee de verdad. `AudioManager._ready()` la arranca sola
+  (autoload, vive toda la sesión) a -8dB para no competir con los SFX; el interruptor de
+  sonido en `SettingsScreen` ahora también para/reanuda la música (antes solo silenciaba
+  SFX futuros — sin este ajuste, apagar "sonido" no habría sido realmente silencio total).
+- **Sprites existentes pulidos con IA** — corrige una suposición de una sesión anterior
+  que asumía "sprites ≤96px = la IA sale borrosa, dejarlos procedurales" sin haber probado
+  la técnica real de pedir la imagen a 512×512 y reducirla con `Image.LANCZOS` (la misma
+  que ya usaba el fondo de menú). Probado con evidencia real ANTES de comprometerse: 2
+  fetches de prueba (totopo, molcajete) mostraron resultados nítidos y legibles incluso a
+  64px/96px — la suposición anterior era demasiado conservadora. Con esa confirmación:
+  - **Con cara/personaje** (elegido por el usuario sobre las otras 2 opciones — "todo sin
+    cara" o "todo con cara"): `totopo.png`, `queso.png` — bloques de comida como
+    personajes tiernos (ojos, sonrisa), consistente con el estilo "vector toony" del GDD.
+  - **Sin cara, objeto con textura**: `salsa.png` (frasco con etiqueta), `stone.png`
+    (roca agrietada), `molcajete.png` (vista CENITAL estricta — el primer intento salió en
+    ángulo 3/4 y no calzaba con la silueta circular que el juego necesita; se corrigió el
+    prompt pidiendo explícitamente "top-down orthographic view, no perspective, no shading
+    depth").
+  - **`seed.png` (16×16) se quedó procedural, a propósito** — se intentó con IA pidiendo
+    explícitamente "no face, no character" y el modelo devolvió una calabaza completa CON
+    cara de todos modos (ignoró la instrucción); además a 16px el resultado no se
+    distinguía de el círculo procedural ya existente. No vale la pena insistir para un
+    sprite tan chico — documentado como excepción en `tools/fetch_ai_assets.py` y en la
+    skill `/gen-ai-art` (corregida, ya no dice "≤64×64 siempre procedural" a secas).
+  - **Bloque triángulo sin cambios** — sigue siendo un `Polygon2D` de color plano
+    (`triangle_block.gd`), variante geométrica del totopo sin necesidad de textura propia.
+  - `tools/fetch_ai_assets.py` reescrito con los 5 prompts/seeds finales documentados
+    (reproducibilidad) + función `chroma_key()` movida ahí (antes solo en un script de
+    prueba descartable).
+- **Advertencia benigna de "leak" en tests** — desde que la música arranca sola en
+  `AudioManager._ready()` (autoload, nunca se detiene), `godot --headless -s
+  addons/gut/gut_cmdln.gd -gexit` termina con `WARNING: 2 ObjectDB instances were leaked
+  at exit` / `ERROR: 1 resources still in use at exit` (el `AudioStreamWAV`/
+  `AudioStreamPlaybackWAV` del loop de música, todavía "en uso" en el momento exacto en que
+  el proceso corta). **No es un bug** — exit code sigue siendo 0, los 204 tests siguen en
+  verde, y es el comportamiento esperado de CUALQUIER autoload con música en loop que nunca
+  se detiene explícitamente (correcto para un juego real, donde la música debe sonar hasta
+  que se cierra la app). No intentar "arreglarlo" deteniendo la música en algún hook de
+  shutdown artificial — sería complejidad sin beneficio real.
+- Verificado con captura real: los 5 sprites nuevos dentro de una partida real (`level_040`,
+  con totopo/queso/salsa/triángulo visibles simultáneamente) y el molcajete con textura de
+  piedra en la base de la pantalla — todos legibles y coherentes con el estilo del resto
+  del juego.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
-- **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
+- **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
 - **Balance de los niveles `static` (pack Mundial v3)** — HP variado 35-174 (rango del nivel 50, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (2 rondas de ajuste ya). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 174 HP?).
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.

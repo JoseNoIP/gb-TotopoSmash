@@ -98,8 +98,16 @@ func _build_ui() -> void:
 	vbox.add_child(close_btn)
 
 
+## La música de fondo (AudioManager, en loop desde el arranque) no se detiene sola al
+## desactivar el sonido — a diferencia de los SFX (uno solo, ya terminan por su cuenta),
+## sin este toque explícito seguiría sonando con el interruptor en "apagado", lo cual el
+## jugador razonablemente esperaría que silenciara TODO.
 func _on_sound_toggled(enabled: bool) -> void:
 	SaveManager.set_sound_enabled(enabled)
+	if enabled:
+		AudioManager.play_music()
+	else:
+		AudioManager.stop_music()
 
 
 func _on_vibration_toggled(enabled: bool) -> void:

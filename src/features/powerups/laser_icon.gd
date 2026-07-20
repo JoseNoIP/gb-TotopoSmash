@@ -5,7 +5,11 @@ extends Area2D
 ## Constants.LASER_DAMAGE de daño, mismo mecanismo de daño explícito que el Frasco de Salsa
 ## (take_explosion_damage), solo que en línea recta en vez de en cruz. Ícono de un solo uso.
 
-const TEXTURE_PATH: String = "res://assets/sprites/powerup_icons/laser.png"
+## Dos texturas (no una) — la orientación real (horizontal/vertical) es información que el
+## jugador debe poder ver ANTES de tocar el ícono (ver _draw() más abajo, que esto
+## reemplaza sin perder esa distinción); una sola imagen genérica la perdería.
+const TEXTURE_PATH_HORIZONTAL: String = "res://assets/sprites/powerup_icons/laser_horizontal.png"
+const TEXTURE_PATH_VERTICAL: String = "res://assets/sprites/powerup_icons/laser_vertical.png"
 
 var grid_pos: Vector2i = Vector2i.ZERO
 var is_horizontal: bool = true
@@ -30,10 +34,11 @@ func setup(p_cell_size: float) -> void:
 
 
 func _build_sprite() -> void:
-	if not ResourceLoader.exists(TEXTURE_PATH):
+	var texture_path: String = TEXTURE_PATH_HORIZONTAL if is_horizontal else TEXTURE_PATH_VERTICAL
+	if not ResourceLoader.exists(texture_path):
 		return
 	var sprite: Sprite2D = Sprite2D.new()
-	sprite.texture = load(TEXTURE_PATH)
+	sprite.texture = load(texture_path)
 	var diameter: float = _radius * 2.0
 	var tex_size: Vector2 = sprite.texture.get_size()
 	sprite.scale = Vector2(diameter / tex_size.x, diameter / tex_size.y)
