@@ -96,14 +96,14 @@ func _physics_process(delta: float) -> void:
 		remaining = PhysicsMathGd.reflect(collision.get_remainder(), collision.get_normal())
 		iterations += 1
 	if global_position.y >= _floor_y:
-		_land()
+		force_land()
 
 
 func _handle_collision(collision: KinematicCollision2D) -> void:
 	velocity = PhysicsMathGd.reflect(velocity, collision.get_normal())
 	_bounce_count += 1
 	if _bounce_count >= Constants.SEED_MAX_BOUNCES_SAFETY:
-		_land()
+		force_land()
 		return
 	var collider: Object = collision.get_collider()
 	## block_type es "" para paredes/techo (WorldBounds no tiene esa propiedad); Object.get()
@@ -135,7 +135,14 @@ func trigger_lemon_split() -> void:
 	split_requested.emit(mirrored)
 
 
-func _land() -> void:
+## Pública (no privada) a propósito: además de llamarse sola al tocar el piso, TurnManager
+## la invoca desde afuera para el "recall" manual (pedido explícito del usuario: no
+## esperar a que cada semilla termine su recorrido cuando ya no quedan bloques que
+## destruir, o simplemente porque el jugador quiere adelantar el turno). Mismo efecto en
+## ambos casos: aterriza en la posición X actual y emite `landed` — TurnManager no
+## necesita ninguna lógica especial para el caso "forzado", es indistinguible del
+## aterrizaje natural para el resto del sistema.
+func force_land() -> void:
 	if _landed:
 		return
 	_landed = true

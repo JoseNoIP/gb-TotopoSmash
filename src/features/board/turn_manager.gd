@@ -30,6 +30,7 @@ func _ready() -> void:
 	EventBus.fire_requested.connect(_on_fire_requested)
 	EventBus.seed_extra_touched.connect(_on_seed_extra_touched)
 	EventBus.turn_advanced.connect(_on_turn_advanced)
+	EventBus.recall_all_seeds_requested.connect(_on_recall_all_seeds_requested)
 
 
 func get_seed_count() -> int:
@@ -141,6 +142,22 @@ func _on_seed_landed(_seed_node: Node2D, x_position: float) -> void:
 		# sigue), lo cual dispara _on_turn_advanced() más abajo antes de que este emit()
 		# retorne.
 		EventBus.all_seeds_returned.emit(x_position)
+
+
+## Pedido explícito del usuario: no obligar a esperar el recorrido completo de cada
+## semilla (ni el boost de mantener presionado alcanza cuando hay cientos de semillas —
+## ej. los niveles `static` del pack Mundial). Cancela cualquier disparo pendiente de la
+## ráfaga (no tiene sentido seguir disparando semillas que van a aterrizar ya mismo) y
+## fuerza el aterrizaje de TODAS las semillas activas — cada `force_land()` emite `landed`
+## como si hubiera llegado sola al piso, así que `_on_seed_landed()` de arriba resuelve el
+## fin del turno exactamente igual que un aterrizaje natural, sin lógica duplicada.
+func _on_recall_all_seeds_requested() -> void:
+	if _active_seeds <= 0 and _seeds_to_fire <= 0:
+		return
+	_seeds_to_fire = 0
+	_fire_timer.stop()
+	for seed_node: Node in get_tree().get_nodes_in_group(&"seeds"):
+		seed_node.call(&"force_land")
 
 
 func _on_seed_extra_touched(_origin: Vector2, amount: int) -> void:

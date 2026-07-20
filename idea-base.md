@@ -662,6 +662,40 @@ completados." La investigación encontró DOS causas reales distintas, no una so
   (2-32+ atenuados/deshabilitados) y `PackLevelsScreen` del pack Mundial mostrando SOLO
   "1. Balón" habilitado — exactamente el comportamiento pedido.
 
+## Botón "recoger semillas" (recall) ✅
+
+Pedido explícito del usuario: "necesitamos alguna funcionalidad para que si el jugador
+quiere volver a llamar todas las semillas lo pueda hacer y no tenga que esperar a que
+termine el recorrido... aún cuando se presione la pantalla para acelerar es molesto."
+Con niveles de hasta 330 semillas (pack Mundial), ni el boost existente (mantener
+presionado, `Constants.SEED_BOOST_MULTIPLIER`) alcanza a hacer la espera indolora una vez
+que ya no queda nada que destruir.
+
+- **`Seed._land()` (privada) pasó a ser `Seed.force_land()` (pública)** — ya existía
+  exactamente la lógica necesaria (aterriza en la X actual, emite `landed`, se libera);
+  solo hacía falta poder invocarla desde AFUERA en vez de solo cuando la semilla toca el
+  piso sola. Cero lógica nueva de aterrizaje — el recall es indistinguible de un
+  aterrizaje natural para el resto del sistema (`TurnManager._on_seed_landed()` no sabe ni
+  le importa si el aterrizaje fue natural o forzado).
+- **`EventBus.recall_all_seeds_requested`** (sin parámetros) → `TurnManager` cancela
+  cualquier disparo pendiente de la ráfaga (`_seeds_to_fire = 0`, para el Timer) y llama
+  `force_land()` en TODAS las semillas activas (`get_tree().get_nodes_in_group(&"seeds")`)
+  — cada una dispara su propio `landed`, así que `_on_seed_landed()` resuelve el fin del
+  turno exactamente igual que si hubieran aterrizado solas, incluyendo el reposicionamiento
+  del molcajete y (en niveles `static`) el chequeo de "¿ya no queda nada que destruir?" en
+  `BoardManager` — pedido explícito del usuario ("que finalice el juego en caso de que ya
+  no haya bloques") sin necesitar NINGÚN código nuevo para eso, ya lo hacía el camino
+  normal de `all_seeds_returned`.
+- **Botón ">>" nuevo en el HUD**, junto al de pausa ("II") — mismo criterio: texto plano,
+  sin pasar por `tr()` (son glifos, no palabras). Visible SOLO durante
+  `Phase.FIRING`/`RESOLVING`/`RETURNING` (reacciona a `EventBus.turn_phase_changed`) — no
+  tiene sentido en `AIMING` (nada que recoger) ni en `ADVANCING` (ya se recogió todo).
+- Verificado con captura real jugando: el botón aparece junto con las primeras semillas en
+  vuelo: al presionarlo, el turno se resuelve al instante (puntaje sube, oleada avanza,
+  vuelve a la fase de apuntado) y el botón desaparece — confirmado que la cadena completa
+  (incluido el turno completo `all_seeds_returned` → `turn_advanced` → vuelta a `AIMING`)
+  se resuelve de forma síncrona en el mismo clic, sin ningún paso intermedio visible.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
