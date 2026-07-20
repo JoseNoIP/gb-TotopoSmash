@@ -1,0 +1,165 @@
+{
+  "id": "worldcup_002",
+  "name": "LEVEL_NAME_TROPHY",
+  "starting_seeds": 200,
+  "cells": [
+    {
+      "col": 0,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 205
+    },
+    {
+      "col": 1,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 135
+    },
+    {
+      "col": 5,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 220
+    },
+    {
+      "col": 6,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 168
+    },
+    {
+      "col": 1,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 249
+    },
+    {
+      "col": 2,
+      "row": 1,
+      "kind": "lemon"
+    },
+    {
+      "col": 3,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 204
+    },
+    {
+      "col": 4,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 200
+    },
+    {
+      "col": 5,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 90
+    },
+    {
+      "col": 2,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 73
+    },
+    {
+      "col": 3,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 92
+    },
+    {
+      "col": 4,
+      "row": 2,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 2,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 206
+    },
+    {
+      "col": 3,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 114
+    },
+    {
+      "col": 4,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 198
+    },
+    {
+      "col": 1,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 157
+    },
+    {
+      "col": 2,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 178
+    },
+    {
+      "col": 3,
+      "row": 4,
+      "kind": "lemon"
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 237
+    },
+    {
+      "col": 5,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 250
+    },
+    {
+      "col": 0,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 109
+    },
+    {
+      "col": 1,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 158
+    },
+    {
+      "col": 2,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 161
+    },
+    {
+      "col": 3,
+      "row": 5,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 4,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 72
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 160
+    },
+    {
+      "col": 6,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 246
+    }
+  ]
+}

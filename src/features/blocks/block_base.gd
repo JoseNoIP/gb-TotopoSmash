@@ -28,10 +28,12 @@ func setup(p_grid_pos: Vector2i, p_hp: int, p_cell_size: float) -> void:
 	_update_visual()
 
 
-## Golpe normal de una semilla. La cantidad de daño la decide el propio bloque
-## (Queso la sobreescribe a 2 vía damage_per_hit).
+## Golpe normal de una semilla. La cantidad de daño base la decide el propio bloque
+## (Queso la sobreescribe a 2 vía damage_per_hit), multiplicada por la mejora "Daño Base"
+## comprada en la tienda (MetaManager) — mínimo 1 para que un bloque siempre pueda morir.
 func take_damage() -> void:
-	_apply_damage(damage_per_hit)
+	var amount: int = maxi(1, roundi(damage_per_hit * MetaManager.get_damage_multiplier()))
+	_apply_damage(amount)
 
 
 ## Daño explícito (usado por la explosión en cruz del Frasco de Salsa).

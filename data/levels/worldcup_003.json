@@ -1,0 +1,136 @@
+{
+  "id": "worldcup_003",
+  "name": "LEVEL_NAME_GOAL",
+  "starting_seeds": 200,
+  "cells": [
+    {
+      "col": 0,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 223
+    },
+    {
+      "col": 6,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 125
+    },
+    {
+      "col": 0,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 282
+    },
+    {
+      "col": 6,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 278
+    },
+    {
+      "col": 0,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 69
+    },
+    {
+      "col": 6,
+      "row": 2,
+      "kind": "lemon"
+    },
+    {
+      "col": 0,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 254
+    },
+    {
+      "col": 6,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 213
+    },
+    {
+      "col": 0,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 243
+    },
+    {
+      "col": 1,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 157
+    },
+    {
+      "col": 2,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 175
+    },
+    {
+      "col": 3,
+      "row": 4,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 87
+    },
+    {
+      "col": 5,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 204
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 108
+    },
+    {
+      "col": 0,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 139
+    },
+    {
+      "col": 1,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 98
+    },
+    {
+      "col": 2,
+      "row": 5,
+      "kind": "lemon"
+    },
+    {
+      "col": 3,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 123
+    },
+    {
+      "col": 4,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 131
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 250
+    },
+    {
+      "col": 6,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 239
+    }
+  ]
+}

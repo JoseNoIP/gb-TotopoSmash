@@ -39,6 +39,7 @@ LANG_NAME_FR,Français,Français,Français,Français
 BTN_LEVELS,NIVELES,LEVELS,NÍVEIS,NIVEAUX
 BTN_INFINITY_MODE,MODO INFINITO,INFINITY MODE,MODO INFINITO,MODE INFINI
 TITLE_LEVEL_SELECT,ELIGE UN NIVEL,CHOOSE A LEVEL,ESCOLHA UM NÍVEL,CHOISIS UN NIVEAU
+TITLE_LEVEL_PACKS,PACKS ESPECIALES,SPECIAL PACKS,PACOTES ESPECIAIS,PACKS SPÉCIAUX
 BTN_BACK,VOLVER,BACK,VOLTAR,RETOUR
 LEVEL_FAILED_TITLE,NIVEL FALLIDO,LEVEL FAILED,NÍVEL FALHOU,NIVEAU ÉCHOUÉ
 LEVEL_COMPLETE_TITLE,¡NIVEL COMPLETADO!,LEVEL COMPLETE!,NÍVEL COMPLETO!,NIVEAU TERMINÉ !
@@ -50,3 +51,37 @@ LEVEL_NAME_097,Botella,Bottle,Garrafa,Bouteille
 LEVEL_NAME_098,Estrella,Star,Estrela,Étoile
 LEVEL_NAME_099,Diamante,Diamond,Diamante,Diamant
 LEVEL_NAME_100,Carita Feliz,Smiley Face,Carinha Feliz,Visage Souriant
+LEVEL_NAME_TREE,Árbol de Navidad,Christmas Tree,Árvore de Natal,Sapin de Noël
+LEVEL_NAME_GIFT,Regalo,Gift Box,Presente,Cadeau
+LEVEL_NAME_SNOWMAN,Muñeco de Nieve,Snowman,Boneco de Neve,Bonhomme de Neige
+LEVEL_NAME_CANDY_CANE,Bastón de Caramelo,Candy Cane,Bengala de Doces,Canne en Bonbon
+LEVEL_NAME_BELL,Campana,Bell,Sino,Cloche
+LEVEL_NAME_BALL,Balón,Soccer Ball,Bola,Ballon
+LEVEL_NAME_TROPHY,Trofeo,Trophy,Troféu,Trophée
+LEVEL_NAME_GOAL,Portería,Goal,Gol,But
+LEVEL_NAME_JERSEY,Camiseta,Jersey,Camisa,Maillot
+LEVEL_NAME_FLAG_CHECKER,Bandera a Cuadros,Checkered Flag,Bandeira Quadriculada,Drapeau à Damier
+LEVEL_NAME_WHISTLE,Silbato,Whistle,Apito,Sifflet
+LEVEL_NAME_BOOT,Botín,Cleat,Chuteira,Crampon
+LEVEL_NAME_STOPWATCH,Cronómetro,Stopwatch,Cronômetro,Chronomètre
+LEVEL_NAME_FLAG_WAVING,Bandera Ondeante,Waving Flag,Bandeira Ondulante,Drapeau Flottant
+LEVEL_NAME_MEDAL,Medalla,Medal,Medalha,Médaille
+TITLE_SHOP,TIENDA,SHOP,LOJA,BOUTIQUE
+LABEL_GOLD,Oro: %d,Gold: %d,Ouro: %d,Or : %d
+TITLE_CHARACTERS,PERSONAJES,CHARACTERS,PERSONAGENS,PERSONNAGES
+UPGRADE_SEEDS_NAME,Semillas Extra,Extra Seeds,Sementes Extras,Graines Extra
+UPGRADE_DAMAGE_NAME,Daño Base,Base Damage,Dano Base,Dégâts de Base
+UPGRADE_SPEED_NAME,Velocidad,Speed,Velocidade,Vitesse
+LABEL_UPGRADE_LEVEL,Nivel %d/%d,Level %d/%d,Nível %d/%d,Niveau %d/%d
+LABEL_MAX_LEVEL,MÁX,MAX,MÁX,MAX
+BTN_BUY_COST,Comprar (%d),Buy (%d),Comprar (%d),Acheter (%d)
+LABEL_CHARACTER_SELECTED,%s ✓,%s ✓,%s ✓,%s ✓
+CHARACTER_CLASSIC,Clásico,Classic,Clássico,Classique
+CHARACTER_TURQUOISE,Turquesa,Turquoise,Turquesa,Turquoise
+CHARACTER_PINK,Rosa Mexicano,Mexican Pink,Rosa Mexicano,Rose Mexicain
+CHARACTER_GOLD,Dorado,Golden,Dourado,Doré
+TITLE_PACK_SELECT,PACKS ESPECIALES,SPECIAL PACKS,PACOTES ESPECIAIS,PACKS SPÉCIAUX
+HINT_PACK_SELECT,Niveles especiales con figuras temáticas,Special levels with themed shapes,Níveis especiais com formas temáticas,Niveaux spéciaux avec des formes à thème
+LABEL_PACK_CARD,%s (%d niveles),%s (%d levels),%s (%d níveis),%s (%d niveaux)
+PACK_HOLIDAY_NAME,Pack Navideño,Holiday Pack,Pacote Natalino,Pack de Noël
+PACK_WORLDCUP_NAME,Pack Mundial,World Cup Pack,Pacote Copa do Mundo,Pack Coupe du Monde

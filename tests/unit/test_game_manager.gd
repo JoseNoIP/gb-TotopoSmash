@@ -3,6 +3,8 @@ extends GutTest
 ## de tests (los autoloads no se recrean por test), así que before_each() lo resetea con
 ## start_game() para evitar contaminación entre casos.
 
+const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
+
 
 func before_each() -> void:
 	GameManager.start_game()
@@ -117,3 +119,33 @@ func test_level_cleared_ignored_when_not_playing() -> void:
 	assert_eq(GameManager.get_state(), state_before, "level_cleared no debe actuar fuera de PLAYING")
 	assert_signal_not_emitted(EventBus, "level_completed")
 	GameManager.start_game()
+
+
+## GOLD_PER_SCORE_POINT=0.05: hace falta score >= 20 para ganar al menos 1 de oro.
+func test_board_reached_bottom_awards_gold_based_on_score() -> void:
+	GameManager.add_score(200)
+	var gold_before: int = MetaManager.get_gold()
+	watch_signals(EventBus)
+	EventBus.board_reached_bottom.emit()
+	var expected_gold: int = UpgradeShopGd.gold_earned_for_score(200)
+	assert_eq(MetaManager.get_gold(), gold_before + expected_gold)
+	assert_signal_emitted(EventBus, "gold_changed")
+
+
+func test_level_cleared_awards_gold_based_on_score() -> void:
+	GameManager.start_game("level_001")
+	GameManager.add_score(500)
+	var gold_before: int = MetaManager.get_gold()
+	watch_signals(EventBus)
+	EventBus.level_cleared.emit("level_001")
+	var expected_gold: int = UpgradeShopGd.gold_earned_for_score(500)
+	assert_eq(MetaManager.get_gold(), gold_before + expected_gold)
+	assert_signal_emitted(EventBus, "gold_changed")
+	GameManager.start_game()
+
+
+func test_board_reached_bottom_does_not_emit_gold_changed_when_score_too_low_for_any_gold() -> void:
+	## score 0 (antes de add_score) -> gold_earned_for_score(0) == 0 -> no hace falta persistir nada.
+	watch_signals(EventBus)
+	EventBus.board_reached_bottom.emit()
+	assert_signal_not_emitted(EventBus, "gold_changed")

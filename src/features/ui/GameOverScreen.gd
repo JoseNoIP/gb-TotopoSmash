@@ -7,6 +7,8 @@ extends CanvasLayer
 signal restart_requested
 signal main_menu_requested
 
+const ModalStyleGd := preload("res://src/shared/modal_style.gd")
+
 var _panel: PanelContainer = PanelContainer.new()
 var _title_label: Label = Label.new()
 var _score_label: Label = Label.new()
@@ -29,6 +31,9 @@ func _build_ui() -> void:
 	var origin_y: float = (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	_panel.position = Vector2(origin_x, origin_y)
 	_panel.set_size(Vector2(panel_w, panel_h))
+	## Fondo sólido/opaco — ver modal_style.gd (bug real: PanelContainer sin esto es
+	## semi-transparente y el texto se mezcla con lo que hay detrás).
+	_panel.add_theme_stylebox_override(&"panel", ModalStyleGd.opaque_panel())
 	add_child(_panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()

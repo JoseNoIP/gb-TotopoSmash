@@ -136,14 +136,18 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
 - **HP (niveles-figura, `cells`)**: `totopo`/`salsa`/`triangle` con HP bajo fijo (1-3) — el
   objetivo es la satisfacción de despejar la forma, no la dificultad. NO usar las escalas
   de abajo aquí.
-- **HP (dificultad progresiva, `row_queue`)**: `tools/gen_levels.py::totopo_hp_for_level()`/
-  `queso_hp_for_level()` — escala DIRECTO con el número de nivel (no con `effective_wave`,
-  que sigue gobernando solo qué tipos de bloque pueden aparecer): nivel 1 = 50 golpes,
-  nivel 100 = 300, sin tope superior más allá de eso (pedido explícito del usuario, ver
-  idea-base.md). Queso siempre 1.5x lo que dé `totopo_hp_for_level()` en ese nivel (misma
-  proporción que `wave_scaling.gd`). `starting_seeds_for_level()` escala con la misma curva
-  para que la cantidad de semillas siga siendo consistente con el HP — un nivel nuevo de
-  este tipo debe usar ambas funciones juntas, nunca HP alto con semillas bajas a mano.
+- **HP (dificultad progresiva, `row_queue`)**: `tools/gen_levels.py::totopo_hp_max_for_level()`/
+  `totopo_hp_min_for_level()` — escala DIRECTO con el número de nivel (no con
+  `effective_wave`, que sigue gobernando solo qué tipos de bloque pueden aparecer): nivel 1
+  va de 10 a 50 golpes, nivel 100 de 60 a 300, sin tope superior más allá de eso (pedido
+  explícito del usuario, ver idea-base.md). **Cada bloque sortea su propio HP dentro de ese
+  rango** vía `random_totopo_hp(level_number, rng)` — NUNCA el mismo valor fijo repetido en
+  todos los bloques del nivel (corrección explícita del usuario: la primera versión hacía
+  justo eso y no era lo pedido). Queso siempre 1.5x el HP sorteado de ESE bloque
+  (`queso_hp_for_base()`, misma proporción que `wave_scaling.gd`), no un valor de queso
+  fijo aparte. `starting_seeds_for_level()` escala con la misma curva para que la cantidad
+  de semillas siga siendo consistente con el HP — un nivel nuevo de este tipo debe usar
+  estas funciones juntas, nunca HP alto con semillas bajas a mano.
 - **Variedad**: sembrar `lemon`/`seed_extra` en ~10-15% de las celdas destructibles (nunca en TODAS — pierden gracia).
 - **`stone`**: NUNCA usarlo salvo que el usuario lo pida explícitamente — es indestructible y bloquea el clear si se coloca sin cuidado (el nivel nunca se puede ganar si hay piedra bloqueando el único camino... en realidad la piedra no cuenta para el clear, así que no bloquea el WIN, pero si "atrapa" visualmente otros bloques detrás de un patrón imposible de alcanzar por geometría, sí podría volver el nivel injugable en la práctica).
 - **`starting_seeds`**: generoso para niveles-figura con muchas celdas (14-20); más ajustado para niveles de dificultad progresiva.
@@ -154,10 +158,10 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
 
 1. Elegir un `id`:
    - Roster principal: `level_0NN` (siguiente número libre en `manifest.json`).
-   - Pack temático (ej. navideño): namespace propio, `holiday_001`, `holiday_002`, ... — no reutilizar `level_0NN` para packs, para no chocar con el roster principal si crece.
+   - Pack temático (ej. navideño): namespace propio, `holiday_001`, `holiday_002`, ... — no reutilizar `level_0NN` para packs, para no chocar con el roster principal si crece. **`LevelSelectScreen._is_pack_level()` decide qué es un pack por este prefijo** — cualquier id que NO empiece con `level_` se muestra en la sección "PACKS ESPECIALES" y queda SIEMPRE desbloqueado (sin depender de `highest_level_unlocked`, ver regla siguiente).
 2. Escribir `data/levels/<id>.json` directo con `Write` (JSON con indentación de 2 espacios, UTF-8, sin BOM — igual que los generados por `tools/gen_levels.py`).
 3. Si el nivel tiene `name`, agregar la key de traducción a `assets/translations/translations.txt` (es/en/pt_BR/fr — ver skill `/mobile-i18n` para el formato CSV con comillas si el texto lleva comas).
-4. Agregar el `id` a `data/levels/manifest.json` en la posición pedida (default: al final del array). **Nunca regenerar el manifiesto completo con `tools/gen_levels.py`** si ya tiene niveles agregados a mano por esta skill — ese script sobreescribe `manifest.json` desde su propia lista interna (mismo principio que la regla #36 de `gen_assets.py` sobre no correr el generador completo para un solo asset).
+4. Agregar el `id` a `data/levels/manifest.json` en la posición pedida (default: al final del array). `tools/gen_levels.py::main()` ya preserva cualquier id que no empiece con `level_` al regenerarse (bug real corregido: antes sobreescribía el manifiesto completo y borraba los packs agregados a mano) — sigue siendo buena práctica no correrlo sin necesidad, pero ya no destruye packs existentes si se corre.
 
 ---
 

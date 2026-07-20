@@ -75,8 +75,7 @@ func set_language(value: String) -> void:
 	save()
 
 
-# --- Puntuación / progreso (Totopo Smash no tiene metagame de oro/upgrades: el GDD
-# solo define progresión infinita por oleadas dentro de una run — ver GDD sección 4) ---
+# --- Puntuación / progreso ---
 func get_best_score() -> int:
 	return _data.get("best_score", 0) as int
 

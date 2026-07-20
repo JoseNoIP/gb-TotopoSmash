@@ -40,7 +40,8 @@ func get_phase() -> Phase:
 
 
 ## Modo Nivel: starting_seeds viene del JSON del nivel (LevelManager ya lo cacheó, no
-## se re-parsea); Modo Infinito: Constants.MOLCAJETE_START_SEEDS de siempre.
+## se re-parsea); Modo Infinito: Constants.MOLCAJETE_START_SEEDS de siempre. En ambos casos
+## se suma el bono de la mejora "Semillas Extra" comprada en la tienda (MetaManager).
 func _on_game_started() -> void:
 	var level_id: String = GameManager.get_current_level_id()
 	if level_id.is_empty():
@@ -48,6 +49,7 @@ func _on_game_started() -> void:
 	else:
 		var data: Dictionary = LevelManager.get_level_data(level_id)
 		_seed_count = int(data.get("starting_seeds", Constants.MOLCAJETE_START_SEEDS))
+	_seed_count += MetaManager.get_bonus_seeds()
 	_seeds_to_fire = 0
 	_active_seeds = 0
 	_fire_timer.stop()
@@ -81,7 +83,8 @@ func _fire_one_seed() -> void:
 		_fire_timer.stop()
 		return
 	_seeds_to_fire -= 1
-	_spawn_seed(_origin, _fire_direction, Constants.SEED_SPEED)
+	var speed: float = Constants.SEED_SPEED * MetaManager.get_seed_speed_multiplier()
+	_spawn_seed(_origin, _fire_direction, speed)
 	if _seeds_to_fire <= 0:
 		_fire_timer.stop()
 		if _active_seeds > 0:

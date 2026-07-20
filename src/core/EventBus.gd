@@ -62,3 +62,8 @@ signal seed_extra_collected(new_total: int)
 # --- Score ---
 signal score_changed(new_score: int)
 signal high_score_updated(new_high_score: int)
+
+# --- Mejoras / oro / personajes (ver src/features/meta/upgrade_shop.gd) ---
+signal gold_changed(new_total: int)
+signal upgrade_purchased(upgrade_id: String, new_level: int)
+signal character_selected(character_id: String)

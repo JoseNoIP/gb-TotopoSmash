@@ -19,12 +19,14 @@ Dos escalas de dificultad INDEPENDIENTES, a propósito:
 - `effective_wave` (portada de src/features/board/wave_scaling.gd) sigue gobernando SOLO
   qué tipos de bloque pueden aparecer y con qué probabilidad — introducción gradual de
   queso/triángulo/salsa (oleada 6+) y piedra (oleada 16+), igual que Modo Infinito.
-- `queso_hp_for_level()`/`totopo_hp_for_level()` (pedido explícito del usuario) escalan el
-  HP de cada bloque directamente con el NÚMERO DE NIVEL, no con `effective_wave`: nivel 1
-  ya exige hasta 50 golpes, nivel 100 hasta 300, sigue creciendo igual más allá de 100 (sin
-  tope). `starting_seeds_for_level()` crece con la misma curva para compensar — sin esto,
-  los niveles bajos serían virtualmente imposibles de limpiar con solo ~12 semillas contra
-  bloques de 50 golpes.
+- `totopo_hp_max_for_level()`/`totopo_hp_min_for_level()` (pedido explícito del usuario)
+  escalan el HP directamente con el NÚMERO DE NIVEL, no con `effective_wave`: nivel 1 va de
+  10 a 50 golpes, nivel 100 de 60 a 300, sigue creciendo igual más allá de 100 (sin tope).
+  CADA bloque sortea su propio HP dentro de ese rango (`random_totopo_hp()`, determinista
+  vía la seed del nivel) — no todos los bloques del nivel comparten un solo valor fijo.
+  `starting_seeds_for_level()` crece con la misma curva para compensar — sin esto, los
+  niveles bajos serían virtualmente imposibles de limpiar con solo ~12 semillas contra
+  bloques de hasta 50 golpes.
 
 Los niveles-figura (95-100) se dibujan a mano en un grid ASCII de 7 columnas y se
 convierten a `cells` absolutas (toda la forma visible desde el inicio), en SILUETA (solo
@@ -92,26 +94,43 @@ def total_rows_for_level(level_number: int) -> int:
 
 
 # --- HP por bloque: escala con el NÚMERO DE NIVEL, no con effective_wave (pedido
-# explícito del usuario) — nivel 1 ya exige hasta 50 golpes, nivel 100 hasta 300, y sigue
-# creciendo igual de ahí en adelante (sin tope, a diferencia de total_rows_for_level).
+# explícito del usuario) — nivel 1 va de 10 a 50 golpes (VARIADO, no el mismo valor en
+# todos los bloques), nivel 100 va de 60 a 300, y sigue creciendo igual de ahí en adelante
+# (sin tope, a diferencia de total_rows_for_level). El HP de cada bloque se sortea (con la
+# misma seed por nivel, así que sigue siendo 100% determinista/reproducible) dentro de ese
+# rango — no todos los bloques del nivel comparten un solo valor fijo.
 # La escala ancla en TOTOPO, no en queso: queso/triángulo/salsa recién desbloquean en
 # oleada 6+ (nivel 11+, ver pick_kind), así que el nivel 1 solo tiene totopos — si el tope
 # de 50 se aplicara a queso, el nivel 1 real nunca llegaría a mostrarlo. Igual que en
 # wave_scaling.gd, totopo ES la escala base y queso es un múltiplo de esa base (1.5x).
-TOTOPO_HP_CAP_START: float = 50.0
-TOTOPO_HP_CAP_AT_100: float = 300.0
-TOTOPO_HP_CAP_STEP: float = (TOTOPO_HP_CAP_AT_100 - TOTOPO_HP_CAP_START) / 99.0  # ~2.525/nivel
+TOTOPO_HP_MAX_START: float = 50.0
+TOTOPO_HP_MAX_AT_100: float = 300.0
+TOTOPO_HP_MAX_STEP: float = (TOTOPO_HP_MAX_AT_100 - TOTOPO_HP_MAX_START) / 99.0  # ~2.525/nivel
+TOTOPO_HP_MIN_RATIO: float = 0.2  # HP mínimo = este % del HP máximo del nivel (10/50 en nivel 1)
 
 
-def totopo_hp_for_level(level_number: int) -> int:
-    """Totopo/salsa/triángulo comparten este HP — el tope real y visible desde el nivel 1."""
-    return max(1, round(TOTOPO_HP_CAP_START + (level_number - 1) * TOTOPO_HP_CAP_STEP))
+def totopo_hp_max_for_level(level_number: int) -> int:
+    """Tope real de golpes del nivel (lo que se ve en el bloque más resistente)."""
+    return max(1, round(TOTOPO_HP_MAX_START + (level_number - 1) * TOTOPO_HP_MAX_STEP))
 
 
-def queso_hp_for_level(level_number: int) -> int:
-    """Queso = 1.5x totopo (misma proporción que wave_scaling.gd) — no aparece hasta la
-    oleada 6+ (nivel 11+), pero cuando lo hace queda más resistente, como siempre."""
-    return max(1, round(totopo_hp_for_level(level_number) * 1.5))
+def totopo_hp_min_for_level(level_number: int) -> int:
+    return max(1, round(totopo_hp_max_for_level(level_number) * TOTOPO_HP_MIN_RATIO))
+
+
+def random_totopo_hp(level_number: int, rng: random.Random) -> int:
+    """HP de UN bloque totopo/salsa/triángulo — sorteado dentro del rango del nivel, no un
+    valor fijo repetido en todos los bloques. Determinista: `rng` ya trae la seed del nivel."""
+    lo = totopo_hp_min_for_level(level_number)
+    hi = totopo_hp_max_for_level(level_number)
+    return rng.randint(lo, hi)
+
+
+def queso_hp_for_base(base_hp: int) -> int:
+    """Queso = 1.5x el HP base sorteado para ESE bloque (misma proporción que
+    wave_scaling.gd) — no aparece hasta la oleada 6+ (nivel 11+), pero cuando lo hace
+    también varía bloque a bloque, igual que totopo."""
+    return max(1, round(base_hp * 1.5))
 
 
 # --- Semillas iniciales: deben crecer en proporción al HP para que el nivel siga siendo
@@ -134,11 +153,9 @@ def generate_procedural_level(level_number: int) -> dict:
     nunca coloca todo el contenido de una vez (eso es lo que hacen las figuras/`cells`)."""
     rng = random.Random(1000 + level_number)
     # effective_wave sigue gobernando solo qué tipos de bloque pueden aparecer (ver arriba)
-    # — el HP ya no depende de esto, ver queso_hp_for_level()/totopo_hp_for_level().
+    # — el HP ya no depende de esto, se sortea por bloque con random_totopo_hp().
     effective_wave = max(1, (level_number + 1) // 2)
     total_rows = total_rows_for_level(level_number)
-    queso_hp = queso_hp_for_level(level_number)
-    totopo_hp = totopo_hp_for_level(level_number)
 
     row_queue = []
     for _ in range(total_rows):
@@ -149,11 +166,11 @@ def generate_procedural_level(level_number: int) -> dict:
                 continue
             cell = {"col": col, "kind": kind}
             if kind == "queso":
-                cell["hp"] = queso_hp
+                cell["hp"] = queso_hp_for_base(random_totopo_hp(level_number, rng))
             elif kind in ("totopo", "salsa"):
-                cell["hp"] = totopo_hp
+                cell["hp"] = random_totopo_hp(level_number, rng)
             elif kind == "triangle":
-                cell["hp"] = totopo_hp
+                cell["hp"] = random_totopo_hp(level_number, rng)
                 cell["corner"] = rng.randint(0, 3)
             row_cells.append(cell)
         row_queue.append(row_cells)
@@ -315,10 +332,24 @@ def main() -> None:
         mode = "relleno" if fill else "silueta"
         print(f"  + {path} ({shape_id}, {mode}, {len(level['cells'])} celdas)")
 
+    ## Bug real encontrado: este script sobreescribía manifest.json completo, borrando las
+    ## entradas de los packs temáticos (holiday_00N/worldcup_00N) que gen_holiday_pack.py /
+    ## gen_worldcup_pack.py ya habían agregado — sus archivos .json seguían en disco pero
+    ## dejaban de estar en el manifiesto (invisibles en el juego) en cuanto se corría este
+    ## script de nuevo. Fix: preservar cualquier id existente que NO empiece con "level_"
+    ## (es un pack, no algo que este script genere) al final de la lista regenerada.
     manifest_path = os.path.join(out_dir, "manifest.json")
+    existing_pack_ids = []
+    if os.path.exists(manifest_path):
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            existing_manifest = json.load(f)
+        existing_pack_ids = [
+            lid for lid in existing_manifest.get("levels", []) if not lid.startswith("level_")
+        ]
+    level_ids.extend(existing_pack_ids)
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump({"levels": level_ids}, f, ensure_ascii=False, indent=2)
-    print(f"\n  + {manifest_path} ({len(level_ids)} niveles)")
+    print(f"\n  + {manifest_path} ({len(level_ids)} niveles, {len(existing_pack_ids)} de packs preservados)")
 
 
 if __name__ == "__main__":
