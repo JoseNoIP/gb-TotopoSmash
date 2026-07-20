@@ -105,9 +105,13 @@ func _on_board_reached_bottom() -> void:
 	EventBus.game_over.emit(_score, _wave)
 
 
-func _on_level_cleared(level_id: String) -> void:
+## `turns_used` > 0 solo en niveles `static` (ver BoardManager) — 0 significa "no aplica"
+## (Modo Infinito y Modo Nivel normal nunca reportan turnos, ver EventBus.level_cleared).
+func _on_level_cleared(level_id: String, turns_used: int) -> void:
 	if _state != State.PLAYING:
 		return
+	## Bono ANTES de cambiar el estado a LEVEL_COMPLETE — add_score() exige State.PLAYING.
+	_apply_par_turns_bonus(level_id, turns_used)
 	_state = State.LEVEL_COMPLETE
 	LevelManager.mark_level_completed(level_id)
 	var is_new_best: bool = SaveManager.set_best_score_if_higher(_score)
@@ -115,6 +119,21 @@ func _on_level_cleared(level_id: String) -> void:
 	if is_new_best:
 		EventBus.high_score_updated.emit(_score)
 	EventBus.level_completed.emit(level_id, _score)
+
+
+## Bono de score (pedido explícito del usuario, "recompensar hacerlo en menos turnos"):
+## un nivel `static` que define `par_turns` y se limpia en <= par_turns multiplica el score
+## final por Constants.STATIC_LEVEL_PAR_BONUS_MULTIPLIER — más oro (vía _award_gold_for_run)
+## y mejor chance de nuevo mejor puntaje, sin inventar una segunda moneda/sistema de
+## estrellas nuevo.
+func _apply_par_turns_bonus(level_id: String, turns_used: int) -> void:
+	if turns_used <= 0:
+		return
+	var par_turns: Variant = LevelManager.get_level_data(level_id).get("par_turns")
+	if par_turns == null or int(par_turns) <= 0 or turns_used > int(par_turns):
+		return
+	var boosted_score: int = roundi(_score * Constants.STATIC_LEVEL_PAR_BONUS_MULTIPLIER)
+	add_score(boosted_score - _score)
 
 
 ## Oro otorgado siempre que la partida termina (victoria, derrota o nivel fallido — sin

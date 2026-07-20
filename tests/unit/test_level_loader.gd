@@ -96,3 +96,4 @@ func test_validate_level_accepts_stone_and_icons_without_hp() -> void:
 	]
 	var errors: Array = LevelLoaderGd.validate_level(data, "level_test")
 	assert_eq(errors, [])
+

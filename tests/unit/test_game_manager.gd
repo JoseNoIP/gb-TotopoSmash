@@ -104,7 +104,7 @@ func test_level_cleared_sets_level_complete_state_and_emits_level_completed() ->
 	GameManager.start_game("level_001")
 	GameManager.add_score(77)
 	watch_signals(EventBus)
-	EventBus.level_cleared.emit("level_001")
+	EventBus.level_cleared.emit("level_001", 0)
 	assert_eq(GameManager.get_state(), GameManager.State.LEVEL_COMPLETE)
 	assert_signal_emitted_with_parameters(EventBus, "level_completed", ["level_001", 77])
 	GameManager.start_game()
@@ -115,7 +115,7 @@ func test_level_cleared_ignored_when_not_playing() -> void:
 	EventBus.board_reached_bottom.emit()  # fuerza GAME_OVER
 	var state_before: int = GameManager.get_state()
 	watch_signals(EventBus)
-	EventBus.level_cleared.emit("level_001")
+	EventBus.level_cleared.emit("level_001", 0)
 	assert_eq(GameManager.get_state(), state_before, "level_cleared no debe actuar fuera de PLAYING")
 	assert_signal_not_emitted(EventBus, "level_completed")
 	GameManager.start_game()
@@ -137,7 +137,7 @@ func test_level_cleared_awards_gold_based_on_score() -> void:
 	GameManager.add_score(500)
 	var gold_before: int = MetaManager.get_gold()
 	watch_signals(EventBus)
-	EventBus.level_cleared.emit("level_001")
+	EventBus.level_cleared.emit("level_001", 0)
 	var expected_gold: int = UpgradeShopGd.gold_earned_for_score(500)
 	assert_eq(MetaManager.get_gold(), gold_before + expected_gold)
 	assert_signal_emitted(EventBus, "gold_changed")
@@ -149,3 +149,4 @@ func test_board_reached_bottom_does_not_emit_gold_changed_when_score_too_low_for
 	watch_signals(EventBus)
 	EventBus.board_reached_bottom.emit()
 	assert_signal_not_emitted(EventBus, "gold_changed")
+

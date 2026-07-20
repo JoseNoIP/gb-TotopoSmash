@@ -14,6 +14,7 @@ var block_type: String = "totopo"
 
 var _hp_label: Label = Label.new()
 var _visual: CanvasItem = null
+var _cell_size: float = 0.0
 
 
 ## Board llama esto justo después de instanciar el bloque.
@@ -21,6 +22,7 @@ func setup(p_grid_pos: Vector2i, p_hp: int, p_cell_size: float) -> void:
 	grid_pos = p_grid_pos
 	max_hp = p_hp
 	current_hp = p_hp
+	_cell_size = p_cell_size
 	collision_layer = Constants.LAYER_BLOCKS
 	collision_mask = 0
 	_build_shape(p_cell_size)
@@ -112,8 +114,13 @@ func _build_hp_label(cell_size: float, center_offset: Vector2) -> void:
 	add_child(_hp_label)
 
 
+## El número de HP se oculta en bloques muy chicos (niveles `static` de alta resolución,
+## ver BoardManager — celdas de ~9px en vez de los ~56px normales): a ese tamaño el texto
+## es ilegible y solo agrega ruido visual, arruinando el propósito de "apreciar la figura"
+## (pedido explícito del usuario tras ver el resultado real con captura de pantalla).
 func _update_visual() -> void:
-	_hp_label.text = "" if is_indestructible else str(current_hp)
+	var too_small_to_read: bool = _cell_size > 0.0 and _cell_size < Constants.UI_MIN_READABLE_CELL_SIZE
+	_hp_label.text = "" if (is_indestructible or too_small_to_read) else str(current_hp)
 
 
 ## Hook de color — usado como fallback si _get_texture_path() no existe todavía,

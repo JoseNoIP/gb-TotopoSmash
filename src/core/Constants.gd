@@ -48,6 +48,7 @@ const BLOCK_SALSA_EXPLOSION_DAMAGE: int = 10
 const BLOCK_SALSA_WARNING_HP: int = 1  ## HP en el que empieza a parpadear antes de estallar
 const WAVE_TOTOPO_HP_MULTIPLIER: float = 1.0  ## N = O
 const WAVE_QUESO_HP_MULTIPLIER: float = 1.5  ## N = ceil(O * 1.5)
+const LASER_DAMAGE: int = 25  ## power-up láser: daño a TODA la fila/columna al tocarlo
 
 # --- Introducción de complejidad por oleada (GDD sección 4.2) ---
 const WAVE_INTRO_END: int = 5  ## 1-5: solo totopos, vida 1-5
@@ -87,6 +88,7 @@ const COLOR_SALSA: Color = Color(0.831, 0.129, 0.129)  ## rojo brillante
 const COLOR_STONE: Color = Color(0.42, 0.42, 0.45)  ## piedra de molcajete
 const COLOR_LEMON: Color = Color(0.667, 0.925, 0.239)  ## verde brillante
 const COLOR_SEED_EXTRA: Color = Color(1.0, 0.878, 0.313)  ## semilla brillante
+const COLOR_LASER: Color = Color(0.9, 0.15, 0.85)  ## magenta — power-up láser
 const COLOR_SEED_TRAIL: Color = Color(0.31, 0.86, 0.44)  ## semillas verdes
 const COLOR_MOLCAJETE: Color = Color(0.35, 0.24, 0.16)  ## piedra volcánica
 const COLOR_HUD_TEXT: Color = Color(0.95, 0.95, 0.95)
@@ -95,6 +97,9 @@ const COLOR_DANGER_LINE: Color = Color(0.9, 0.2, 0.2, 0.8)  ## línea de la fila
 
 # --- UI: tamaños mínimos ---
 const UI_MIN_FONT_SIZE: int = 18
+## Por debajo de esto, el número de HP de un bloque se oculta (niveles `static` de alta
+## resolución) — a UI_MIN_FONT_SIZE=18 el texto ya no entra legible en un bloque más chico.
+const UI_MIN_READABLE_CELL_SIZE: float = 20.0
 
 # --- VFX (migajas / salpicadura, sin assets — GPUParticles2D procedural) ---
 const VFX_CRUMB_AMOUNT: int = 14
@@ -122,6 +127,10 @@ const CHARACTERS: Array = [
 	{"id": "pink", "name_key": "CHARACTER_PINK", "color": Color(0.86, 0.27, 0.55), "cost": 350},
 	{"id": "gold", "name_key": "CHARACTER_GOLD", "color": Color(0.83, 0.68, 0.21), "cost": 500},
 ]
+
+# --- Niveles "static" (figuras de alta resolución, sin condición de derrota — ver
+# BoardManager/level_loader.gd) ---
+const STATIC_LEVEL_PAR_BONUS_MULTIPLIER: float = 1.5  ## ×score si se limpia en <= par_turns
 
 # --- Packs temáticos de niveles (ver PackSelectScreen/PackLevelsScreen/LevelSelectScreen) ---
 ## Registro central de packs — un nivel nuevo agregado por /level-designer con un prefijo

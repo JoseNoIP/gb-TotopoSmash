@@ -56,16 +56,9 @@ LEVEL_NAME_GIFT,Regalo,Gift Box,Presente,Cadeau
 LEVEL_NAME_SNOWMAN,Muñeco de Nieve,Snowman,Boneco de Neve,Bonhomme de Neige
 LEVEL_NAME_CANDY_CANE,Bastón de Caramelo,Candy Cane,Bengala de Doces,Canne en Bonbon
 LEVEL_NAME_BELL,Campana,Bell,Sino,Cloche
-LEVEL_NAME_BALL,Balón,Soccer Ball,Bola,Ballon
-LEVEL_NAME_TROPHY,Trofeo,Trophy,Troféu,Trophée
-LEVEL_NAME_GOAL,Portería,Goal,Gol,But
-LEVEL_NAME_JERSEY,Camiseta,Jersey,Camisa,Maillot
-LEVEL_NAME_FLAG_CHECKER,Bandera a Cuadros,Checkered Flag,Bandeira Quadriculada,Drapeau à Damier
-LEVEL_NAME_WHISTLE,Silbato,Whistle,Apito,Sifflet
-LEVEL_NAME_BOOT,Botín,Cleat,Chuteira,Crampon
-LEVEL_NAME_STOPWATCH,Cronómetro,Stopwatch,Cronômetro,Chronomètre
-LEVEL_NAME_FLAG_WAVING,Bandera Ondeante,Waving Flag,Bandeira Ondulante,Drapeau Flottant
-LEVEL_NAME_MEDAL,Medalla,Medal,Medalha,Médaille
+LEVEL_NAME_SOCCER_FIELD,Cancha de Fútbol,Soccer Field,Campo de Futebol,Terrain de Football
+LEVEL_NAME_TROPHY_DETAILED,Copa del Mundo,World Cup Trophy,Taça do Mundo,Coupe du Monde
+LEVEL_NAME_GOL_TEXT,¡GOL!,GOAL!,GOL!,BUT !
 TITLE_SHOP,TIENDA,SHOP,LOJA,BOUTIQUE
 LABEL_GOLD,Oro: %d,Gold: %d,Ouro: %d,Or : %d
 TITLE_CHARACTERS,PERSONAJES,CHARACTERS,PERSONAGENS,PERSONNAGES

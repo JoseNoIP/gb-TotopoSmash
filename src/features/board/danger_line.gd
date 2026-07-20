@@ -10,6 +10,7 @@ extends Node2D
 ## si el árbol se pausa, ya que no usa PROCESS_MODE_ALWAYS).
 
 const GridMathGd := preload("res://src/shared/grid_math.gd")
+const LevelLoaderGd := preload("res://src/features/levels/level_loader.gd")
 
 const GLOW_HEIGHT: float = 34.0
 const GLOW_BANDS: int = 10
@@ -28,7 +29,21 @@ func _ready() -> void:
 	var cell_size: float = GridMathGd.cell_size(Constants.DESIGN_WIDTH)
 	var row_center_y: float = GridMathGd.row_to_y(Constants.MOLCAJETE_ROW, Constants.DESIGN_WIDTH)
 	_line_y = row_center_y - cell_size * 0.5
+	EventBus.game_started.connect(_on_game_started)
 	queue_redraw()
+
+
+## Un nivel `static` (ver BoardManager) no tiene condición de derrota — los bloques nunca
+## se acercan al molcajete, así que esta línea (fija en Constants.MOLCAJETE_ROW, ajena a la
+## grilla propia del nivel static) solo confundiría cortando la figura a la mitad sin
+## significar nada real. Se oculta por completo para esos niveles.
+func _on_game_started() -> void:
+	var level_id: String = GameManager.get_current_level_id()
+	var is_static: bool = (
+		not level_id.is_empty()
+		and LevelLoaderGd.is_static_level(LevelManager.get_level_data(level_id))
+	)
+	visible = not is_static
 
 
 func _process(delta: float) -> void:
