@@ -53,7 +53,7 @@ Leer:
 | `cells` | Array disperso — solo listar celdas ocupadas, no hace falta rellenar vacíos. |
 | `cells[].col` | Entero en `[0, 6]`. |
 | `cells[].row` | Entero en `[0, 7]`. **NUNCA 8** (`Constants.MOLCAJETE_ROW`) — sería game over instantáneo en el primer turno. |
-| `cells[].kind` | Uno de `KNOWN_KINDS` en `cell_factory.gd`: `totopo`, `queso`, `salsa`, `stone`, `triangle`, `lemon`, `seed_extra`. **Nunca inventar un kind nuevo sin agregar antes su constante en `wave_scaling.gd` + su caso en `cell_factory.gd` + su clase de bloque/ícono.** |
+| `cells[].kind` | Uno de `KNOWN_KINDS` en `cell_factory.gd`: `totopo`, `queso`, `salsa`, `stone`, `triangle`, `lemon`, `seed_extra`, `laser`. **Nunca inventar un kind nuevo sin agregar antes su constante en `wave_scaling.gd` + su caso en `cell_factory.gd` + su clase de bloque/ícono.** |
 | `cells[].hp` | Requerido para `totopo`/`queso`/`salsa`/`triangle`. Ausente/ignorado en `stone`/`lemon`/`seed_extra`. |
 | `cells[].corner` | Requerido SOLO para `triangle`, entero `[0,3]` = **esquina que se RECORTA** (0=arriba-izq, 1=arriba-der, 2=abajo-der, 3=abajo-izq) — no la punta. Si no importa la orientación, usar cualquier valor fijo; no hay penalización por repetir el mismo corner en varias celdas. |
 
@@ -85,6 +85,35 @@ que revela una fila nueva por turno igual que Modo Infinito pero con contenido f
 Un nivel puede combinar ambos (`cells` para algo fijo de fondo + `row_queue` para
 contenido que va bajando), pero lo normal es usar solo uno: `cells` para figuras,
 `row_queue` para dificultad progresiva. Al menos uno de los dos debe tener contenido.
+
+**Tercer mecanismo: `"static": true`** — figuras de ALTA resolución (cientos de bloques,
+grilla propia más angosta que el tablero normal). Incompatible con `row_queue`.
+
+```json
+{
+  "id": "worldcup_004",
+  "static": true,
+  "grid_cols": 30,
+  "starting_seeds": 50,
+  "par_turns": 80,
+  "cells": [
+    { "col": 12, "row": 3, "kind": "totopo", "hp": 120 },
+    { "col": 5, "row": 40, "kind": "laser", "orientation": "vertical" }
+  ]
+}
+```
+
+| Campo | Regla |
+|---|---|
+| `static` | `true` activa el modo — bloques que NUNCA se desplazan y sin condición de derrota (se gana despejando todo lo destructible, sin importar los turnos). |
+| `grid_cols` | **Obligatorio** si `static`. Entero > 0 — número de columnas de la grilla PROPIA de este nivel (nada que ver con `Constants.GRID_COLS=7`; entre más grande, más bloques más chicos caben en el mismo ancho de pantalla). `tools/gen_worldcup_pack.py` usa 22-50 según la forma. |
+| `cells[].col` (en `static`) | Entero en `[0, grid_cols-1]` — NO `[0,6]` como en niveles normales. |
+| `cells[].row` (en `static`) | Cualquier entero >= 0 (tope defensivo 300) — NO limitado a `Constants.MOLCAJETE_ROW`, no hay fila de molcajete prohibida porque no hay condición de derrota. |
+| `par_turns` | Opcional. Si se limpia el nivel en <= este número de turnos, el score final se multiplica por `Constants.STATIC_LEVEL_PAR_BONUS_MULTIPLIER`. |
+| `cells[].kind: "laser"` | Power-up nuevo — al tocarlo, daña TODA la fila (`"orientation": "horizontal"`, default) o columna (`"vertical"`) donde está. Sin `hp`. |
+
+Ver PASO 2 para cómo rasterizar una figura de alta resolución (geometría pura o
+`tools/gen_worldcup_pack.py` como referencia de un caso con Pillow para texto).
 
 ---
 
@@ -121,11 +150,16 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
 
 ### PASO 3 — Defaults de dificultad y variedad
 
-- **Filas jugables (niveles-figura, `cells`)**: el tablero se desplaza 1 fila por turno
-  AUNQUE no aparezcan filas nuevas (`cells` se coloca todo de una vez, sin recarga) — así
-  que "llegar a la fila del molcajete" sigue siendo derrota real. Un nivel con contenido
-  en las filas `0..(R-1)` da al jugador `9-R` turnos antes de perder. **Recomendado: R ≤ 6
-  filas** (deja 3+ turnos de margen).
+- **Filas jugables (niveles-figura, `cells`, sin `static`)**: el tablero se desplaza 1 fila
+  por turno AUNQUE no aparezcan filas nuevas (`cells` se coloca todo de una vez, sin
+  recarga) — así que "llegar a la fila del molcajete" sigue siendo derrota real. Un nivel
+  con contenido en las filas `0..(R-1)` da al jugador `9-R` turnos antes de perder.
+  **Recomendado: R ≤ 6 filas** (deja 3+ turnos de margen).
+- **Filas (niveles `static`)**: NO aplica nada de lo anterior — no hay condición de
+  derrota, así que la figura puede ocupar todas las filas que necesite (limitado solo por
+  que la altura total en píxeles quepa en pantalla: `filas × (DESIGN_WIDTH/grid_cols)` no
+  debería superar ~650-700px). Elegir `grid_cols` según qué tan ancha/angosta sea la figura
+  (más columnas = bloques más chicos = más detalle horizontal).
 - **Filas totales (dificultad progresiva, `row_queue`)**: como cada fila se revela recién
   cuando se consume la anterior, el total de filas NO reduce el margen turno a turno —
   define cuánto dura el nivel. `tools/gen_levels.py::total_rows_for_level()` usa nivel 1 =
@@ -148,9 +182,16 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
   fijo aparte. `starting_seeds_for_level()` escala con la misma curva para que la cantidad
   de semillas siga siendo consistente con el HP — un nivel nuevo de este tipo debe usar
   estas funciones juntas, nunca HP alto con semillas bajas a mano.
-- **Variedad**: sembrar `lemon`/`seed_extra` en ~10-15% de las celdas destructibles (nunca en TODAS — pierden gracia).
+- **HP (niveles `static`)**: alto y variado (60-300 por bloque es el precedente del pack
+  Mundial v2, sorteado con `rng.randint(HP_MIN, HP_MAX)` — nunca fijo, mismo criterio que
+  `row_queue`) — como no hay condición de derrota, "difícil" solo significa "toma más
+  turnos", no "imposible", así que hay más margen para HP alto que en los otros dos tipos.
+- **Variedad**: sembrar `lemon`/`seed_extra` en ~10-15% de las celdas destructibles (nunca
+  en TODAS — pierden gracia). En niveles `static`, sembrar además en los HUECOS (celdas
+  vacías dentro del recuadro de la figura, no parte de la silueta) — incluir algo de
+  `laser` ahí también (pedido explícito del usuario), no solo dentro de la silueta.
 - **`stone`**: NUNCA usarlo salvo que el usuario lo pida explícitamente — es indestructible y bloquea el clear si se coloca sin cuidado (el nivel nunca se puede ganar si hay piedra bloqueando el único camino... en realidad la piedra no cuenta para el clear, así que no bloquea el WIN, pero si "atrapa" visualmente otros bloques detrás de un patrón imposible de alcanzar por geometría, sí podría volver el nivel injugable en la práctica).
-- **`starting_seeds`**: generoso para niveles-figura con muchas celdas (14-20); más ajustado para niveles de dificultad progresiva.
+- **`starting_seeds`**: generoso para niveles-figura con muchas celdas (14-20); más ajustado para niveles de dificultad progresiva. En niveles `static` puede ser más bajo (50 en el pack Mundial v2) porque no hay presión de tiempo — el jugador puede tomarse los turnos que necesite.
 
 ---
 
@@ -186,13 +227,14 @@ el nivel nuevo (y el manifiesto actualizado) quedaron bien.
 ### Checklist
 
 - [ ] `id` único en todo `manifest.json`, igual al nombre de archivo.
-- [ ] Ninguna celda en `row: 8` (fila del molcajete).
+- [ ] Ninguna celda en `row: 8` (fila del molcajete) — NO aplica a niveles `static`.
 - [ ] Todo `kind` existe en `CellFactoryGd.KNOWN_KINDS` — si es nuevo, se agregó su caso ahí primero.
-- [ ] `hp` presente en totopo/queso/salsa/triangle; `corner` presente en triangle.
+- [ ] `hp` presente en totopo/queso/salsa/triangle; `corner` presente en triangle; `orientation` de laser (si se usa) es `"horizontal"` o `"vertical"`.
 - [ ] `starting_seeds` entero > 0.
-- [ ] Contenido dentro de ~6 filas (niveles-figura, `cells`) o cola de filas balanceada según `tools/gen_levels.py::total_rows_for_level()` (dificultad progresiva, `row_queue`).
+- [ ] Contenido dentro de ~6 filas (niveles-figura, `cells`) o cola de filas balanceada según `tools/gen_levels.py::total_rows_for_level()` (dificultad progresiva, `row_queue`) — NO aplica a niveles `static` (sin límite de filas).
 - [ ] `row_queue[][]` sin campo `row` (implícito); duplicados validados por columna dentro de cada fila, no por posición global.
+- [ ] Si `static: true`: `grid_cols` presente y > 0; `col` validado contra `grid_cols`, no contra `Constants.GRID_COLS`; sin `row_queue`.
 - [ ] `python3 tools/validate_level.py` sin errores.
-- [ ] `manifest.json` actualizado (no regenerado desde cero).
+- [ ] `manifest.json` actualizado (no regenerado desde cero) — `tools/gen_levels.py::main()` ya preserva packs existentes si se corre, pero mejor no correrlo sin necesidad.
 - [ ] Si tiene `name`, la key existe en `assets/translations/translations.txt` para los 4 idiomas.
 - [ ] GUT completo en verde (en particular `test_level_manifest_integrity.gd`).

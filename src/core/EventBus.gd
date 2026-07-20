@@ -43,9 +43,10 @@ signal board_reached_bottom
 
 # --- Modo Nivel (niveles finitos y deterministas, ver LevelManager/LevelLoader) ---
 ## Cruda: BoardManager la emite cuando ya no quedan bloques destructibles (piedra no
-## cuenta) y no hay más filas en la cola del nivel. GameManager la escucha y emite
-## level_completed (enriquecida) — mismo patrón que board_reached_bottom -> game_over.
-signal level_cleared(level_id: String)
+## cuenta) y no hay más filas en la cola del nivel. `turns_used` es cuántos turnos tomó
+## limpiarlo — 0 si no aplica (Modo Infinito nunca la emite). GameManager la escucha y
+## emite level_completed (enriquecida) — mismo patrón que board_reached_bottom -> game_over.
+signal level_cleared(level_id: String, turns_used: int)
 signal level_completed(level_id: String, final_score: int)
 
 # --- Acelerar semillas mientras rebotan ---
@@ -58,6 +59,10 @@ signal lemon_triggered(origin: Vector2)
 ## Emitida por el ícono al ser tocado (antes de que TurnManager sepa el nuevo total).
 signal seed_extra_touched(origin: Vector2)
 signal seed_extra_collected(new_total: int)
+## Power-up láser (ver laser_icon.gd) — BoardManager aplica Constants.LASER_DAMAGE a toda
+## la fila (is_horizontal=true) o columna (false) de grid_pos, mismo patrón que
+## salsa_exploded pero en línea recta en vez de en cruz.
+signal laser_triggered(grid_pos: Vector2i, is_horizontal: bool)
 
 # --- Score ---
 signal score_changed(new_score: int)

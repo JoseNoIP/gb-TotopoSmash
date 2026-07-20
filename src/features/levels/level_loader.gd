@@ -8,6 +8,10 @@ const WaveScalingGd := preload("res://src/features/board/wave_scaling.gd")
 
 const LEVELS_DIR: String = "res://data/levels/"
 const MANIFEST_PATH: String = "res://data/levels/manifest.json"
+## Tope de fila defensivo para niveles `static` (grilla propia, mucho más alta que
+## Constants.GRID_ROWS — ver validate_level) — solo atrapa datos corruptos/absurdos, no es
+## una restricción de diseño real.
+const STATIC_LEVEL_MAX_ROW: int = 300
 
 
 ## Nunca referenciar un autoload (Constants) dentro de un `const` — no es una expresión
@@ -17,6 +21,13 @@ const MANIFEST_PATH: String = "res://data/levels/manifest.json"
 ## instantáneo al primer turno.
 static func max_content_row() -> int:
 	return Constants.MOLCAJETE_ROW - 1
+
+
+## Comparación explícita contra `true` (no un `as bool` directo) — el valor viene de JSON
+## parseado, así que un `Variant` ausente/de otro tipo nunca debe leerse como verdadero
+## por accidente.
+static func is_static_level(data: Dictionary) -> bool:
+	return data.get("static", false) == true
 
 
 ## Lee y parsea un archivo JSON arbitrario a Dictionary. {} si falta o está corrupto —
@@ -57,6 +68,14 @@ static func _is_whole_number(value: Variant) -> bool:
 ## niveles-figura donde toda la forma es visible desde el inicio) y/o `row_queue` (filas
 ## que aparecen una por turno, igual que Modo Infinito pero con contenido fijo — para
 ## niveles de dificultad progresiva). Al menos uno de los dos debe traer contenido real.
+##
+## `"static": true` (opcional, pedido explícito del usuario) — nivel-figura de ALTA
+## resolución: los bloques NUNCA se desplazan y no hay condición de derrota (ver
+## BoardManager); usa su PROPIA grilla vía el campo obligatorio `"grid_cols"` (más angosta
+## que Constants.GRID_COLS = más bloques, más chicos, caben en el mismo ancho de pantalla),
+## así que `col`/`row` de sus `cells` NO se validan contra Constants.GRID_COLS/MOLCAJETE_ROW
+## como los niveles-figura normales. Incompatible con `row_queue`. `"par_turns"` (opcional)
+## habilita el bono de score por terminarlo en pocos turnos (ver GameManager).
 static func validate_level(data: Dictionary, expected_id: String) -> Array:
 	var errors: Array = []
 	if data.is_empty():
@@ -73,6 +92,19 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 	if not _is_whole_number(starting_seeds) or int(starting_seeds) <= 0:
 		errors.append("'starting_seeds' debe ser un entero > 0")
 
+	var is_static: bool = data.get("static", false) == true
+	var max_col: int = Constants.GRID_COLS - 1
+	if is_static:
+		var grid_cols: Variant = data.get("grid_cols")
+		if not _is_whole_number(grid_cols) or int(grid_cols) <= 0:
+			errors.append("nivel 'static' requiere 'grid_cols' entero > 0")
+		else:
+			max_col = int(grid_cols) - 1
+		if data.has("par_turns"):
+			var par_turns: Variant = data.get("par_turns")
+			if not _is_whole_number(par_turns) or int(par_turns) <= 0:
+				errors.append("'par_turns' debe ser un entero > 0 si está presente")
+
 	var cells: Variant = data.get("cells", [])
 	var row_queue: Variant = data.get("row_queue", [])
 	var has_cells: bool = cells is Array and not (cells as Array).is_empty()
@@ -80,6 +112,8 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 	if not has_cells and not has_queue:
 		errors.append("el nivel no tiene contenido — 'cells' y 'row_queue' están vacíos o ausentes")
 		return errors
+	if is_static and has_queue:
+		errors.append("un nivel 'static' no puede combinarse con 'row_queue'")
 
 	if data.has("cells"):
 		if not (cells is Array):
@@ -92,7 +126,9 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 					errors.append("cells[%d]: no es un Dictionary" % i)
 					continue
 				errors.append_array(
-					_validate_cell(cell as Dictionary, "cells[%d]" % i, true, seen_positions)
+					_validate_cell(
+						cell as Dictionary, "cells[%d]" % i, true, seen_positions, max_col, is_static
+					)
 				)
 
 	if data.has("row_queue"):
@@ -113,7 +149,10 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 						errors.append("row_queue[%d][%d]: no es un Dictionary" % [r, i])
 						continue
 					errors.append_array(
-						_validate_cell(cell as Dictionary, "row_queue[%d][%d]" % [r, i], false, seen_cols)
+						_validate_cell(
+							cell as Dictionary, "row_queue[%d][%d]" % [r, i], false, seen_cols,
+							Constants.GRID_COLS - 1, false
+						)
 					)
 
 	return errors
@@ -122,24 +161,25 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 ## `require_row`: true para `cells` (posición absoluta, valida col+row+duplicados por
 ## (col,row)). false para celdas de `row_queue` (la fila es implícita — siempre "la
 ## próxima fila que aparece arriba" — así que solo se valida `col` y duplicados por col).
+## `max_col`/`is_static`: un nivel `static` usa su propia grilla (ver validate_level), así
+## que el rango válido de columnas/filas es distinto al de un nivel-figura normal.
 static func _validate_cell(
-	cell: Dictionary, label: String, require_row: bool, seen_positions: Dictionary
+	cell: Dictionary, label: String, require_row: bool, seen_positions: Dictionary,
+	max_col: int, is_static: bool
 ) -> Array:
 	var errors: Array = []
 
 	var col: Variant = cell.get("col")
-	var col_ok: bool = _is_whole_number(col) and int(col) >= 0 and int(col) < Constants.GRID_COLS
+	var col_ok: bool = _is_whole_number(col) and int(col) >= 0 and int(col) <= max_col
 	if not col_ok:
-		errors.append("%s: 'col' fuera de rango [0, %d]" % [label, Constants.GRID_COLS - 1])
+		errors.append("%s: 'col' fuera de rango [0, %d]" % [label, max_col])
 
 	if require_row:
-		var max_row: int = max_content_row()
+		var max_row: int = STATIC_LEVEL_MAX_ROW if is_static else max_content_row()
 		var row: Variant = cell.get("row")
 		var row_ok: bool = _is_whole_number(row) and int(row) >= 0 and int(row) <= max_row
 		if not row_ok:
-			errors.append(
-				"%s: 'row' fuera de rango [0, %d] (fila del molcajete prohibida)" % [label, max_row]
-			)
+			errors.append("%s: 'row' fuera de rango [0, %d]" % [label, max_row])
 		if col_ok and row_ok:
 			var pos_key: Vector2i = Vector2i(int(col), int(row))
 			if seen_positions.has(pos_key):
@@ -168,5 +208,10 @@ static func _validate_cell(
 		var corner: Variant = cell.get("corner")
 		if not _is_whole_number(corner) or int(corner) < 0 or int(corner) > 3:
 			errors.append("%s: kind 'triangle' requiere 'corner' entero en [0,3]" % label)
+
+	if kind == WaveScalingGd.KIND_LASER and cell.has("orientation"):
+		var orientation: Variant = cell.get("orientation")
+		if orientation != "horizontal" and orientation != "vertical":
+			errors.append("%s: 'orientation' de laser debe ser 'horizontal' o 'vertical'" % label)
 
 	return errors

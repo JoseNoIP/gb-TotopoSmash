@@ -208,7 +208,7 @@ func test_level_cleared_emitted_when_only_stone_blocks_remain() -> void:
 	blocks[Vector2i(0, 0)] = stone
 	watch_signals(EventBus)
 	EventBus.all_seeds_returned.emit(0.0)
-	assert_signal_emitted_with_parameters(EventBus, "level_cleared", ["level_001"])
+	assert_signal_emitted_with_parameters(EventBus, "level_cleared", ["level_001", 0])
 	assert_signal_not_emitted(
 		EventBus, "turn_advanced", "el nivel ya terminó, no debe volver a AIMING"
 	)

@@ -18,6 +18,9 @@ const KIND_STONE: String = "stone"
 const KIND_SALSA: String = "salsa"
 const KIND_LEMON: String = "lemon"
 const KIND_SEED_EXTRA: String = "seed_extra"
+## Sin probabilidad de spawn en Modo Infinito a propósito (no se toca pick_cell_kind() más
+## abajo) — solo aparece en niveles autorados (row_queue/cells), ver CellFactoryGd.
+const KIND_LASER: String = "laser"
 
 
 ## GDD 4.1 — "Bloques Normales (Totopos): N = O"

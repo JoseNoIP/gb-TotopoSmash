@@ -14,6 +14,7 @@ const StoneBlockGd := preload("res://src/features/blocks/stone_block.gd")
 const TriangleBlockGd := preload("res://src/features/blocks/triangle_block.gd")
 const LemonIconGd := preload("res://src/features/powerups/lemon_icon.gd")
 const SeedExtraIconGd := preload("res://src/features/powerups/seed_extra_icon.gd")
+const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
 
 const KNOWN_KINDS: Array = [
 	WaveScalingGd.KIND_TOTOPO,
@@ -23,6 +24,7 @@ const KNOWN_KINDS: Array = [
 	WaveScalingGd.KIND_TRIANGLE,
 	WaveScalingGd.KIND_LEMON,
 	WaveScalingGd.KIND_SEED_EXTRA,
+	WaveScalingGd.KIND_LASER,
 ]
 
 
@@ -45,12 +47,16 @@ static func create_kind_instance(kind: String) -> Node:
 			return LemonIconGd.new()
 		WaveScalingGd.KIND_SEED_EXTRA:
 			return SeedExtraIconGd.new()
+		WaveScalingGd.KIND_LASER:
+			return LaserIconGd.new()
 		_:
 			return null
 
 
 static func is_icon_kind(kind: String) -> bool:
-	return kind == WaveScalingGd.KIND_LEMON or kind == WaveScalingGd.KIND_SEED_EXTRA
+	return kind in [
+		WaveScalingGd.KIND_LEMON, WaveScalingGd.KIND_SEED_EXTRA, WaveScalingGd.KIND_LASER
+	]
 
 
 static func is_known_kind(kind: String) -> bool:
