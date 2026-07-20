@@ -59,7 +59,11 @@ func _on_game_started() -> void:
 ## termina (GDD "Condiciones de Fin de Juego") — igual en ambos modos. Modo Infinito
 ## además spawnea una fila aleatoria nueva; Modo Nivel revela la siguiente fila de la cola
 ## (si queda alguna) y, si ya no queda ninguna Y el tablero está libre de destructibles,
-## declara el nivel ganado.
+## declara el nivel ganado. `EventBus.turn_advanced` se emite siempre que el turno termina
+## SIN que la partida haya terminado (ni game over ni nivel ganado) — es la señal que
+## TurnManager necesita para volver a AIMING; regresión real encontrada jugando: Modo Nivel
+## nunca emitía `wave_advanced` (específica de Infinito) y TurnManager dependía solo de esa
+## señal, así que el apuntado se quedaba trabado para siempre después del primer turno.
 func _on_all_seeds_returned(_landing_x: float) -> void:
 	if not GameManager.is_playing():
 		return
@@ -72,10 +76,13 @@ func _on_all_seeds_returned(_landing_x: float) -> void:
 		_wave += 1
 		_spawn_row(0)
 		EventBus.wave_advanced.emit(_wave)
+		EventBus.turn_advanced.emit()
 		return
 	_spawn_next_queued_row()
 	if _level_queue_index >= _level_row_queue.size() and _all_destructible_cleared():
 		EventBus.level_cleared.emit(level_id)
+		return
+	EventBus.turn_advanced.emit()
 
 
 ## Modo Nivel: consume la siguiente fila de `row_queue` (si queda alguna) y la coloca en

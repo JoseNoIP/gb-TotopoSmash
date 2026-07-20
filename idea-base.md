@@ -70,7 +70,7 @@
 - `set_tutorial_shown(true)` solo se llama al presionar JUGAR en el paso COMPLETE.
 - Si el jugador muere durante el tutorial, se reinicia `TutorialGame.tscn` (no marca `tutorial_shown`).
 
-## Tests GUT (137 tests, 0 fallos) ✅
+## Tests GUT (138 tests, 0 fallos) ✅
 - `test_physics_math.gd`, `test_grid_math.gd`, `test_wave_scaling.gd` — funciones puras, casos normal/borde/inválido.
 - `test_game_manager.gd`, `test_save_manager.gd` — máquina de estados y persistencia (autoloads reales), incluye `language`.
 - `test_block_base.gd` — daño, destrucción, indestructibilidad, doble daño de queso, explosión de salsa, geometría de triángulo.
@@ -93,6 +93,13 @@ El build inicial pasaba los 3 gates (lint/tests/export) pero el juego no era jug
 - Además: input táctil no emulado en escritorio (`pointing/emulate_touch_from_mouse`), placeholders de `export_presets.cfg` sin llenar, `.gitignore` sin proteger `*.keystore`.
 
 **Lección para el proceso:** verificar visualmente con una captura de pantalla real (no solo boot headless) antes de dar por bueno un build — headless nunca renderiza nada, así que no atrapa ninguno de estos 5 bugs.
+
+### Ronda 2 — reportados por el usuario jugando Modo Nivel ✅
+
+- **El apuntado se quedaba trabado para siempre después del primer disparo en Modo Nivel** (el botón de pausa seguía funcionando, el juego no) — `TurnManager` solo volvía de `Phase.ADVANCING` a `Phase.AIMING` escuchando `EventBus.wave_advanced`, una señal específica de Modo Infinito que `BoardManager` nunca emite en Modo Nivel. Bug real desde que existe Modo Nivel, invisible a los tests porque ninguno ejercitaba el ciclo completo de un segundo turno con ambos sistemas conectados de verdad. Fix: nueva señal mode-agnostic `EventBus.turn_advanced` (sin parámetros), emitida por `BoardManager` en AMBOS modos cuando el turno termina sin game over ni nivel ganado; `TurnManager` pasó a escucharla en vez de `wave_advanced`. Test de regresión de punta a punta en `test_turn_manager.gd` (instancia `BoardManager` + `TurnManager` juntos, sin emitir la señal a mano). Ver regla CLAUDE.md #50.
+- **Botón del tutorial mostraba `BTN_UNDERSTOOD` en vez de "ENTENDIDO"** — la key nunca se agregó a `assets/translations/translations.txt` (usada en código, ausente en el CSV; Godot devuelve la key cruda cuando no encuentra traducción, sin error ni warning). Fix: key agregada para los 4 idiomas. De paso, un barrido sistemático de TODAS las keys usadas vía `tr()` contra el archivo de traducciones no encontró ninguna otra faltante — y se corrigió un cabo suelto relacionado: `LEVEL_NAME_015..020` (nombres de los niveles-figura) quedaron huérfanas al mover esos niveles a 95-100 en la expansión del roster a 100 niveles; renombradas a `LEVEL_NAME_095..100` (el campo `name` del nivel todavía no se renderiza en ningún lado, así que esto no era un bug visible, solo dato inconsistente).
+
+**Lección para el proceso:** ningún test verifica que una key usada en código exista en el CSV de traducciones — un grep cruzando `tr(&"...")` contra las keys definidas (`comm -23` de las dos listas ordenadas) lo detecta en segundos y debería correrse cada vez que se toquen strings de UI.
 
 ## CI/CD Android ✅ — funcional de punta a punta
 - `.github/workflows/build-android.yml` — build de APK + subida a Dropbox en cada push a `main`/`staging`. **Confirmado corriendo en verde**, APK instalado y probado en Android real.
@@ -120,7 +127,7 @@ por oleadas) se conserva como **Modo Infinito**, y se agrega **Modo Nivel** como
 experiencia principal — tableros finitos y deterministas (mismo contenido para todos
 los jugadores), con victoria real.
 
-- **`data/levels/*.json` + `manifest.json`** — un archivo por nivel, el manifiesto define el orden de juego. Un nivel define su contenido con `cells` (col/row/kind/hp/corner, absolutas, visibles desde el inicio) y/o `row_queue` (filas sin `row` explícito que se revelan una por turno, igual mecánica que Modo Infinito pero con contenido fijo). **Corrección de diseño post-implementación:** la primera versión colocaba todo el contenido de un nivel de una sola vez (`cells` únicamente) — el usuario aclaró que un nivel debe sentirse como el Modo Infinito en miniatura: arrancar mostrando 1 fila y revelar el resto de a poco hasta agotar un total fijo de filas (nivel 1 = 10 filas), venciendo solo cuando la cola se agota Y no queda ningún destructible. De ahí nace `row_queue`; `cells` se conservó tal cual para los niveles-figura, donde SÍ se quiere ver toda la forma de una vez. **20 niveles iniciales** (`tools/gen_levels.py`): 14 procedurales vía `row_queue` (porta las fórmulas de `wave_scaling.gd` a Python, sin RNG en runtime; `total_rows_for_level()` = 10 + 2×(nivel-1)) + 6 niveles-figura vía `cells` hechos a mano (Cruz, Corazón, Botella, Estrella, Diamante, Carita Feliz — 3 en silueta + 3 rellenos).
+- **`data/levels/*.json` + `manifest.json`** — un archivo por nivel, el manifiesto define el orden de juego. Un nivel define su contenido con `cells` (col/row/kind/hp/corner, absolutas, visibles desde el inicio) y/o `row_queue` (filas sin `row` explícito que se revelan una por turno, igual mecánica que Modo Infinito pero con contenido fijo). **Corrección de diseño post-implementación:** la primera versión colocaba todo el contenido de un nivel de una sola vez (`cells` únicamente) — el usuario aclaró que un nivel debe sentirse como el Modo Infinito en miniatura: arrancar mostrando 1 fila y revelar el resto de a poco hasta agotar un total fijo de filas (nivel 1 = 10 filas), venciendo solo cuando la cola se agota Y no queda ningún destructible. De ahí nace `row_queue`; `cells` se conservó tal cual para los niveles-figura, donde SÍ se quiere ver toda la forma de una vez. **100 niveles** (`tools/gen_levels.py`, objetivo del GDD alcanzado): 94 procedurales vía `row_queue` (porta las fórmulas de `wave_scaling.gd` a Python, sin RNG en runtime; `total_rows_for_level()` = 10 + 3×(nivel-1) con TOPE de 50 filas, alcanzado en el nivel 15 — de ahí en adelante la dificultad sigue subiendo por HP/variedad de bloques vía `effective_wave`, no por duración, para no violar la "sesión target: 2-5 minutos" del GDD en niveles altos) + 6 niveles-figura vía `cells` hechos a mano (Cruz, Corazón, Botella, Estrella, Diamante, Carita Feliz — 3 en silueta + 3 rellenos).
 - **`src/features/board/cell_factory.gd`** (nuevo) — única fábrica "kind → nodo", compartida por Modo Infinito y Modo Nivel. Es el único lugar que hay que tocar para agregar un power-up/bonus nuevo a futuro.
 - **`src/features/levels/level_loader.gd`** — parseo + validación pura de JSON (mismo estilo que `wave_scaling.gd`). **Bug real encontrado por los tests:** `JSON.parse_string()` devuelve los números siempre como `float`, nunca `int` — un chequeo `is int` rechazaba niveles perfectamente válidos. Ver regla CLAUDE.md #46.
 - **`LevelManager`** (autoload nuevo, después de `SaveManager`) — cachea niveles ya cargados, guarda el manifiesto, y expone un "buzón" de nivel pendiente de **lectura no destructiva** (crítico: si se vaciara al leerlo, reintentar un nivel tras perder volvería a Modo Infinito en silencio).
@@ -131,8 +138,28 @@ los jugadores), con victoria real.
 - **Pantallas nuevas**: `LevelSelectScreen.tscn` (grilla de niveles, bloqueados más allá de `SaveManager.get_highest_level_unlocked()`), `LevelCompleteScreen.gd` (calco de `GameOverScreen.gd`, con botón "Siguiente Nivel"). `MainMenu` ahora tiene NIVELES / MODO INFINITO / CONFIGURACIÓN.
 - **Bug real encontrado por captura de pantalla:** `HUD` leía `GameManager.is_level_mode()` en su propio `_ready()`, que corre ANTES de que `Game.gd` llame `GameManager.start_game(level_id)` — mostraba el nivel/oleada de la partida ANTERIOR. Fix: `HUD` reacciona a `EventBus.game_started` (igual que `BoardManager`/`TurnManager`), nunca lee el estado de forma síncrona y temprana. Ver regla CLAUDE.md #47.
 - **Skill nueva `/level-designer`** (`.claude/skills/level-designer/SKILL.md`) — diseña niveles nuevos en lenguaje natural (figuras, packs temáticos), incluye `tools/validate_level.py` (validación en Python sin necesitar Godot) y `tests/unit/test_level_manifest_integrity.gd` como autoridad final (recorre TODO el catálogo real).
-- Verificado con captura real del viewport: nivel procedural, nivel-figura (corazón en silueta), MainMenu con los 3 botones, y LevelSelectScreen con la grilla de 20 niveles.
+- Verificado con captura real del viewport: nivel procedural, nivel-figura (corazón en silueta), MainMenu con los 3 botones, y LevelSelectScreen con la grilla de niveles (ScrollContainer vertical, escala sin cambios a 100 niveles).
 - **Corrección post-feedback verificada con captura real:** `level_001` arranca mostrando solo 1 fila (no las 10 completas) y, tras emitir `all_seeds_returned`, revela la fila siguiente de la cola mientras la primera baja — confirma `row_queue` funcionando turno a turno. La misma captura muestra `danger_line.gd` v2 (banda + chevrones) renderizando correctamente. **Nota técnica:** la captura vía `get_viewport().get_texture().get_image()` da `null` bajo `--headless` (usa el `RenderingServer` dummy, sin textura real) — hay que correr el proceso probe SIN `--headless` (ventana real, aunque no se vea) para que la captura funcione.
+
+### Rebalance de HP/semillas por nivel (dificultad progresiva) ✅
+
+Pedido explícito: los niveles procedurales se sentían con muy poca resistencia por bloque
+(nivel 1 arrancaba con totopos de HP 1). El HP ahora escala directo con el **número de
+nivel**, desacoplado de `effective_wave` (que sigue gobernando SOLO qué tipos de bloque
+pueden aparecer — queso/triángulo/salsa oleada 6+, piedra oleada 16+, igual que antes):
+- `tools/gen_levels.py::totopo_hp_for_level()` — nivel 1 = 50 golpes, nivel 100 = 300,
+  sigue subiendo igual más allá (sin tope, a diferencia de `total_rows_for_level()`).
+  Totopo es la escala ancla (no queso) porque queso/triángulo/salsa no existen todavía en
+  el nivel 1 real (desbloquean en nivel 11+) — anclar el tope en queso habría dejado el
+  nivel 1 sin ningún bloque que realmente llegue a 50.
+- `queso_hp_for_level()` = 1.5x lo anterior (misma proporción que `wave_scaling.gd` de
+  siempre), salsa/triángulo comparten el valor de totopo.
+- `starting_seeds_for_level()` escala con la misma curva lineal (30 semillas en nivel 1,
+  110 en nivel 100) — pedido explícito de mantener esto "consistente" para que el salto de
+  HP no vuelva los niveles imposibles de limpiar. Ajuste de buena fe, no verificado con
+  playtesting real (ver Pendientes) — la física de rebote real (una semilla puede golpear
+  el mismo bloque muchas veces mientras rebota, no se "gasta" al primer impacto) hace muy
+  difícil simular en el papel si el ratio HP:semillas elegido es exactamente el correcto.
 
 ## Ícono de Android rediseñado ✅
 
@@ -160,8 +187,8 @@ por una mascota vectorial "toony" del totopo (ver skill `/gen-ai-art`, 512×512 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
 - **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
 - **Sistema de mejoras/oro/personajes** — decisión de alcance explícita, pedido por el usuario pero diferido a otra sesión. `SaveManager` ya persiste cualquier clave nueva en un `Dictionary` a JSON sin fricción, así que agregarlo después no debería requerir cambios estructurales.
-- **Balance de los 20 niveles** — primera pasada razonable (HP/filas/semillas escalados a mano en `tools/gen_levels.py`), no verificada con playtesting real más allá de las pruebas automatizadas y visuales de esta sesión. Ajustar constantes del script y regenerar si algún nivel resulta muy fácil/difícil.
-- **Más niveles** — el roster llega a 20; el objetivo declarado son ~100. Usar `/level-designer` para seguir agregando de a poco (incluye packs temáticos, ej. figuras navideñas).
+- **Balance de los 100 niveles** — el HP por bloque ahora escala fuerte (totopo 50→300 entre nivel 1 y 100, ver sección de rebalance arriba) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar `TOTOPO_HP_CAP_START/AT_100` y `SEEDS_START/AT_100` en `tools/gen_levels.py` y regenerar.
+- **Más niveles / packs temáticos** — el roster ya llega a 100 (objetivo del GDD). Lo que sigue es variedad cualitativa: usar `/level-designer` para packs temáticos (ej. figuras navideñas) o reemplazar tramos procedurales por niveles diseñados a mano donde se quiera más personalidad.
 
 ---
 

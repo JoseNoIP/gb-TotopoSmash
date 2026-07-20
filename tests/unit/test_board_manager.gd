@@ -62,6 +62,9 @@ func test_all_seeds_returned_advances_wave_and_spawns_a_new_row() -> void:
 	EventBus.all_seeds_returned.emit(0.0)
 	assert_eq(board.call(&"get_wave"), 2)
 	assert_signal_emitted_with_parameters(EventBus, "wave_advanced", [2])
+	assert_signal_emitted(
+		EventBus, "turn_advanced", "TurnManager depende de esto para volver a AIMING"
+	)
 
 
 func test_block_reaching_molcajete_row_triggers_game_over_and_stops_the_wave() -> void:
@@ -84,6 +87,9 @@ func test_block_reaching_molcajete_row_triggers_game_over_and_stops_the_wave() -
 	assert_signal_emitted(EventBus, "board_reached_bottom")
 	assert_signal_not_emitted(
 		EventBus, "wave_advanced", "no debe spawnear fila nueva tras game over"
+	)
+	assert_signal_not_emitted(
+		EventBus, "turn_advanced", "no debe volver a AIMING tras game over"
 	)
 
 
@@ -178,6 +184,9 @@ func test_all_seeds_returned_in_level_mode_still_checks_game_over() -> void:
 	watch_signals(EventBus)
 	EventBus.all_seeds_returned.emit(0.0)
 	assert_signal_emitted(EventBus, "board_reached_bottom")
+	assert_signal_not_emitted(
+		EventBus, "turn_advanced", "no debe volver a AIMING tras game over en Modo Nivel"
+	)
 	GameManager.start_game()
 
 
@@ -200,9 +209,16 @@ func test_level_cleared_emitted_when_only_stone_blocks_remain() -> void:
 	watch_signals(EventBus)
 	EventBus.all_seeds_returned.emit(0.0)
 	assert_signal_emitted_with_parameters(EventBus, "level_cleared", ["level_001"])
+	assert_signal_not_emitted(
+		EventBus, "turn_advanced", "el nivel ya terminó, no debe volver a AIMING"
+	)
 	GameManager.start_game()
 
 
+## Regresión real encontrada jugando: Modo Nivel nunca emitía `wave_advanced` (específica
+## de Modo Infinito) y TurnManager dependía SOLO de esa señal para volver de ADVANCING a
+## AIMING — el apuntado se quedaba trabado para siempre después del primer turno en
+## cualquier nivel. `turn_advanced` es la señal mode-agnostic que reemplaza esa dependencia.
 func test_level_cleared_not_emitted_while_a_destructible_block_remains() -> void:
 	var board: Node2D = BoardManagerGd.new()
 	add_child_autofree(board)
@@ -218,6 +234,11 @@ func test_level_cleared_not_emitted_while_a_destructible_block_remains() -> void
 	watch_signals(EventBus)
 	EventBus.all_seeds_returned.emit(0.0)
 	assert_signal_not_emitted(EventBus, "level_cleared")
+	assert_signal_emitted(
+		EventBus,
+		"turn_advanced",
+		"sin esto el apuntado se queda trabado para siempre tras el primer turno en Modo Nivel"
+	)
 	GameManager.start_game()
 
 

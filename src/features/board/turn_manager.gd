@@ -3,7 +3,7 @@ extends Node
 ## Avance). Dueño del inventario de semillas y de cada instancia de Seed que dispara.
 ## BoardManager es dueño EXCLUSIVO de la matriz de bloques — este nodo nunca la toca
 ## directamente, solo se comunican por EventBus (fire_requested / all_seeds_returned /
-## wave_advanced). Instanciado por Game.tscn y TutorialGame.tscn.
+## turn_advanced). Instanciado por Game.tscn y TutorialGame.tscn.
 
 enum Phase { AIMING, FIRING, RESOLVING, RETURNING, ADVANCING }
 
@@ -28,7 +28,7 @@ func _ready() -> void:
 	EventBus.game_started.connect(_on_game_started)
 	EventBus.fire_requested.connect(_on_fire_requested)
 	EventBus.seed_extra_touched.connect(_on_seed_extra_touched)
-	EventBus.wave_advanced.connect(_on_wave_advanced)
+	EventBus.turn_advanced.connect(_on_turn_advanced)
 
 
 func get_seed_count() -> int:
@@ -126,8 +126,9 @@ func _on_seed_landed(_seed_node: Node2D, x_position: float) -> void:
 	if _active_seeds <= 0 and _seeds_to_fire <= 0:
 		_set_phase(Phase.ADVANCING)
 		# BoardManager escucha esta señal y responde de forma síncrona (desplaza el
-		# tablero, spawnea la fila nueva y emite wave_advanced), lo cual dispara
-		# _on_wave_advanced() más abajo antes de que este emit() retorne.
+		# tablero, revela/spawnea contenido nuevo y emite turn_advanced si la partida
+		# sigue), lo cual dispara _on_turn_advanced() más abajo antes de que este emit()
+		# retorne.
 		EventBus.all_seeds_returned.emit(x_position)
 
 
@@ -137,9 +138,11 @@ func _on_seed_extra_touched(_origin: Vector2) -> void:
 	EventBus.seed_count_changed.emit(_seed_count)
 
 
-func _on_wave_advanced(_wave_number: int) -> void:
-	## También se emite una vez al armar el tablero inicial (wave 1, fase ya AIMING);
-	## el guard evita una transición espuria en ese caso.
+## Mode-agnostic (ver EventBus.turn_advanced) — BoardManager la emite en Modo Infinito Y
+## en Modo Nivel siempre que el turno termina sin game over ni nivel ganado. También podría
+## llegar con la fase ya en AIMING (ej. nada que hacer todavía); el guard evita una
+## transición espuria en ese caso.
+func _on_turn_advanced() -> void:
 	if _phase == Phase.ADVANCING:
 		_set_phase(Phase.AIMING)
 
