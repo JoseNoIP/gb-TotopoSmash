@@ -1,12 +1,12 @@
 {
   "id": "level_027",
-  "starting_seeds": 38,
+  "starting_seeds": 51,
   "row_queue": [
     [
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 3
       },
       {
@@ -16,22 +16,22 @@
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
@@ -42,27 +42,27 @@
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       }
     ],
     [
@@ -73,12 +73,12 @@
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
@@ -87,46 +87,46 @@
       {
         "col": 4,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
@@ -137,13 +137,13 @@
       {
         "col": 0,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
@@ -153,7 +153,7 @@
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
@@ -162,44 +162,44 @@
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 3
       }
     ],
@@ -207,88 +207,88 @@
       {
         "col": 0,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 3,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
         "col": 3,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
@@ -301,24 +301,24 @@
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
@@ -329,32 +329,32 @@
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 3,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 3
       }
     ],
@@ -362,17 +362,17 @@
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
@@ -383,12 +383,12 @@
       {
         "col": 0,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 3,
@@ -397,46 +397,46 @@
       {
         "col": 5,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 1,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       }
     ],
     [
       {
         "col": 0,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
@@ -446,17 +446,17 @@
       {
         "col": 2,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
@@ -467,67 +467,67 @@
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 0
       },
       {
         "col": 1,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
@@ -536,7 +536,7 @@
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
@@ -547,117 +547,117 @@
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 3
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
@@ -666,7 +666,7 @@
       {
         "col": 3,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
@@ -675,127 +675,127 @@
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 0
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 5,
@@ -804,19 +804,19 @@
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
@@ -825,52 +825,52 @@
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 4,
@@ -879,24 +879,24 @@
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
@@ -905,40 +905,40 @@
       {
         "col": 4,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       }
     ],
     [
       {
         "col": 0,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 0
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
@@ -949,7 +949,7 @@
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
@@ -958,57 +958,57 @@
       {
         "col": 4,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 0
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
         "col": 1,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 0
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 0
       }
     ],
@@ -1016,34 +1016,34 @@
       {
         "col": 0,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
@@ -1053,24 +1053,24 @@
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
@@ -1079,62 +1079,62 @@
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 2,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 3,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
@@ -1143,139 +1143,139 @@
       {
         "col": 3,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 2
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 3
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
@@ -1284,12 +1284,12 @@
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 3
       }
     ],
@@ -1297,52 +1297,52 @@
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "triangle",
-        "hp": 14,
+        "hp": 116,
         "corner": 1
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 1,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 3,
@@ -1351,73 +1351,73 @@
       {
         "col": 4,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 5,
         "kind": "salsa",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       },
       {
         "col": 4,
@@ -1426,12 +1426,12 @@
       {
         "col": 5,
         "kind": "queso",
-        "hp": 21
+        "hp": 174
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 14
+        "hp": 116
       }
     ]
   ]

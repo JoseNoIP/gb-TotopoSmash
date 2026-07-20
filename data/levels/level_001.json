@@ -1,6 +1,6 @@
 {
   "id": "level_001",
-  "starting_seeds": 12,
+  "starting_seeds": 30,
   "row_queue": [
     [
       {
@@ -10,56 +10,56 @@
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
@@ -68,12 +68,12 @@
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 6,
@@ -100,14 +100,14 @@
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
@@ -116,34 +116,34 @@
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 4,
@@ -152,19 +152,19 @@
       {
         "col": 6,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 0,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 4,
@@ -173,63 +173,63 @@
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 4,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       }
     ],
     [
       {
         "col": 1,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 2,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 3,
@@ -238,7 +238,7 @@
       {
         "col": 5,
         "kind": "totopo",
-        "hp": 1
+        "hp": 50
       },
       {
         "col": 6,

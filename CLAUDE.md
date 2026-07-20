@@ -291,7 +291,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 ### Referencia Rápida del GDD
 
 - **Molcajete:** 10 semillas iniciales, velocidad 640px/s, ráfaga cada 0.06s, cono de apuntado ±15° respecto a la horizontal.
-- **Totopo:** `HP = oleada`. **Queso:** `HP = ceil(oleada * 1.5)`, daño x2, -15% velocidad de semilla al rebotar (piso `SEED_MIN_SPEED_RATIO = 0.35`). **Salsa:** 10 de daño en cruz al morir. **Piedra:** indestructible.
+- **Totopo:** `HP = oleada`. **Queso:** `HP = ceil(oleada * 1.5)`, daño x2, -15% velocidad de semilla al rebotar (piso `SEED_MIN_SPEED_RATIO = 0.35`). **Salsa:** 10 de daño en cruz al morir. **Piedra:** indestructible. Esto rige `wave_scaling.gd` (Modo Infinito); Modo Nivel usa su propia escala por NÚMERO DE NIVEL, ver `tools/gen_levels.py::totopo_hp_for_level()`.
 - **Oleadas:** 1–5 introducción (solo totopo) · 6–15 geometría (triángulo + queso + salsa) · 16–30 piedra · 31+ espaciado ajustado.
 - **Grid:** 7 columnas × 9 filas (`Constants.GRID_COLS/GRID_ROWS`), diseño base 390×844.
 - **Sin metagame de oro/upgrades** — el GDD no lo define; `SaveManager` solo persiste settings + best_score/max_wave/tutorial_shown.

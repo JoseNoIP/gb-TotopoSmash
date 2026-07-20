@@ -141,6 +141,26 @@ los jugadores), con victoria real.
 - Verificado con captura real del viewport: nivel procedural, nivel-figura (corazón en silueta), MainMenu con los 3 botones, y LevelSelectScreen con la grilla de niveles (ScrollContainer vertical, escala sin cambios a 100 niveles).
 - **Corrección post-feedback verificada con captura real:** `level_001` arranca mostrando solo 1 fila (no las 10 completas) y, tras emitir `all_seeds_returned`, revela la fila siguiente de la cola mientras la primera baja — confirma `row_queue` funcionando turno a turno. La misma captura muestra `danger_line.gd` v2 (banda + chevrones) renderizando correctamente. **Nota técnica:** la captura vía `get_viewport().get_texture().get_image()` da `null` bajo `--headless` (usa el `RenderingServer` dummy, sin textura real) — hay que correr el proceso probe SIN `--headless` (ventana real, aunque no se vea) para que la captura funcione.
 
+### Rebalance de HP/semillas por nivel (dificultad progresiva) ✅
+
+Pedido explícito: los niveles procedurales se sentían con muy poca resistencia por bloque
+(nivel 1 arrancaba con totopos de HP 1). El HP ahora escala directo con el **número de
+nivel**, desacoplado de `effective_wave` (que sigue gobernando SOLO qué tipos de bloque
+pueden aparecer — queso/triángulo/salsa oleada 6+, piedra oleada 16+, igual que antes):
+- `tools/gen_levels.py::totopo_hp_for_level()` — nivel 1 = 50 golpes, nivel 100 = 300,
+  sigue subiendo igual más allá (sin tope, a diferencia de `total_rows_for_level()`).
+  Totopo es la escala ancla (no queso) porque queso/triángulo/salsa no existen todavía en
+  el nivel 1 real (desbloquean en nivel 11+) — anclar el tope en queso habría dejado el
+  nivel 1 sin ningún bloque que realmente llegue a 50.
+- `queso_hp_for_level()` = 1.5x lo anterior (misma proporción que `wave_scaling.gd` de
+  siempre), salsa/triángulo comparten el valor de totopo.
+- `starting_seeds_for_level()` escala con la misma curva lineal (30 semillas en nivel 1,
+  110 en nivel 100) — pedido explícito de mantener esto "consistente" para que el salto de
+  HP no vuelva los niveles imposibles de limpiar. Ajuste de buena fe, no verificado con
+  playtesting real (ver Pendientes) — la física de rebote real (una semilla puede golpear
+  el mismo bloque muchas veces mientras rebota, no se "gasta" al primer impacto) hace muy
+  difícil simular en el papel si el ratio HP:semillas elegido es exactamente el correcto.
+
 ## Ícono de Android rediseñado ✅
 
 El ícono anterior (`assets/icon.png`, `config/icon` en `project.godot` — usado por Android
@@ -167,7 +187,7 @@ por una mascota vectorial "toony" del totopo (ver skill `/gen-ai-art`, 512×512 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
 - **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
 - **Sistema de mejoras/oro/personajes** — decisión de alcance explícita, pedido por el usuario pero diferido a otra sesión. `SaveManager` ya persiste cualquier clave nueva en un `Dictionary` a JSON sin fricción, así que agregarlo después no debería requerir cambios estructurales.
-- **Balance de los 100 niveles** — primera pasada razonable (HP/filas/semillas escalados a mano en `tools/gen_levels.py`, tope de filas agregado para respetar la sesión target), no verificada con playtesting real más allá de las pruebas automatizadas y visuales. Ajustar constantes del script y regenerar si algún nivel resulta muy fácil/difícil — especialmente los niveles altos (70+), donde el HP escala bastante (`effective_wave` sigue creciendo sin tope) y no hay forma de confirmar la sensación real de dificultad sin jugarlos.
+- **Balance de los 100 niveles** — el HP por bloque ahora escala fuerte (totopo 50→300 entre nivel 1 y 100, ver sección de rebalance arriba) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar `TOTOPO_HP_CAP_START/AT_100` y `SEEDS_START/AT_100` en `tools/gen_levels.py` y regenerar.
 - **Más niveles / packs temáticos** — el roster ya llega a 100 (objetivo del GDD). Lo que sigue es variedad cualitativa: usar `/level-designer` para packs temáticos (ej. figuras navideñas) o reemplazar tramos procedurales por niveles diseñados a mano donde se quiera más personalidad.
 
 ---
