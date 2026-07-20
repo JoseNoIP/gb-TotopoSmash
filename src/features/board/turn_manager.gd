@@ -135,8 +135,8 @@ func _on_seed_landed(_seed_node: Node2D, x_position: float) -> void:
 		EventBus.all_seeds_returned.emit(x_position)
 
 
-func _on_seed_extra_touched(_origin: Vector2) -> void:
-	_seed_count += Constants.SEED_EXTRA_AMOUNT
+func _on_seed_extra_touched(_origin: Vector2, amount: int) -> void:
+	_seed_count += amount
 	EventBus.seed_extra_collected.emit(_seed_count)
 	EventBus.seed_count_changed.emit(_seed_count)
 

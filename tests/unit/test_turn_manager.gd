@@ -44,11 +44,20 @@ func test_seed_extra_touched_adds_one_seed_and_emits_signals() -> void:
 	GameManager.start_game()
 	var before: int = turn_manager.call(&"get_seed_count")
 	watch_signals(EventBus)
-	EventBus.seed_extra_touched.emit(Vector2.ZERO)
+	EventBus.seed_extra_touched.emit(Vector2.ZERO, Constants.SEED_EXTRA_AMOUNT)
 	var expected: int = before + Constants.SEED_EXTRA_AMOUNT
 	assert_eq(turn_manager.call(&"get_seed_count"), expected)
 	assert_signal_emitted_with_parameters(EventBus, "seed_extra_collected", [expected])
 	assert_signal_emitted_with_parameters(EventBus, "seed_count_changed", [expected])
+
+
+func test_seed_extra_touched_respects_a_custom_amount() -> void:
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	GameManager.start_game()
+	var before: int = turn_manager.call(&"get_seed_count")
+	EventBus.seed_extra_touched.emit(Vector2.ZERO, 25)
+	assert_eq(turn_manager.call(&"get_seed_count"), before + 25)
 
 
 func test_fire_requested_ignored_outside_aiming_phase() -> void:

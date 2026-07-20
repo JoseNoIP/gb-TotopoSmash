@@ -11,9 +11,10 @@ extends Node2D
 ## - `row_queue` — filas que aparecen una por turno, igual que Modo Infinito pero con
 ##   contenido fijo en vez de aleatorio (niveles de dificultad progresiva: arrancan
 ##   mostrando 1 fila y el resto se revela de a poco, hasta agotar la cola).
-## - `static: true` — niveles-figura de ALTA resolución (grilla propia vía `grid_cols`, ver
-##   _spawn_static_cell): los bloques NUNCA se desplazan y NO hay condición de derrota; se
-##   gana al despejar todo lo destructible, sin importar cuántos turnos tome.
+## - `static: true` — niveles-figura de ALTA resolución (grilla propia vía `grid_cols`/
+##   `grid_rows`, ver _setup_static_layout/_spawn_static_cell, centrada y auto-escalada
+##   para nunca invadir el área del molcajete): los bloques NUNCA se desplazan y NO hay
+##   condición de derrota; se gana al despejar todo lo destructible, sin importar los turnos.
 ## El nivel (no-static) se gana cuando la cola ya no tiene más filas Y no queda ningún
 ## bloque destructible (piedra no cuenta) — antes de eso, aunque el tablero esté
 ## momentáneamente limpio, todavía falta contenido por venir. TurnManager NUNCA toca esta
@@ -32,6 +33,7 @@ var _level_row_queue: Array = []
 var _level_queue_index: int = 0
 var _is_static_level: bool = false
 var _static_cell_size: float = 0.0
+var _static_origin: Vector2 = Vector2.ZERO
 var _static_turns_used: int = 0
 
 
@@ -60,8 +62,7 @@ func _on_game_started() -> void:
 	var data: Dictionary = LevelManager.get_level_data(level_id)
 	_is_static_level = LevelLoaderGd.is_static_level(data)
 	if _is_static_level:
-		var grid_cols: int = int(data.get("grid_cols", Constants.GRID_COLS))
-		_static_cell_size = Constants.DESIGN_WIDTH / float(grid_cols)
+		_setup_static_layout(data)
 		for cell: Dictionary in data.get("cells", []) as Array:
 			_spawn_static_cell(cell)
 		return
@@ -70,6 +71,29 @@ func _on_game_started() -> void:
 	_level_row_queue = data.get("row_queue", []) as Array
 	_level_queue_index = 0
 	_spawn_next_queued_row()  # revela la primera fila de la cola (si el nivel tiene una)
+
+
+## Calcula `_static_cell_size` como el MÁS GRANDE que quepa en ancho Y alto dentro del
+## área jugable (nunca solo en ancho) — bug real corregido: un nivel `static` con muchas
+## filas terminaba dibujándose encima del molcajete porque el cell_size solo se ajustaba
+## al ancho. `grid_rows` (obligatorio, ver level_loader.gd) es lo que permite calcular esto
+## SIN tener que recorrer `cells` primero. `_static_origin` centra el resultado en ambos
+## ejes dentro del área segura (pedido explícito del usuario: "centrarlos verticalmente").
+func _setup_static_layout(data: Dictionary) -> void:
+	var grid_cols: int = int(data.get("grid_cols", Constants.GRID_COLS))
+	var grid_rows: int = int(data.get("grid_rows", 1))
+	var safe_height: float = (
+		Constants.DESIGN_HEIGHT - Constants.BOARD_TOP_MARGIN - Constants.STATIC_LEVEL_BOTTOM_MARGIN
+	)
+	_static_cell_size = minf(
+		Constants.DESIGN_WIDTH / float(grid_cols), safe_height / float(grid_rows)
+	)
+	var content_w: float = _static_cell_size * grid_cols
+	var content_h: float = _static_cell_size * grid_rows
+	_static_origin = Vector2(
+		(Constants.DESIGN_WIDTH - content_w) * 0.5,
+		Constants.BOARD_TOP_MARGIN + (safe_height - content_h) * 0.5
+	)
 
 
 ## GDD "Fase de Avance": una vez que la última semilla regresa, los bloques sobrevivientes
@@ -253,12 +277,13 @@ func _spawn_level_cell(cell: Dictionary) -> void:
 	_spawn_block(node as StaticBody2D, grid_pos, pos, hp, cell_size)
 
 
-## Nivel `static`: usa la grilla PROPIA del nivel (_static_cell_size, calculado en
-## _on_game_started() a partir de `grid_cols`) en vez de GridMathGd/Constants.GRID_COLS —
-## es la única forma de que quepan muchos más bloques, más chicos, en el mismo ancho de
-## pantalla (pedido explícito del usuario: "cuadros más pequeños" para apreciar figuras de
-## alta resolución). Nunca se desplaza, así que la fila puede ser cualquier entero >= 0
-## (validado hasta STATIC_LEVEL_MAX_ROW en level_loader.gd) sin relación con
+## Nivel `static`: usa la grilla PROPIA del nivel (_static_cell_size/_static_origin,
+## calculados en _setup_static_layout() a partir de `grid_cols`/`grid_rows`) en vez de
+## GridMathGd/Constants.GRID_COLS — es la única forma de que quepan muchos más bloques, más
+## chicos, en el mismo ancho de pantalla (pedido explícito del usuario: "cuadros más
+## pequeños" para apreciar figuras de alta resolución), CENTRADA (pedido explícito) y sin
+## invadir nunca el área del molcajete. Nunca se desplaza, así que la fila puede ser
+## cualquier entero >= 0 (validado contra `grid_rows` en level_loader.gd) sin relación con
 ## Constants.MOLCAJETE_ROW.
 func _spawn_static_cell(cell: Dictionary) -> void:
 	var kind: String = cell.get("kind", "") as String
@@ -266,14 +291,13 @@ func _spawn_static_cell(cell: Dictionary) -> void:
 	if node == null:
 		return
 	var grid_pos := Vector2i(int(cell.get("col", 0)), int(cell.get("row", 0)))
-	var pos := Vector2(
-		_static_cell_size * (float(grid_pos.x) + 0.5),
-		Constants.BOARD_TOP_MARGIN + _static_cell_size * (float(grid_pos.y) + 0.5)
-	)
+	var pos: Vector2 = _static_origin + _static_cell_size * (Vector2(grid_pos) + Vector2(0.5, 0.5))
 	if kind == WaveScalingGd.KIND_TRIANGLE:
 		node.set(&"corner", int(cell.get("corner", 0)))
 	if kind == WaveScalingGd.KIND_LASER:
 		node.set(&"is_horizontal", cell.get("orientation", "horizontal") != "vertical")
+	if kind == WaveScalingGd.KIND_SEED_EXTRA and cell.has("amount"):
+		node.set(&"amount", int(cell.get("amount")))
 	if CellFactoryGd.is_icon_kind(kind):
 		_spawn_icon(node as Area2D, grid_pos, pos, _static_cell_size)
 		return

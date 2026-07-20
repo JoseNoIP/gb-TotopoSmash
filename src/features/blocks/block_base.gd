@@ -107,7 +107,11 @@ func _build_hp_label(cell_size: float, center_offset: Vector2) -> void:
 	_hp_label.name = &"HpLabel"
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hp_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
+	var font_size: int = clampi(
+		roundi(cell_size * Constants.UI_HP_FONT_SIZE_RATIO),
+		Constants.UI_HP_FONT_MIN_SIZE, Constants.UI_MIN_FONT_SIZE
+	)
+	_hp_label.add_theme_font_size_override(&"font_size", font_size)
 	_hp_label.position = Vector2(visual_size, visual_size) * -0.5 + center_offset
 	_hp_label.size = Vector2(visual_size, visual_size)
 	_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

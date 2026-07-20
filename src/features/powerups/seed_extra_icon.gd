@@ -5,6 +5,10 @@ extends Area2D
 
 const TEXTURE_PATH: String = "res://assets/sprites/powerup_icons/seed_extra.png"
 
+## Cuántas semillas otorga este ícono en particular. Default = el bono normal de Modo
+## Infinito/campaña numérica; niveles autorados (ver BoardManager._spawn_static_cell) pueden
+## pedir un valor mayor vía `"amount"` en el JSON del nivel.
+var amount: int = Constants.SEED_EXTRA_AMOUNT
 var _radius: float = 14.0
 var _has_sprite: bool = false
 
@@ -52,5 +56,5 @@ func _draw() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group(&"seeds"):
 		return
-	EventBus.seed_extra_touched.emit(global_position)
+	EventBus.seed_extra_touched.emit(global_position, amount)
 	queue_free()

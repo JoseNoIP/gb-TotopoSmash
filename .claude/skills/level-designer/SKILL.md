@@ -86,19 +86,21 @@ Un nivel puede combinar ambos (`cells` para algo fijo de fondo + `row_queue` par
 contenido que va bajando), pero lo normal es usar solo uno: `cells` para figuras,
 `row_queue` para dificultad progresiva. Al menos uno de los dos debe tener contenido.
 
-**Tercer mecanismo: `"static": true`** — figuras de ALTA resolución (cientos de bloques,
-grilla propia más angosta que el tablero normal). Incompatible con `row_queue`.
+**Tercer mecanismo: `"static": true`** — figuras de ALTA resolución (decenas/cientos de
+bloques, grilla propia más angosta que el tablero normal, imagen fija que NUNCA se mueve).
+Incompatible con `row_queue`.
 
 ```json
 {
   "id": "worldcup_004",
   "static": true,
-  "grid_cols": 30,
+  "grid_cols": 14,
+  "grid_rows": 20,
   "starting_seeds": 50,
   "par_turns": 80,
   "cells": [
     { "col": 12, "row": 3, "kind": "totopo", "hp": 120 },
-    { "col": 5, "row": 40, "kind": "laser", "orientation": "vertical" }
+    { "col": 5, "row": 12, "kind": "laser", "orientation": "vertical" }
   ]
 }
 ```
@@ -106,14 +108,66 @@ grilla propia más angosta que el tablero normal). Incompatible con `row_queue`.
 | Campo | Regla |
 |---|---|
 | `static` | `true` activa el modo — bloques que NUNCA se desplazan y sin condición de derrota (se gana despejando todo lo destructible, sin importar los turnos). |
-| `grid_cols` | **Obligatorio** si `static`. Entero > 0 — número de columnas de la grilla PROPIA de este nivel (nada que ver con `Constants.GRID_COLS=7`; entre más grande, más bloques más chicos caben en el mismo ancho de pantalla). `tools/gen_worldcup_pack.py` usa 22-50 según la forma. |
+| `grid_cols` | **Obligatorio**. Entero > 0 — columnas de la grilla PROPIA de este nivel (nada que ver con `Constants.GRID_COLS=7`). Ver "Tamaño proporcional" más abajo — NO elegir un número arbitrario. |
+| `grid_rows` | **Obligatorio** (agregado tras un bug real: un nivel sin límite de fila explícito terminó dibujándose sobre el molcajete). Entero > 0 — filas de la grilla propia. `BoardManager` usa `grid_cols`/`grid_rows` para auto-escalar el tamaño de celda (`min(ancho/grid_cols, alto_disponible/grid_rows)`) y **centrar la figura en ambos ejes** dentro del área de juego — por eso este script/skill NUNCA necesita calcular manualmente si la figura "cabe": basta con declarar cuántas columnas/filas ocupa el contenido y BoardManager garantiza que no invada el molcajete. |
 | `cells[].col` (en `static`) | Entero en `[0, grid_cols-1]` — NO `[0,6]` como en niveles normales. |
-| `cells[].row` (en `static`) | Cualquier entero >= 0 (tope defensivo 300) — NO limitado a `Constants.MOLCAJETE_ROW`, no hay fila de molcajete prohibida porque no hay condición de derrota. |
+| `cells[].row` (en `static`) | Entero en `[0, grid_rows-1]` — NO limitado a `Constants.MOLCAJETE_ROW` (no hay fila de molcajete prohibida, no hay condición de derrota), pero SÍ acotado por `grid_rows` de este nivel. |
 | `par_turns` | Opcional. Si se limpia el nivel en <= este número de turnos, el score final se multiplica por `Constants.STATIC_LEVEL_PAR_BONUS_MULTIPLIER`. |
-| `cells[].kind: "laser"` | Power-up nuevo — al tocarlo, daña TODA la fila (`"orientation": "horizontal"`, default) o columna (`"vertical"`) donde está. Sin `hp`. |
+| `cells[].kind: "laser"` | Power-up — al tocarlo, daña TODA la fila (`"orientation": "horizontal"`, default) o columna (`"vertical"`) donde está. Sin `hp`. |
+| `cells[].kind: "seed_extra"` + `"amount"` | Opcional, entero > 0. Cuántas semillas otorga ESE ícono en particular — default `Constants.SEED_EXTRA_AMOUNT` (+1, pensado para Modo Infinito/campaña numérica) si se omite. Niveles `static` de exhibición (sin presión de tiempo, muchas celdas) pueden pedir bonos grandes (ej. 20-25) para que una partida completa acumule varios cientos de semillas — ver "Semillas extra abundantes" más abajo. |
 
-Ver PASO 2 para cómo rasterizar una figura de alta resolución (geometría pura o
-`tools/gen_worldcup_pack.py` como referencia de un caso con Pillow para texto).
+**Tamaño proporcional (pedido explícito del usuario — corrige un error real de la v1 de
+`gen_worldcup_pack.py`, que usaba 22-50 columnas por nivel sin relación entre sí, dando
+bloques de tamaño muy inconsistente entre figuras del mismo pack):** pensar `grid_cols`
+como una subdivisión de la celda normal del tablero (`Constants.GRID_COLS = 7`), no como un
+número libre. `Constants.STATIC_LEVEL_DEFAULT_SUBDIVISION = 2` → **`grid_cols = 14` es el
+tamaño ESTÁNDAR** para la mayoría de las figuras de un pack — mantiene el tamaño de bloque
+visualmente consistente entre niveles del mismo pack. Excepción documentada: figuras que
+necesitan más ancho para leerse bien (texto, escenas panorámicas como una cancha completa)
+pueden usar subdivisión 3 (`grid_cols = 21`) — pero esto debe ser la excepción, no la
+norma; NO variar `grid_cols` nivel a nivel "a ojo" como hacía la v1. `grid_rows` sí varía
+libremente según la proporción natural de cada figura (a igual `grid_cols`, una figura alta
+como un trofeo simplemente pide más `grid_rows` que una ancha como una portería) — lo que
+se mantiene constante es el TAMAÑO DE CELDA (columnas), no el alto.
+
+Ver PASO 2 para cómo rasterizar una figura de alta resolución (geometría pura — círculos,
+rectángulos, perfiles paramétricos por fila — o `tools/gen_worldcup_pack.py` como
+referencia de un caso con Pillow para texto). Preferir geometría pura (funciones
+matemáticas de `(col,row) -> dentro/fuera de la figura`) sobre ASCII a mano en este nivel
+de resolución — a 14+ columnas dibujar el ASCII celda por celda ya no es práctico.
+
+**Elementos decorativos (pedido explícito: "que no se vean tan vacíos"):** una figura
+sola dentro de su bounding box suele dejar mucho margen vacío alrededor. Sembrar 2-5
+acentos chicos (ej. una mini-estrella de 5 celdas en cruz) en el margen, sin superponerse a
+la silueta principal — ver `_add_decorations()` en `tools/gen_worldcup_pack.py` como
+referencia. Dejar `MARGIN_CELLS` (2 celdas) de padding entre el borde del `grid_cols` x
+`grid_rows` y el bounding box real de la figura, para que estos acentos tengan dónde ir sin
+quedar pegados al borde del canvas.
+
+**Puntos de entrada (pedido explícito: "que el jugador acierte a ese punto para entrar a
+la figura y poder destruirla desde adentro"):** en vez de sembrar power-ups SOLO en el
+fondo/huecos fuera de la silueta, reemplazar algunas celdas realmente INTERIORES de la
+figura (celdas con sus 4 vecinos —arriba/abajo/izq/der— también rellenos, es decir
+inalcanzables en línea recta desde afuera) por `lemon`/`seed_extra`/`laser` en vez de
+`totopo`. El jugador tiene que abrirse paso destruyendo bloques hasta llegar exactamente a
+esa celda para "entrar" — ver `_interior_entry_points()` en `tools/gen_worldcup_pack.py`.
+No todas las figuras tienen celdas interiores así (un marco delgado como una portería o un
+patrón muy fragmentado como una bandera a cuadros puede no tener ninguna) — está bien que
+esas figuras terminen con 0 puntos de entrada, no forzarlo artificialmente.
+
+**Dos tipos de pack — declarar SIEMPRE cuál(es) usa un pack nuevo, pedido explícito del
+usuario:**
+
+| Tipo | Mecanismo | Cuándo usarlo |
+|---|---|---|
+| 1. Bloques descendentes | `row_queue` (o `cells` de baja resolución que se desplaza igual, sin `static`) | Dificultad progresiva, presión de tiempo real, "survival" temático. |
+| 2. Imagen fija | `"static": true` | Mostrar una figura/escena reconocible de una vez, sin presión de tiempo — pensado para packs visuales (ver Mundial). |
+
+Un pack se registra en `Constants.LEVEL_PACKS` (`{"prefix":..., "name_key":...}`) — al
+crear un pack nuevo, decidir explícitamente (y documentar en el mensaje de la skill al
+usuario) si es tipo 1, tipo 2, o una mezcla, ANTES de generar contenido. No asumir "imagen
+fija" solo porque el pack anterior (Mundial) lo usó — el tipo es una decisión de diseño por
+pack, no un default global.
 
 ---
 
@@ -156,10 +210,11 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
   con contenido en las filas `0..(R-1)` da al jugador `9-R` turnos antes de perder.
   **Recomendado: R ≤ 6 filas** (deja 3+ turnos de margen).
 - **Filas (niveles `static`)**: NO aplica nada de lo anterior — no hay condición de
-  derrota, así que la figura puede ocupar todas las filas que necesite (limitado solo por
-  que la altura total en píxeles quepa en pantalla: `filas × (DESIGN_WIDTH/grid_cols)` no
-  debería superar ~650-700px). Elegir `grid_cols` según qué tan ancha/angosta sea la figura
-  (más columnas = bloques más chicos = más detalle horizontal).
+  derrota, y ya no hace falta calcular a mano si la figura "cabe" en pantalla: BoardManager
+  auto-escala el tamaño de celda para que `grid_cols`×`grid_rows` siempre quepa en el área
+  de juego (y centra el resultado), sin importar cuántas filas se declaren. Elegir
+  `grid_rows` según la proporción NATURAL de la figura a `grid_cols` fijo (ver "Tamaño
+  proporcional" en PASO 1) — no como un intento de controlar el tamaño final en pantalla.
 - **Filas totales (dificultad progresiva, `row_queue`)**: como cada fila se revela recién
   cuando se consume la anterior, el total de filas NO reduce el margen turno a turno —
   define cuánto dura el nivel. `tools/gen_levels.py::total_rows_for_level()` usa nivel 1 =
@@ -233,7 +288,8 @@ el nivel nuevo (y el manifiesto actualizado) quedaron bien.
 - [ ] `starting_seeds` entero > 0.
 - [ ] Contenido dentro de ~6 filas (niveles-figura, `cells`) o cola de filas balanceada según `tools/gen_levels.py::total_rows_for_level()` (dificultad progresiva, `row_queue`) — NO aplica a niveles `static` (sin límite de filas).
 - [ ] `row_queue[][]` sin campo `row` (implícito); duplicados validados por columna dentro de cada fila, no por posición global.
-- [ ] Si `static: true`: `grid_cols` presente y > 0; `col` validado contra `grid_cols`, no contra `Constants.GRID_COLS`; sin `row_queue`.
+- [ ] Si `static: true`: `grid_cols` Y `grid_rows` presentes y > 0; `col`/`row` validados contra `grid_cols`/`grid_rows`, no contra `Constants.GRID_COLS`/`MOLCAJETE_ROW`; sin `row_queue`; `grid_cols` sigue la convención de subdivisión (14 estándar, 21 solo si la figura lo justifica), no un número arbitrario.
+- [ ] Si el pack es nuevo: se declaró explícitamente qué tipo(s) usa (bloques descendentes / imagen fija / mezcla) antes de generar contenido, y se registró en `Constants.LEVEL_PACKS`.
 - [ ] `python3 tools/validate_level.py` sin errores.
 - [ ] `manifest.json` actualizado (no regenerado desde cero) — `tools/gen_levels.py::main()` ya preserva packs existentes si se corre, pero mejor no correrlo sin necesidad.
 - [ ] Si tiene `name`, la key existe en `assets/translations/translations.txt` para los 4 idiomas.

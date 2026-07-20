@@ -252,6 +252,29 @@ inicio". Reemplaza por completo el pack Mundial v1 (10 niveles, baja resolución
   estos niveles (mostrarla no tendría sentido y cortaría la figura a la mitad visualmente,
   ver bug corregido abajo). Se gana despejando todo lo destructible, sin importar cuántos
   turnos tome.
+- **`grid_rows` obligatorio + auto-escalado en 2 ejes (v3, corrige un bug real reportado
+  jugando):** v2 solo escalaba el tamaño de celda por ancho (`DESIGN_WIDTH / grid_cols`),
+  sin verificar si `grid_rows` (que ni siquiera era un campo declarado — se inferían del
+  máximo `row` usado) cabía en el alto disponible. Resultado real: el nivel de la Copa (alto,
+  40 filas de contenido) se dibujaba más grande de lo que cabía verticalmente y terminaba
+  tapando el área del molcajete. Fix: `grid_rows` ahora es **obligatorio** (validado igual
+  que `grid_cols`, en `level_loader.gd` y su espejo `tools/validate_level.py`) y
+  `BoardManager._setup_static_layout()` calcula `_static_cell_size =
+  min(DESIGN_WIDTH/grid_cols, alto_disponible/grid_rows)` (el menor de los dos ajustes, para
+  garantizar que SIEMPRE quepan ambas dimensiones) y centra el resultado en ambos ejes
+  (`_static_origin`) dentro del área de juego, reservando `Constants.STATIC_LEVEL_BOTTOM_MARGIN
+  = 144.0` px libres antes del molcajete. Con esto, declarar `grid_cols`/`grid_rows`
+  correctamente basta — ya no hace falta calcular a mano si una figura "cabe".
+- **Tamaño proporcional entre niveles del mismo pack** (pedido explícito: "los tamaños de
+  los cuadros deben ser proporcionales... el espacio del cuadro de un nivel normal
+  podríamos dividirlo en 4 cuadros de niveles fijos") — v2 usaba `grid_cols` muy distintos
+  entre sí (22/44/50) sin relación con el tablero normal, dando bloques de tamaño
+  visualmente inconsistente entre las 3 figuras. v3 fija `Constants.STATIC_LEVEL_DEFAULT_SUBDIVISION
+  = 2` → `grid_cols = Constants.GRID_COLS * 2 = 14` como tamaño ESTÁNDAR para la mayoría de
+  las figuras del pack (mismo tamaño de bloque en todas), con una excepción documentada
+  (subdivisión 3 → 21 columnas) solo para la cancha y el texto "GOL", que sí necesitan más
+  ancho para leerse. `grid_rows` varía libremente según la proporción natural de cada
+  figura a `grid_cols` fijo.
 - **Bono por velocidad** (pedido explícito: "recompensar el hecho de hacerlo en menos
   turnos") — campo opcional `"par_turns"` en el nivel; si se limpia en <= par_turns,
   `GameManager._apply_par_turns_bonus()` multiplica el score final por
@@ -268,27 +291,46 @@ inicio". Reemplaza por completo el pack Mundial v1 (10 niveles, baja resolución
   pero en línea recta). Nuevo kind `"laser"` registrado en `wave_scaling.gd`/
   `cell_factory.gd`, **sin** probabilidad de spawn en Modo Infinito a propósito (solo
   aparece en niveles autorados) para no tocar el balance ya validado de ese modo.
-- **Power-ups en los huecos** (pedido explícito: "dentro de los huecos puedes poner los
-  power up") — las celdas vacías dentro del recuadro de la figura (no parte de la
-  silueta) llevan `lemon`/`seed_extra`/`laser` sembrados, ~18 por nivel.
+- **Puntos de entrada dentro de la figura** (pedido explícito, corrige v2: "dentro de los
+  huecos puedes poner los power up" se leyó primero como "solo en el fondo", pero el
+  usuario aclaró después: "entre las partes de las figuras puedes poner power up... para
+  entrar a la figura y poder destruirla desde adentro") — v3 identifica celdas realmente
+  INTERIORES de la silueta (con sus 4 vecinos también rellenos, inalcanzables en línea
+  recta desde afuera) y reemplaza hasta 5 de ellas por `lemon`/`seed_extra`/`laser` en vez
+  de `totopo` (`_interior_entry_points()`) — el jugador tiene que abrirse paso hasta esa
+  celda exacta para "entrar". Figuras sin celdas interiores (marcos delgados como la
+  portería, patrones fragmentados como la bandera a cuadros) terminan con 0 puntos de
+  entrada — no se fuerza.
+- **Elementos decorativos** (pedido explícito: "que no se vean tan vacíos... alguna
+  estrella, un balón, la silueta abstracta de un futbolista") — 2-5 mini-estrellas
+  (`_add_decorations()`) sembradas en el margen alrededor de cada figura, sin superponerse
+  a la silueta principal; `MARGIN_CELLS = 2` de padding entre el borde del canvas y el
+  bounding box real de la figura para que tengan dónde ir.
 - **Semillas iniciales bajas** (pedido explícito, ya sin presión de tiempo): 50 en vez del
   antiguo 200 del pack Mundial v1.
-- **`tools/gen_worldcup_pack.py` v2** — 3 niveles (reemplazan los 10 de v1): Cancha de
-  Fútbol (44×20, geometría pura: borde, línea media, círculo central, áreas grande/chica,
-  arcos de esquina — todo calculado con matemática simple, sin dependencias), Copa del
-  Mundo (22×40, silueta paramétrica: ancho por fila vía una función a trozos con un
-  "ojo" hueco cerca de la cabeza, sin PIL), "¡GOL!" (50×16, único que sí usa Pillow — texto
-  renderizado con Arial Black y muestreado a la grilla del nivel). HP variado 60-300 por
-  bloque (igual filosofía que el resto del roster: sorteado, nunca fijo).
-- **Bug real encontrado con captura de pantalla:** a la resolución de un nivel `static`
-  (~9px por celda), el número de HP que `block_base.gd` siempre dibuja sobre cada bloque
-  se volvía ilegible y convertía la figura en ruido visual — arruinaba el propósito
+- **`tools/gen_worldcup_pack.py` v3 — 10 niveles** (corrige v2, que redujo el pack de 10 a
+  3 por error de alcance — "tampoco me refería a que solo dejaras 3 niveles"): Balón,
+  Trofeo (silueta paramétrica reutilizada de v2, con el "ojo" hueco cerca de la cabeza),
+  Portería, Camiseta, Estrella del Mundial, **Silueta abstracta de futbolista** (nueva,
+  pedida explícitamente — cabeza + torso + pierna de apoyo + pierna de patada extendida,
+  geometría pura), Cancha de Fútbol (geometría reutilizada de v2), texto "¡GOL!" (único que
+  usa Pillow), Bandera a Cuadros, Medalla. Las imágenes de referencia que compartió el
+  usuario (cancha/copa/GOL) se tratan como **ejemplos de estilo**, no specs a replicar
+  celda por celda ("no se trataba de que los crearas exactamente igual con la misma
+  cantidad de bloques" — aclaración explícita del usuario). HP variado 60-300 por bloque
+  (igual filosofía que el resto del roster: sorteado, nunca fijo).
+- **Bug real encontrado con captura de pantalla (v2):** a la resolución de un nivel
+  `static` (~9px por celda), el número de HP que `block_base.gd` siempre dibuja sobre cada
+  bloque se volvía ilegible y convertía la figura en ruido visual — arruinaba el propósito
   completo de la feature. Fix: `Constants.UI_MIN_READABLE_CELL_SIZE = 20.0`;
   `block_base.gd` guarda su `_cell_size` real en `setup()` y oculta el label de HP por
   debajo de ese umbral. Generalizado (no es específico de niveles `static`) — cualquier
   bloque futuro suficientemente chico se beneficia automáticamente.
-- Verificado con captura real de los 3 niveles — cancha, trofeo y "GOL" perfectamente
-  reconocibles, sin ruido de texto.
+- **Bug real reportado jugando (v2 → v3): el nivel de la Copa tapaba el molcajete** — ver
+  el punto "`grid_rows` obligatorio + auto-escalado en 2 ejes" más arriba; root cause y fix
+  completos ahí.
+- Verificado con captura real de varios niveles del pack v3 tras el fix de auto-escalado —
+  ninguno invade el área del molcajete, figuras centradas verticalmente.
 
 ## Sistema de mejoras/oro/personajes ✅
 
@@ -366,9 +408,9 @@ defecto del tema de Godot — el texto se mezclaba visualmente con el fondo real
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
-- **Balance de los niveles `static` (pack Mundial v2)** — HP variado 60-300, 50 semillas iniciales, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos tres números está verificado jugando de verdad. Como estos niveles ya no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible" — menor riesgo que el pack Mundial v1, pero el bono de `par_turns` podría sentirse trivial de alcanzar o inalcanzable según cómo se comporte la física real. Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 300 HP?).
+- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 60-300, 50 semillas iniciales, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos tres números está verificado jugando de verdad. Como estos niveles ya no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 300 HP?).
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
-- **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño, Mundial v2 de alta resolución). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — ahora también existe la opción de niveles `static` de alta resolución para figuras más elaboradas.
+- **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 
 ---
 

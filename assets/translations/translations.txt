@@ -59,6 +59,13 @@ LEVEL_NAME_BELL,Campana,Bell,Sino,Cloche
 LEVEL_NAME_SOCCER_FIELD,Cancha de Fútbol,Soccer Field,Campo de Futebol,Terrain de Football
 LEVEL_NAME_TROPHY_DETAILED,Copa del Mundo,World Cup Trophy,Taça do Mundo,Coupe du Monde
 LEVEL_NAME_GOL_TEXT,¡GOL!,GOAL!,GOL!,BUT !
+LEVEL_NAME_BALL,Balón,Soccer Ball,Bola,Ballon
+LEVEL_NAME_GOAL,Portería,Goal Post,Trave,But
+LEVEL_NAME_JERSEY,Camiseta,Jersey,Camisa,Maillot
+LEVEL_NAME_STAR_MUNDIAL,Estrella del Mundial,World Cup Star,Estrela da Copa,Étoile de la Coupe
+LEVEL_NAME_PLAYER,Futbolista,Soccer Player,Jogador,Footballeur
+LEVEL_NAME_PENNANT_FLAG,Banderín,Corner Flag,Bandeirinha,Fanion
+LEVEL_NAME_MEDAL,Medalla,Medal,Medalha,Médaille
 TITLE_SHOP,TIENDA,SHOP,LOJA,BOUTIQUE
 LABEL_GOLD,Oro: %d,Gold: %d,Ouro: %d,Or : %d
 TITLE_CHARACTERS,PERSONAJES,CHARACTERS,PERSONAGENS,PERSONNAGES

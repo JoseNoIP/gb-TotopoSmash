@@ -57,7 +57,11 @@ signal seed_boost_changed(active: bool)
 # --- Íconos de poder en el tablero ---
 signal lemon_triggered(origin: Vector2)
 ## Emitida por el ícono al ser tocado (antes de que TurnManager sepa el nuevo total).
-signal seed_extra_touched(origin: Vector2)
+## `amount` viaja con la señal en vez de leerse de Constants.SEED_EXTRA_AMOUNT directo —
+## un nivel autorado (ver seed_extra_icon.gd::amount) puede pedir un ícono que otorgue más
+## de 1 semilla (pedido explícito del usuario: niveles `static` de exhibición con muchas
+## semillas iniciales necesitan bonos grandes para acumular cientos de semillas).
+signal seed_extra_touched(origin: Vector2, amount: int)
 signal seed_extra_collected(new_total: int)
 ## Power-up láser (ver laser_icon.gd) — BoardManager aplica Constants.LASER_DAMAGE a toda
 ## la fila (is_horizontal=true) o columna (false) de grid_pos, mismo patrón que
