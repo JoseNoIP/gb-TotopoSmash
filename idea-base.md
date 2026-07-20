@@ -314,23 +314,69 @@ inicio". Reemplaza por completo el pack Mundial v1 (10 niveles, baja resolución
   Portería, Camiseta, Estrella del Mundial, **Silueta abstracta de futbolista** (nueva,
   pedida explícitamente — cabeza + torso + pierna de apoyo + pierna de patada extendida,
   geometría pura), Cancha de Fútbol (geometría reutilizada de v2), texto "¡GOL!" (único que
-  usa Pillow), Bandera a Cuadros, Medalla. Las imágenes de referencia que compartió el
+  usa Pillow), Banderín de esquina, Medalla. Las imágenes de referencia que compartió el
   usuario (cancha/copa/GOL) se tratan como **ejemplos de estilo**, no specs a replicar
   celda por celda ("no se trataba de que los crearas exactamente igual con la misma
   cantidad de bloques" — aclaración explícita del usuario). HP variado 60-300 por bloque
   (igual filosofía que el resto del roster: sorteado, nunca fijo).
+  - Dos formas descartadas por no leerse bien en el juego (detectado con captura real, no a
+    priori): una "malla" en la portería con suficiente densidad para leerse como red
+    terminaba rellenando casi todo el marco (se simplificó a marco limpio, sin malla); una
+    "bandera a cuadros" no se distinguía como tal porque el juego solo tiene un color de
+    bloque por tipo (sin alternancia de color no hay efecto ajedrezado) — se reemplazó por
+    un banderín de esquina (asta + triángulo), que sí se lee en monocromo.
 - **Bug real encontrado con captura de pantalla (v2):** a la resolución de un nivel
   `static` (~9px por celda), el número de HP que `block_base.gd` siempre dibuja sobre cada
   bloque se volvía ilegible y convertía la figura en ruido visual — arruinaba el propósito
-  completo de la feature. Fix: `Constants.UI_MIN_READABLE_CELL_SIZE = 20.0`;
+  completo de la feature. Fix inicial: `Constants.UI_MIN_READABLE_CELL_SIZE = 20.0`;
   `block_base.gd` guarda su `_cell_size` real en `setup()` y oculta el label de HP por
-  debajo de ese umbral. Generalizado (no es específico de niveles `static`) — cualquier
-  bloque futuro suficientemente chico se beneficia automáticamente.
+  debajo de ese umbral.
 - **Bug real reportado jugando (v2 → v3): el nivel de la Copa tapaba el molcajete** — ver
   el punto "`grid_rows` obligatorio + auto-escalado en 2 ejes" más arriba; root cause y fix
   completos ahí.
-- Verificado con captura real de varios niveles del pack v3 tras el fix de auto-escalado —
-  ninguno invade el área del molcajete, figuras centradas verticalmente.
+- **Bug real reportado jugando (v3): los números de HP excedían el tamaño de los cuadros**
+  — el fix anterior solo ocultaba el label por debajo de 20px, pero para niveles `static`
+  con celdas de ~21-22px (la mayoría del pack Mundial v3) el label SÍ se mostraba, con un
+  `font_size` FIJO de 18px (pensado para el tablero normal, ~56px de celda) — un HP de 3
+  dígitos a 18px desbordaba visualmente cualquier celda por debajo de ese tamaño. Fix:
+  `Constants.UI_HP_FONT_SIZE_RATIO = 0.4` — el font_size ahora escala con
+  `_cell_size * UI_HP_FONT_SIZE_RATIO` (capado por `UI_MIN_FONT_SIZE=18`, piso
+  `UI_HP_FONT_MIN_SIZE=8`). Con la fuente ya escalando, el umbral de "ocultar por completo"
+  se pudo bajar de 20.0 a 15.0 (antes ocultaba de más — con el número ya chico, celdas de
+  ~15-19px se leen perfectamente bien) — recuperó los números en el nivel de la Copa
+  (~19.5px), que antes quedaba oculto de más. Verificado con captura real: números
+  legibles y CLARAMENTE variados (ej. "61 43 260 255 167 193…" en el mismo nivel) — esto
+  también resuelve, sin tocar datos, la percepción reportada de "todos los cuadrados
+  requieren la misma cantidad de golpes": el HP siempre estuvo sorteado por celda
+  (`rng.randint(HP_MIN, HP_MAX)` en `build_static_level()`, confirmado con datos reales:
+  106 celdas, 89 valores únicos, rango 63-300) — lo que hacía parecer "todos iguales" era
+  que los números overflowing/ilegibles no dejaban comparar valores, no que faltara
+  variedad real.
+- **Semillas extra abundantes** (pedido explícito tras jugar: "en una partida de este tipo
+  de exhibición deberíamos poder llegar por lo menos a unas 300 semillas al finalizar el
+  nivel") — con `Constants.SEED_EXTRA_AMOUNT` fijo en +1 (pensado para Modo Infinito/
+  campaña numérica) habría hecho falta sembrar ~250 íconos por nivel, poco práctico. En vez
+  de tocar esa constante global (arriesgaría el balance ya ajustado de los otros dos
+  modos), `EventBus.seed_extra_touched` ganó un segundo parámetro (`amount: int`) y
+  `seed_extra_icon.gd` expone una propiedad `amount` (default = la constante global,
+  overridable por celda vía el campo opcional `"amount"` en el JSON del nivel, mismo patrón
+  que `corner`/`orientation` en triangle/laser). `gen_worldcup_pack.py` v3 siembra
+  `SEED_BOUNTY_COUNT=12` íconos por nivel en el fondo (fácil de alcanzar, sin necesidad de
+  abrirse paso) más los que caigan en puntos de entrada, cada uno con
+  `"amount": SEED_EXTRA_ICON_AMOUNT=20` — la mayoría de los 10 niveles llega a 290-330
+  semillas máximas si se recolectan todos.
+- **Bug real reportado jugando: el molcajete se reposicionaba antes de que terminara la
+  ráfaga** — `TurnManager` emitía `EventBus.molcajete_position_changed` en cuanto ATERRIZABA
+  LA PRIMERA semilla, mientras el resto de la ráfaga seguía rebotando en el aire — se veía
+  raro (el molcajete "abandonaba" la posición con semillas todavía cayendo ahí). Fix: la
+  posición de destino se sigue calculando con la primera semilla en aterrizar (mismo
+  criterio de siempre para "dónde atajar"), pero la señal que mueve el molcajete
+  (`Mortar._on_molcajete_position_changed`) ahora se emite junto con `all_seeds_returned`
+  — recién cuando ya no queda ninguna semilla activa. No es específico de niveles `static`
+  (afecta a los 3 modos por igual, ver `turn_manager.gd::_on_seed_landed()`).
+- Verificado con captura real de varios niveles del pack v3 tras todos los fixes de esta
+  ronda — ninguno invade el área del molcajete, figuras centradas verticalmente, números de
+  HP legibles y variados donde el tamaño de celda lo permite.
 
 ## Sistema de mejoras/oro/personajes ✅
 

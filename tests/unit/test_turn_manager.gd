@@ -51,6 +51,24 @@ func test_seed_extra_touched_adds_one_seed_and_emits_signals() -> void:
 	assert_signal_emitted_with_parameters(EventBus, "seed_count_changed", [expected])
 
 
+## Regresión directa del bug real reportado jugando: el molcajete se reposicionaba en
+## cuanto ATERRIZABA LA PRIMERA semilla, mientras el resto todavía rebotaba en el aire —
+## se veía raro (el molcajete "se iba" antes de que la ráfaga terminara). Ahora la señal
+## de reposición debe emitirse recién cuando ya no queda NINGUNA semilla activa, aunque
+## siga usando la posición de la primera semilla en aterrizar como destino.
+func test_molcajete_does_not_reposition_until_all_seeds_have_landed() -> void:
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	GameManager.start_game()
+	turn_manager.set(&"_active_seeds", 2)
+	turn_manager.set(&"_seeds_to_fire", 0)
+	watch_signals(EventBus)
+	turn_manager.call(&"_on_seed_landed", null, 50.0)  ## primera de dos, todavía queda una activa
+	assert_signal_not_emitted(EventBus, "molcajete_position_changed")
+	turn_manager.call(&"_on_seed_landed", null, 80.0)  ## última — recién aquí se reposiciona
+	assert_signal_emitted_with_parameters(EventBus, "molcajete_position_changed", [50.0])
+
+
 func test_seed_extra_touched_respects_a_custom_amount() -> void:
 	var turn_manager: Node = TurnManagerGd.new()
 	add_child_autofree(turn_manager)

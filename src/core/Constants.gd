@@ -97,14 +97,18 @@ const COLOR_DANGER_LINE: Color = Color(0.9, 0.2, 0.2, 0.8)  ## línea de la fila
 
 # --- UI: tamaños mínimos ---
 const UI_MIN_FONT_SIZE: int = 18
-## Por debajo de esto, el número de HP de un bloque se oculta (niveles `static` de alta
-## resolución) — a UI_MIN_FONT_SIZE=18 el texto ya no entra legible en un bloque más chico.
-const UI_MIN_READABLE_CELL_SIZE: float = 20.0
 ## El label de HP escala su font_size con `_cell_size * UI_HP_FONT_SIZE_RATIO` (capado por
 ## UI_MIN_FONT_SIZE arriba, piso UI_HP_FONT_MIN_SIZE abajo) — un font_size FIJO (bug real
 ## reportado jugando: en niveles `static`, con celdas de ~20-30px, un HP de 3 dígitos a
-## font_size 18 desbordaba visualmente el cuadro) solo funciona bien al tamaño de celda del
-## tablero normal (~56px); cualquier bloque más chico necesita un número más chico también.
+## font_size 18 desbordaba visualmente el cuadro, porque 18px fijo solo entra bien al
+## tamaño de celda del tablero normal ~56px) solo funciona bien a un tamaño; cualquier
+## bloque más chico necesita un número más chico también.
+## Por debajo de esto, el número de HP de un bloque se oculta por completo (niveles
+## `static` de muy alta resolución, ej. el texto "GOL") — con el font_size ya escalado
+## (piso UI_HP_FONT_MIN_SIZE=8) un HP de 3 dígitos todavía entra en una celda de ~15px;
+## bajado de 20.0 a 15.0 tras el fix de escalado de fuente (antes ocultaba de más, sin
+## necesidad, niveles que con el número ya chico se leían perfectamente bien).
+const UI_MIN_READABLE_CELL_SIZE: float = 15.0
 const UI_HP_FONT_SIZE_RATIO: float = 0.4
 const UI_HP_FONT_MIN_SIZE: int = 8
 
