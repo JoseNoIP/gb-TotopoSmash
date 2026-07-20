@@ -1,0 +1,130 @@
+{
+  "id": "worldcup_005",
+  "name": "LEVEL_NAME_FLAG_CHECKER",
+  "starting_seeds": 200,
+  "cells": [
+    {
+      "col": 0,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 144
+    },
+    {
+      "col": 2,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 289
+    },
+    {
+      "col": 4,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 130
+    },
+    {
+      "col": 6,
+      "row": 0,
+      "kind": "totopo",
+      "hp": 145
+    },
+    {
+      "col": 1,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 214
+    },
+    {
+      "col": 3,
+      "row": 1,
+      "kind": "lemon"
+    },
+    {
+      "col": 5,
+      "row": 1,
+      "kind": "totopo",
+      "hp": 93
+    },
+    {
+      "col": 0,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 185
+    },
+    {
+      "col": 2,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 127
+    },
+    {
+      "col": 4,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 75
+    },
+    {
+      "col": 6,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 112
+    },
+    {
+      "col": 1,
+      "row": 3,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 3,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 76
+    },
+    {
+      "col": 5,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 106
+    },
+    {
+      "col": 0,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 81
+    },
+    {
+      "col": 2,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 82
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 93
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "kind": "lemon"
+    },
+    {
+      "col": 1,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 139
+    },
+    {
+      "col": 3,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 175
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 234
+    }
+  ]
+}

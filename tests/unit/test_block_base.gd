@@ -14,6 +14,7 @@ const CELL_SIZE: float = 55.7
 
 
 func test_take_damage_reduces_hp_and_emits_block_damaged() -> void:
+	MetaManager.set_upgrade_level("damage", 0)  ## arreglo del test: sin mejora de la tienda
 	var block: StaticBody2D = TotopoBlockGd.new()
 	add_child_autofree(block)
 	block.call(&"setup", Vector2i(2, 3), 3, CELL_SIZE)
@@ -21,6 +22,21 @@ func test_take_damage_reduces_hp_and_emits_block_damaged() -> void:
 	block.call(&"take_damage")
 	assert_eq(int(block.get(&"current_hp")), 2, "un impacto normal debe restar 1 de vida")
 	assert_signal_emitted_with_parameters(EventBus, "block_damaged", [Vector2i(2, 3), 2, 3])
+
+
+## Regresión: la mejora "Daño Base" de la tienda (MetaManager) debe multiplicar el daño
+## por impacto — mínimo 1 garantizado aunque el multiplicador redondeara a 0.
+func test_take_damage_scales_with_damage_multiplier_upgrade() -> void:
+	MetaManager.set_upgrade_level("damage", Constants.UPGRADE_MAX_LEVEL)
+	var block: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(block)
+	block.call(&"setup", Vector2i(0, 0), 1000, CELL_SIZE)
+	block.call(&"take_damage")
+	var bonus: float = Constants.UPGRADE_MAX_LEVEL * Constants.UPGRADE_DAMAGE_BONUS_PER_LEVEL
+	var multiplier: float = 1.0 + bonus
+	var expected_damage: int = maxi(1, roundi(1 * multiplier))
+	assert_eq(int(block.get(&"current_hp")), 1000 - expected_damage)
+	MetaManager.set_upgrade_level("damage", 0)  ## deja el estado limpio para otros tests
 
 
 func test_take_damage_to_zero_destroys_block_and_emits_block_destroyed() -> void:
@@ -42,6 +58,7 @@ func test_take_explosion_damage_never_goes_below_zero() -> void:
 
 
 func test_score_value_on_destroy_equals_max_hp_times_score_per_point() -> void:
+	MetaManager.set_upgrade_level("damage", 0)  ## arreglo del test: sin mejora de la tienda
 	var block: StaticBody2D = TotopoBlockGd.new()
 	add_child_autofree(block)
 	block.call(&"setup", Vector2i(0, 0), 4, CELL_SIZE)
@@ -65,6 +82,7 @@ func test_indestructible_stone_ignores_all_damage() -> void:
 
 
 func test_queso_takes_double_damage_per_hit() -> void:
+	MetaManager.set_upgrade_level("damage", 0)  ## arreglo del test: sin mejora de la tienda
 	var block: StaticBody2D = QuesoBlockGd.new()
 	add_child_autofree(block)
 	block.call(&"setup", Vector2i(0, 0), 10, CELL_SIZE)

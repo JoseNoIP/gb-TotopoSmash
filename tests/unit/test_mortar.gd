@@ -4,6 +4,7 @@ extends GutTest
 
 const MortarGd := preload("res://src/features/player/mortar.gd")
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
+const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
 
 
 func _touch(pressed: bool, pos: Vector2) -> InputEventScreenTouch:
@@ -66,3 +67,14 @@ func test_returning_to_aiming_forces_boost_off() -> void:
 	watch_signals(EventBus)
 	mortar.call(&"_on_turn_phase_changed", TurnManagerGd.Phase.AIMING)
 	assert_signal_emitted_with_parameters(EventBus, "seed_boost_changed", [false])
+
+
+## Personaje cosmético (tienda, ver MetaManager/Constants.CHARACTERS): el molcajete se
+## tiñe con el color del personaje seleccionado al instanciarse.
+func test_ready_applies_selected_character_tint() -> void:
+	MetaManager.set_selected_character("gold")
+	var mortar: Node2D = MortarGd.new()
+	add_child_autofree(mortar)
+	var expected: Color = UpgradeShopGd.find_character("gold").get("color", Color.WHITE) as Color
+	assert_eq(mortar.modulate, expected)
+	MetaManager.set_selected_character(Constants.CHARACTER_DEFAULT_ID)  ## limpio para otros tests

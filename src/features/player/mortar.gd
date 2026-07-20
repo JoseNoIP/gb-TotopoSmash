@@ -10,6 +10,7 @@ extends Node2D
 const PhysicsMathGd := preload("res://src/shared/physics_math.gd")
 const GridMathGd := preload("res://src/shared/grid_math.gd")
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
+const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
 
 const BODY_RADIUS: float = 26.0
 const TEXTURE_PATH: String = "res://assets/sprites/molcajete.png"
@@ -30,6 +31,7 @@ func _ready() -> void:
 	EventBus.turn_phase_changed.connect(_on_turn_phase_changed)
 	EventBus.molcajete_position_changed.connect(_on_molcajete_position_changed)
 	_build_sprite()
+	_apply_character_tint()
 
 
 ## Sprite2D con textura real si existe; si no, _draw() sigue dibujando los dos círculos
@@ -45,6 +47,15 @@ func _build_sprite() -> void:
 	sprite.scale = Vector2(diameter / tex_size.x, diameter / tex_size.y)
 	add_child(sprite)
 	_has_sprite = true
+
+
+## Personaje cosmético (tienda, ver MetaManager/Constants.CHARACTERS) — solo tiñe el
+## molcajete, sin efecto en gameplay. `modulate` vive en CanvasItem, seguro de usar directo
+## sin importar si hay Sprite2D o solo el _draw() de respaldo (regla CLAUDE.md #44).
+func _apply_character_tint() -> void:
+	var character_id: String = MetaManager.get_selected_character()
+	var character: Dictionary = UpgradeShopGd.find_character(character_id)
+	modulate = character.get("color", Color.WHITE) as Color
 
 
 ## Fuera de AIMING, mantener presionada la pantalla acelera las semillas mientras rebotan

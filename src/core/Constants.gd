@@ -101,3 +101,35 @@ const VFX_CRUMB_AMOUNT: int = 14
 const VFX_CRUMB_LIFETIME: float = 0.5
 const VFX_SAUCE_AMOUNT: int = 24
 const VFX_SAUCE_LIFETIME: float = 0.6
+
+# --- Mejoras permanentes (oro) — ver src/features/meta/upgrade_shop.gd ---
+const GOLD_PER_SCORE_POINT: float = 0.05  ## oro ganado = score * esto, al terminar la run
+const UPGRADE_MAX_LEVEL: int = 5
+const UPGRADE_BASE_COST: int = 50  ## costo del nivel 1 de cualquier mejora
+const UPGRADE_COST_STEP: int = 40  ## incremento de costo por cada nivel adicional
+const UPGRADE_SEEDS_BONUS_PER_LEVEL: int = 2  ## +2 semillas iniciales por nivel comprado
+const UPGRADE_DAMAGE_BONUS_PER_LEVEL: float = 0.08  ## +8% daño por nivel comprado
+const UPGRADE_SPEED_BONUS_PER_LEVEL: float = 0.04  ## +4% velocidad de semilla por nivel comprado
+
+# --- Personajes (skins cosméticas del molcajete, oro — sin efecto en gameplay) ---
+const CHARACTER_DEFAULT_ID: String = "classic"
+const CHARACTERS: Array = [
+	{"id": "classic", "name_key": "CHARACTER_CLASSIC", "color": Color(1.0, 1.0, 1.0), "cost": 0},
+	{
+		"id": "turquoise", "name_key": "CHARACTER_TURQUOISE",
+		"color": Color(0.16, 0.62, 0.60), "cost": 200,
+	},
+	{"id": "pink", "name_key": "CHARACTER_PINK", "color": Color(0.86, 0.27, 0.55), "cost": 350},
+	{"id": "gold", "name_key": "CHARACTER_GOLD", "color": Color(0.83, 0.68, 0.21), "cost": 500},
+]
+
+# --- Packs temáticos de niveles (ver PackSelectScreen/PackLevelsScreen/LevelSelectScreen) ---
+## Registro central de packs — un nivel nuevo agregado por /level-designer con un prefijo
+## de id nuevo (ej. "easter_001") necesita una entrada nueva aquí para aparecer en
+## PackSelectScreen; si no, sigue siendo jugable (visible en la sección "PACKS ESPECIALES"
+## de LevelSelectScreen, que detecta packs solo por prefijo != "level_"), simplemente no
+## sale en la lista dedicada de packs hasta que se registre acá.
+const LEVEL_PACKS: Array = [
+	{"prefix": "holiday", "name_key": "PACK_HOLIDAY_NAME"},
+	{"prefix": "worldcup", "name_key": "PACK_WORLDCUP_NAME"},
+]

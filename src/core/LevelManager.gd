@@ -14,6 +14,7 @@ extends Node
 const LevelLoaderGd := preload("res://src/features/levels/level_loader.gd")
 
 var _pending_level_id: String = ""
+var _pending_pack_prefix: String = ""
 var _level_cache: Dictionary[String, Dictionary] = {}
 var _manifest_cache: Array = []
 var _manifest_loaded: bool = false
@@ -25,6 +26,16 @@ func set_pending_level(level_id: String) -> void:
 
 func get_pending_level() -> String:
 	return _pending_level_id
+
+
+## Mismo patrón que _pending_level_id (buzón no destructivo) — PackSelectScreen lo escribe
+## antes de rutear a PackLevelsScreen, que lee de acá para saber qué pack mostrar.
+func set_pending_pack_prefix(prefix: String) -> void:
+	_pending_pack_prefix = prefix
+
+
+func get_pending_pack_prefix() -> String:
+	return _pending_pack_prefix
 
 
 ## Carga+valida perezosamente vía LevelLoaderGd la primera vez que se pide un id;

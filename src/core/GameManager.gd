@@ -7,6 +7,8 @@ extends Node
 
 enum State { MENU, PLAYING, PAUSED, GAME_OVER, LEVEL_COMPLETE }
 
+const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
+
 var _state: State = State.MENU
 var _score: int = 0
 var _wave: int = 1
@@ -97,6 +99,7 @@ func _on_board_reached_bottom() -> void:
 	_state = State.GAME_OVER
 	var is_new_best: bool = SaveManager.set_best_score_if_higher(_score)
 	SaveManager.set_max_wave_if_higher(_wave)
+	_award_gold_for_run()
 	if is_new_best:
 		EventBus.high_score_updated.emit(_score)
 	EventBus.game_over.emit(_score, _wave)
@@ -108,6 +111,17 @@ func _on_level_cleared(level_id: String) -> void:
 	_state = State.LEVEL_COMPLETE
 	LevelManager.mark_level_completed(level_id)
 	var is_new_best: bool = SaveManager.set_best_score_if_higher(_score)
+	_award_gold_for_run()
 	if is_new_best:
 		EventBus.high_score_updated.emit(_score)
 	EventBus.level_completed.emit(level_id, _score)
+
+
+## Oro otorgado siempre que la partida termina (victoria, derrota o nivel fallido — sin
+## distinguir el desenlace, mismo `board_reached_bottom` cubre game over en ambos modos).
+func _award_gold_for_run() -> void:
+	var earned: int = UpgradeShopGd.gold_earned_for_score(_score)
+	if earned <= 0:
+		return
+	MetaManager.add_gold(earned)
+	EventBus.gold_changed.emit(MetaManager.get_gold())

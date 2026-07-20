@@ -7,10 +7,13 @@ const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const TUTORIAL_SCENE: String = "res://src/scenes/TutorialGame.tscn"
 const LANGUAGE_SELECT_SCENE: String = "res://src/scenes/LanguageSelectScreen.tscn"
 const LEVEL_SELECT_SCENE: String = "res://src/scenes/LevelSelectScreen.tscn"
+const PACK_SELECT_SCENE: String = "res://src/scenes/PackSelectScreen.tscn"
+const UPGRADE_SHOP_SCENE: String = "res://src/scenes/UpgradeShopScreen.tscn"
 const MENU_BG_PATH: String = "res://assets/sprites/backgrounds/menu_bg.png"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
 
 var _settings: CanvasLayer = null
+var _gold_label: Label = Label.new()
 
 
 func _ready() -> void:
@@ -54,10 +57,19 @@ func _build_ui() -> void:
 	best_label.set_size(Vector2(Constants.DESIGN_WIDTH, 30.0))
 	add_child(best_label)
 
+	_gold_label.text = tr(&"LABEL_GOLD") % MetaManager.get_gold()
+	_gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gold_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
+	_gold_label.add_theme_color_override(&"font_color", Constants.COLOR_SEED_EXTRA)
+	_gold_label.position = Vector2(0.0, 244.0)
+	_gold_label.set_size(Vector2(Constants.DESIGN_WIDTH, 30.0))
+	add_child(_gold_label)
+	EventBus.gold_changed.connect(_on_gold_changed)
+
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override(&"separation", 16)
 	vbox.position = Vector2((Constants.DESIGN_WIDTH - 220.0) * 0.5, 400.0)
-	vbox.set_size(Vector2(220.0, 200.0))
+	vbox.set_size(Vector2(220.0, 324.0))
 	add_child(vbox)
 
 	var levels_btn: Button = Button.new()
@@ -66,11 +78,23 @@ func _build_ui() -> void:
 	levels_btn.pressed.connect(_on_levels_pressed)
 	vbox.add_child(levels_btn)
 
+	var packs_btn: Button = Button.new()
+	packs_btn.text = "TITLE_PACK_SELECT"
+	packs_btn.custom_minimum_size = Vector2(0.0, 52.0)
+	packs_btn.pressed.connect(_on_packs_pressed)
+	vbox.add_child(packs_btn)
+
 	var play_btn: Button = Button.new()
 	play_btn.text = "BTN_INFINITY_MODE"
 	play_btn.custom_minimum_size = Vector2(0.0, 52.0)
 	play_btn.pressed.connect(_on_play_pressed)
 	vbox.add_child(play_btn)
+
+	var shop_btn: Button = Button.new()
+	shop_btn.text = "TITLE_SHOP"
+	shop_btn.custom_minimum_size = Vector2(0.0, 52.0)
+	shop_btn.pressed.connect(_on_shop_pressed)
+	vbox.add_child(shop_btn)
 
 	var settings_btn: Button = Button.new()
 	settings_btn.text = "TITLE_SETTINGS"
@@ -127,5 +151,18 @@ func _on_levels_pressed() -> void:
 	get_tree().change_scene_to_file.call_deferred(LEVEL_SELECT_SCENE)
 
 
+## Igual que "NIVELES": solo navegación, no gateado por el tutorial.
+func _on_packs_pressed() -> void:
+	get_tree().change_scene_to_file.call_deferred(PACK_SELECT_SCENE)
+
+
+func _on_shop_pressed() -> void:
+	get_tree().change_scene_to_file.call_deferred(UPGRADE_SHOP_SCENE)
+
+
 func _on_settings_pressed() -> void:
 	_settings.call(&"open")
+
+
+func _on_gold_changed(new_total: int) -> void:
+	_gold_label.text = tr(&"LABEL_GOLD") % new_total

@@ -20,9 +20,22 @@ func before_each() -> void:
 func test_seed_count_resets_to_starting_value_on_game_started() -> void:
 	var turn_manager: Node = TurnManagerGd.new()
 	add_child_autofree(turn_manager)
+	MetaManager.set_upgrade_level("seeds", 0)  ## arreglo del test: sin bono de la tienda
 	GameManager.start_game()
 	assert_eq(turn_manager.call(&"get_seed_count"), Constants.MOLCAJETE_START_SEEDS)
 	assert_eq(turn_manager.call(&"get_phase"), TurnManagerGd.Phase.AIMING)
+
+
+## Regresión: la mejora "Semillas Extra" de la tienda (MetaManager) debe sumarse al
+## inventario inicial en AMBOS modos — este caso cubre Modo Infinito.
+func test_seed_count_includes_bonus_from_seeds_upgrade() -> void:
+	var turn_manager: Node = TurnManagerGd.new()
+	add_child_autofree(turn_manager)
+	MetaManager.set_upgrade_level("seeds", 2)
+	GameManager.start_game()
+	var expected: int = Constants.MOLCAJETE_START_SEEDS + 2 * Constants.UPGRADE_SEEDS_BONUS_PER_LEVEL
+	assert_eq(turn_manager.call(&"get_seed_count"), expected)
+	MetaManager.set_upgrade_level("seeds", 0)  ## deja el estado limpio para otros tests
 
 
 func test_seed_extra_touched_adds_one_seed_and_emits_signals() -> void:
@@ -107,6 +120,7 @@ func test_all_seeds_returned_after_landing_resets_phase_to_aiming() -> void:
 func test_seed_count_uses_level_starting_seeds_when_in_level_mode() -> void:
 	var turn_manager: Node = TurnManagerGd.new()
 	add_child_autofree(turn_manager)
+	MetaManager.set_upgrade_level("seeds", 0)  ## arreglo del test: sin bono de la tienda
 	GameManager.start_game("level_001")
 	var expected: int = int(LevelManager.get_level_data("level_001").get("starting_seeds"))
 	assert_eq(turn_manager.call(&"get_seed_count"), expected)

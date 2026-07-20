@@ -47,6 +47,13 @@ func _build_ui() -> void:
 	add_child(back_btn)
 
 
+## Los ids del roster numérico principal SIEMPRE empiezan con "level_"; cualquier otro
+## prefijo ("holiday_"/"worldcup_"/lo que traiga una skill futura) es un pack temático —
+## ver .claude/skills/level-designer/SKILL.md, PASO 4 "convención de ids para packs".
+func _is_pack_level(level_id: String) -> bool:
+	return not level_id.begins_with("level_")
+
+
 func _build_grid() -> void:
 	var manifest: Array = LevelManager.get_manifest()
 	var highest_unlocked: int = SaveManager.get_highest_level_unlocked()
@@ -56,9 +63,9 @@ func _build_grid() -> void:
 	var origin_y: float = 140.0
 
 	## El ScrollContainer (Container) reposiciona a sus hijos por su cuenta en cada sort —
-	## un `grid.position` puesto a mano ahí queda ignorado (regla CLAUDE.md nueva, mismo
-	## principio que #32 pero para Container en vez de anchors). Para centrar la grilla, el
-	## que se centra es el propio ScrollContainer (hijo de este Control plano, donde
+	## un `grid.position` puesto a mano ahí queda ignorado (regla CLAUDE.md #49, mismo
+	## principio que #32 pero para Container en vez de anchors). Para centrar el contenido,
+	## el que se centra es el propio ScrollContainer (hijo de este Control plano, donde
 	## position/set_size sí se respetan) con el ancho exacto del contenido — no hace falta
 	## scroll horizontal porque nunca hay overflow en X.
 	var scroll: ScrollContainer = ScrollContainer.new()
@@ -66,22 +73,59 @@ func _build_grid() -> void:
 	scroll.set_size(Vector2(grid_w, Constants.DESIGN_HEIGHT - origin_y - 120.0))
 	add_child(scroll)
 
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.custom_minimum_size = Vector2(grid_w, 0.0)
+	vbox.add_theme_constant_override(&"separation", 18)
+	scroll.add_child(vbox)
+
+	var main_grid: GridContainer = _build_level_grid(vbox)
+	var pack_grid: GridContainer = null
+
+	for i: int in manifest.size():
+		var level_id: String = manifest[i]
+		var level_number: int = i + 1
+		if _is_pack_level(level_id):
+			if pack_grid == null:
+				_build_pack_section_label(vbox, grid_w)
+				pack_grid = _build_level_grid(vbox)
+			## Los packs temáticos son contenido opcional/bonus — SIEMPRE desbloqueados,
+			## sin depender de highest_level_unlocked (el usuario reportó no poder
+			## encontrarlos: quedaban bloqueados detrás de terminar los 100 niveles).
+			_build_level_button(pack_grid, level_id, level_number, true)
+		else:
+			_build_level_button(main_grid, level_id, level_number, level_number <= highest_unlocked)
+
+
+func _build_level_grid(parent: VBoxContainer) -> GridContainer:
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = COLUMNS
 	grid.add_theme_constant_override(&"h_separation", int(BUTTON_GAP))
 	grid.add_theme_constant_override(&"v_separation", int(BUTTON_GAP))
-	scroll.add_child(grid)
+	parent.add_child(grid)
+	return grid
 
-	for i: int in manifest.size():
-		var level_number: int = i + 1
-		var btn: Button = Button.new()
-		btn.text = str(level_number)
-		btn.custom_minimum_size = Vector2(BUTTON_SIZE, BUTTON_SIZE)
-		if level_number <= highest_unlocked:
-			btn.pressed.connect(_on_level_pressed.bind(manifest[i]))
-		else:
-			btn.disabled = true
-		grid.add_child(btn)
+
+func _build_pack_section_label(parent: VBoxContainer, grid_w: float) -> void:
+	var label: Label = Label.new()
+	label.text = "TITLE_LEVEL_PACKS"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override(&"font_size", 18)
+	label.add_theme_color_override(&"font_color", Constants.COLOR_TOTOPO)
+	label.custom_minimum_size = Vector2(grid_w, 0.0)
+	parent.add_child(label)
+
+
+func _build_level_button(
+	grid: GridContainer, level_id: String, level_number: int, unlocked: bool
+) -> void:
+	var btn: Button = Button.new()
+	btn.text = str(level_number)
+	btn.custom_minimum_size = Vector2(BUTTON_SIZE, BUTTON_SIZE)
+	if unlocked:
+		btn.pressed.connect(_on_level_pressed.bind(level_id))
+	else:
+		btn.disabled = true
+	grid.add_child(btn)
 
 
 func _on_level_pressed(level_id: String) -> void:

@@ -70,7 +70,7 @@
 - `set_tutorial_shown(true)` solo se llama al presionar JUGAR en el paso COMPLETE.
 - Si el jugador muere durante el tutorial, se reinicia `TutorialGame.tscn` (no marca `tutorial_shown`).
 
-## Tests GUT (138 tests, 0 fallos) ✅
+## Tests GUT (176 tests, 0 fallos) ✅
 - `test_physics_math.gd`, `test_grid_math.gd`, `test_wave_scaling.gd` — funciones puras, casos normal/borde/inválido.
 - `test_game_manager.gd`, `test_save_manager.gd` — máquina de estados y persistencia (autoloads reales), incluye `language`.
 - `test_block_base.gd` — daño, destrucción, indestructibilidad, doble daño de queso, explosión de salsa, geometría de triángulo.
@@ -147,13 +147,21 @@ Pedido explícito: los niveles procedurales se sentían con muy poca resistencia
 (nivel 1 arrancaba con totopos de HP 1). El HP ahora escala directo con el **número de
 nivel**, desacoplado de `effective_wave` (que sigue gobernando SOLO qué tipos de bloque
 pueden aparecer — queso/triángulo/salsa oleada 6+, piedra oleada 16+, igual que antes):
-- `tools/gen_levels.py::totopo_hp_for_level()` — nivel 1 = 50 golpes, nivel 100 = 300,
-  sigue subiendo igual más allá (sin tope, a diferencia de `total_rows_for_level()`).
-  Totopo es la escala ancla (no queso) porque queso/triángulo/salsa no existen todavía en
-  el nivel 1 real (desbloquean en nivel 11+) — anclar el tope en queso habría dejado el
-  nivel 1 sin ningún bloque que realmente llegue a 50.
-- `queso_hp_for_level()` = 1.5x lo anterior (misma proporción que `wave_scaling.gd` de
-  siempre), salsa/triángulo comparten el valor de totopo.
+- `tools/gen_levels.py::totopo_hp_max_for_level()`/`totopo_hp_min_for_level()` — nivel 1 va
+  de 10 a 50 golpes, nivel 100 de 60 a 300, sigue subiendo igual más allá (sin tope, a
+  diferencia de `total_rows_for_level()`). Totopo es la escala ancla (no queso) porque
+  queso/triángulo/salsa no existen todavía en el nivel 1 real (desbloquean en nivel 11+) —
+  anclar el tope en queso habría dejado el nivel 1 sin ningún bloque que realmente llegue a
+  50. **Corrección post-feedback:** la primera versión le daba el MISMO valor de HP a
+  TODOS los bloques del nivel (ej. todos con 50 en nivel 1) — el usuario aclaró que quería
+  variedad: cada bloque sortea su propio HP dentro del rango del nivel
+  (`random_totopo_hp()`, determinista vía la seed fija del nivel, así que sigue siendo el
+  mismo tablero para todos los jugadores), con el valor MÁXIMO posible siendo el número
+  pedido (50 en nivel 1, 300 en nivel 100) — no un valor fijo repetido. El pack Mundial
+  (`tools/gen_worldcup_pack.py`) se corrigió igual (rango 60-300, el mismo que nivel 100).
+- `queso_hp_for_base()` = 1.5x el HP sorteado de ESE bloque (misma proporción que
+  `wave_scaling.gd` de siempre — no un valor de queso fijo), salsa/triángulo comparten la
+  misma llamada a `random_totopo_hp()` que totopo (cada uno sortea su propio valor).
 - `starting_seeds_for_level()` escala con la misma curva lineal (30 semillas en nivel 1,
   110 en nivel 100) — pedido explícito de mantener esto "consistente" para que el salto de
   HP no vuelva los niveles imposibles de limpiar. Ajuste de buena fe, no verificado con
@@ -182,13 +190,134 @@ por una mascota vectorial "toony" del totopo (ver skill `/gen-ai-art`, 512×512 
 - `assets/icon.png.import` no cambió (mismo archivo/UID, Godot reimporta solo). Confirmado
   con `godot --headless --editor --quit` (reimport limpio) + `gdlint`/GUT sin regresiones.
 
+## Packs temáticos de niveles ✅
+
+Dos packs hand-authored (namespace propio, nunca `level_0NN`, siguiendo la convención de
+`/level-designer` para packs) agregados al final del manifiesto (115 niveles en total):
+- **`tools/gen_holiday_pack.py`** (5 niveles, `holiday_001`-`005`) — Árbol de Navidad,
+  Regalo, Muñeco de Nieve, Bastón de Caramelo, Campana. Mismo patrón que las 6 figuras del
+  roster numérico: `cells` (toda la forma visible desde el inicio), HP 1 fijo, 16 semillas
+  — el objetivo es la satisfacción de despejar la figura, no la dificultad.
+- **`tools/gen_worldcup_pack.py`** (10 niveles, `worldcup_001`-`010`, pedido explícito de
+  complejidad "arriba del nivel 100") — Balón, Trofeo, Portería, Camiseta, Bandera a
+  Cuadros, Silbato, Botín, Cronómetro, Bandera Ondeante, Medalla. A diferencia del pack
+  navideño, usa el mismo rango de HP VARIADO que el nivel 100 (60-300 por bloque, sorteado,
+  nunca un valor fijo — ver corrección en la sección de rebalance arriba) — es un pack
+  "desafío" explícitamente muy difícil, no un tutorial. **Decisión de diseño importante:**
+  se consideró usar `row_queue` (como los niveles procedurales) para estos, pero el tablero
+  solo tiene 9 filas visibles a la vez (`Constants.GRID_ROWS`) — con más de ~9 filas en la
+  cola, el jugador NUNCA vería la figura completa de una vez (por diseño, cada fila nueva
+  empuja las anteriores hacia abajo, así que solo una ventana deslizante de ~8 filas está
+  en pantalla en cualquier momento). Para que una figura de "más de 100 de complejidad"
+  siguiera siendo reconocible como figura, se quedó en `cells` (6 filas, toda la forma
+  visible) con el HP mucho más alto en vez de más filas — eso además significa solo ~3
+  turnos de margen antes de la fila del molcajete (ver PASO 3 de
+  `.claude/skills/level-designer/SKILL.md`), así que `starting_seeds` se subió generoso
+  (200, muy por encima de `starting_seeds_for_level(100)`=110) para darle una chance real.
+  **Ajuste de buena fe sin playtesting** — es, a propósito, el tramo más difícil de todo
+  el juego; puede resultar imposible de limpiar tal como está.
+- Ambos scripts son idempotentes (correrlos de nuevo no duplica entradas en el manifiesto)
+  y usan `cells_from_ascii()`/`sprinkle_icons()` de `tools/gen_levels.py` por import, sin
+  duplicar lógica. Validados con `tools/validate_level.py` + `test_level_manifest_integrity.gd`
+  (recorre TODO el manifiesto real, incluyendo ambos packs) + captura real del viewport
+  (árbol navideño y trofeo del Mundial, ambos reconocibles).
+- **Bug real encontrado (el usuario no podía acceder a los packs):** dos problemas
+  distintos, ambos corregidos:
+  1. `tools/gen_levels.py::main()` sobreescribía `manifest.json` completo con SOLO su
+     propia lista de 100 ids — cualquier corrida posterior de este script borraba las
+     entradas de los packs (`holiday_00N`/`worldcup_00N`) del manifiesto, aunque sus
+     archivos `.json` seguían en disco (contenido huérfano, invisible en el juego, sin
+     ningún error). Fix: `main()` ahora preserva cualquier id existente en el manifiesto
+     que NO empiece con `level_` (es un pack, no algo que ese script genere) al final de
+     la lista regenerada.
+  2. `LevelSelectScreen.gd` desbloqueaba TODOS los niveles del manifiesto (numéricos y de
+     packs) con la misma regla secuencial (`highest_level_unlocked`) — como los packs
+     quedan en las posiciones 101+ del manifiesto, en la práctica había que terminar el
+     roster numérico completo para poder tocarlos. Fix: `_is_pack_level()` distingue por
+     prefijo del id; los packs ahora se muestran en una sección aparte ("PACKS ESPECIALES")
+     y SIEMPRE están desbloqueados, sin depender del progreso — son contenido
+     opcional/bonus, no una continuación de la campaña principal. Verificado con captura
+     real (scroll hasta el final: niveles 89-100 en gris/bloqueados, 101-115 de los packs
+     todos habilitados).
+
+## Sistema de mejoras/oro/personajes ✅
+
+Pedido explícito del usuario — decisión de alcance previamente diferida, implementada esta
+sesión sin más aclaraciones (el usuario pidió "avanzar" mientras probaba otra parte del
+juego). Alcance elegido deliberadamente conservador para no arriesgar el balance del juego
+ya ajustado esta sesión:
+- **`MetaManager`** (autoload nuevo, `user://meta.json`, SEPARADO de `SaveManager`) — oro,
+  nivel de cada mejora (0-5), personajes desbloqueados/seleccionado. Se separó de
+  `SaveManager` porque agregar estos métodos ahí superaba el máximo de 20 métodos públicos
+  por clase que exige `gdlint` (`max-public-methods`) — ver regla CLAUDE.md #51. Mismo
+  patrón JSON plano que `SaveManager.gd` (`_load()`/`save()`), archivo separado.
+- **`src/features/meta/upgrade_shop.gd`** — lógica pura (costos, bonos, oro ganado por
+  score), sin autoload, testeable sin escena (mismo estilo que `wave_scaling.gd`).
+- **Oro:** se gana siempre que una run/nivel termina (`GameManager._award_gold_for_run()`,
+  victoria, derrota o nivel fallido — sin distinguir el desenlace), `Constants.GOLD_PER_SCORE_POINT
+  = 0.05` × score final.
+- **3 mejoras permanentes**, 5 niveles cada una, costo lineal creciente
+  (`Constants.UPGRADE_BASE_COST=50` + 40 por nivel adicional): **Semillas Extra**
+  (+2 semillas iniciales/nivel, aplicado en `TurnManager._on_game_started()`, ambos modos),
+  **Daño Base** (+8% daño por impacto/nivel, aplicado en `block_base.take_damage()` —
+  la explosión de salsa NO se escala, sigue siendo el valor fijo del GDD), **Velocidad**
+  (+4% velocidad de semilla/nivel, aplicado en `TurnManager._fire_one_seed()`).
+- **4 personajes cosméticos** (Clásico/Turquesa/Rosa Mexicano/Dorado) — SOLO tiñen el
+  molcajete vía `modulate` (`Mortar._apply_character_tint()`), sin ningún efecto en
+  gameplay — decisión deliberada para no meter otra variable de balance encima del
+  rebalance de HP/semillas de esta misma sesión.
+- **`UpgradeShopScreen.tscn`** (nueva, accesible desde `MainMenu` — botón TIENDA) — lista de
+  mejoras con nivel/costo/botón comprar + grilla de personajes con estado
+  bloqueado/desbloqueado/seleccionado. `MainMenu` también muestra el oro actual, reactivo a
+  `EventBus.gold_changed`.
+- Verificado con captura real: `MainMenu` con el botón TIENDA + oro visible, y la tienda
+  completa (mejoras + personajes) renderizando sin el bug de centrado de Container (regla
+  CLAUDE.md #49) que ya se había corregido antes en `LevelSelectScreen`.
+
+## Navegación dedicada a packs temáticos ✅
+
+Pedido explícito del usuario tras probar: los packs (navideño/Mundial) solo eran visibles
+haciendo scroll hasta el final de los 115 niveles en `LevelSelectScreen` — "no intuitivo".
+- **`Constants.LEVEL_PACKS`** — registro central (`{"prefix": ..., "name_key": ...}` por
+  pack). Agregar un pack nuevo con la skill `/level-designer` requiere sumarlo acá para que
+  aparezca en la lista dedicada (aunque sigue siendo jugable desde la sección de
+  `LevelSelectScreen` sin este paso, por prefijo de id).
+- **`PackSelectScreen.tscn`** (nueva, botón "PACKS ESPECIALES" en `MainMenu`, antes de
+  MODO INFINITO) — una tarjeta por pack registrado con nivel/es reales en el manifiesto
+  (nombre + cantidad de niveles). Tocar una tarjeta escribe el buzón no destructivo
+  `LevelManager.get_pending_pack_prefix()` (mismo patrón que `get_pending_level()`) y rutea
+  a...
+- **`PackLevelsScreen.tscn`** (nueva) — grilla de SOLO los niveles de ese pack, todos
+  SIEMPRE desbloqueados (son contenido opcional/bonus, no la campaña numérica secuencial).
+- `LevelSelectScreen` conserva su sección "PACKS ESPECIALES" al final del scroll (no se
+  quitó — sigue siendo un camino válido, ahora hay dos formas de llegar).
+- Verificado con captura real: `MainMenu` con el botón nuevo, y `PackSelectScreen` mostrando
+  "Pack Navideño (5 niveles)" / "Pack Mundial (10 niveles)".
+
+## Fix: paneles modales translúcidos ✅
+
+Pedido explícito del usuario ("ten esto en cuenta siempre que hagas un modal"): la pantalla
+de configuración (y, por el mismo motivo, cualquier overlay construido con
+`PanelContainer.new()` sin un `StyleBox` propio) usa el panel semi-transparente por
+defecto del tema de Godot — el texto se mezclaba visualmente con el fondo real detrás
+(la imagen de `MainMenu`, el tablero de juego durante el tutorial), ilegible.
+- **`src/shared/modal_style.gd`** (nuevo, helper compartido) — `opaque_panel(bg_color)`
+  devuelve un `StyleBoxFlat` con `bg_color` casi 100% opaco (alpha 0.97) y esquinas
+  redondeadas, aplicado vía `panel.add_theme_stylebox_override(&"panel", ...)`.
+- Aplicado a los 5 `PanelContainer` que existen en el proyecto: `SettingsScreen`,
+  `PauseScreen`, `GameOverScreen`, `LevelCompleteScreen`, y el panel de hints de
+  `TutorialGame`. Ver regla CLAUDE.md #52 — cualquier modal nuevo debe usar este helper
+  desde el principio, no solo los que ya existían.
+- Verificado con captura real: `SettingsScreen` abierto sobre `MainMenu`, texto
+  completamente legible (antes se mezclaba con el fondo detrás).
+
 ## Pendientes
 
-- **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía).
+- **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
-- **Sistema de mejoras/oro/personajes** — decisión de alcance explícita, pedido por el usuario pero diferido a otra sesión. `SaveManager` ya persiste cualquier clave nueva en un `Dictionary` a JSON sin fricción, así que agregarlo después no debería requerir cambios estructurales.
-- **Balance de los 100 niveles** — el HP por bloque ahora escala fuerte (totopo 50→300 entre nivel 1 y 100, ver sección de rebalance arriba) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar `TOTOPO_HP_CAP_START/AT_100` y `SEEDS_START/AT_100` en `tools/gen_levels.py` y regenerar.
-- **Más niveles / packs temáticos** — el roster ya llega a 100 (objetivo del GDD). Lo que sigue es variedad cualitativa: usar `/level-designer` para packs temáticos (ej. figuras navideñas) o reemplazar tramos procedurales por niveles diseñados a mano donde se quiera más personalidad.
+- **Balance de los 100 niveles numéricos + el pack Mundial** — el HP por bloque escala fuerte (totopo 50→300 entre nivel 1 y 100) y las semillas iniciales se ajustaron para compensar (30→110; el pack Mundial usa 200 fijo), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. El pack Mundial en particular (HP 300 fijo + solo ~3 turnos de margen) puede resultar imposible tal como está. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes correspondientes en `tools/gen_levels.py`/`tools/gen_worldcup_pack.py` y regenerar.
+- **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
+- **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño, Mundial). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere.
 
 ---
 

@@ -21,6 +21,7 @@ const MortarGd := preload("res://src/features/player/mortar.gd")
 const VfxSpawnerGd := preload("res://src/features/vfx/vfx_spawner.gd")
 const HudGd := preload("res://src/features/ui/HUD.gd")
 const PauseScreenGd := preload("res://src/features/ui/PauseScreen.gd")
+const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const TUTORIAL_SCENE: String = "res://src/scenes/TutorialGame.tscn"
@@ -77,6 +78,9 @@ func _build_overlay() -> void:
 	var panel_h: float = 176.0
 	_panel.position = Vector2(0.0, Constants.DESIGN_HEIGHT - panel_h)
 	_panel.set_size(Vector2(Constants.DESIGN_WIDTH, panel_h))
+	## Fondo sólido/opaco — ver modal_style.gd (bug real: PanelContainer sin esto es
+	## semi-transparente y el texto se mezcla con el tablero de juego detrás).
+	_panel.add_theme_stylebox_override(&"panel", ModalStyleGd.opaque_panel())
 	_layer.add_child(_panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()

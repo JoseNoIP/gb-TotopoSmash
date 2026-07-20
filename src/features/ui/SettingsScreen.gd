@@ -5,6 +5,7 @@ extends CanvasLayer
 
 signal closed
 
+const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 const LANG_CODES: Array = ["es", "en", "pt_BR", "fr"]
 const LANG_NAME_KEYS: Array = ["LANG_NAME_ES", "LANG_NAME_EN", "LANG_NAME_PT_BR", "LANG_NAME_FR"]
 
@@ -37,6 +38,10 @@ func _build_ui() -> void:
 	var origin_y: float = (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	_panel.position = Vector2(origin_x, origin_y)
 	_panel.set_size(Vector2(panel_w, panel_h))
+	## Fondo sólido/opaco — el estilo default de PanelContainer es semi-transparente y el
+	## texto se mezclaba con lo que hay detrás (bug real reportado jugando, ver
+	## modal_style.gd). Aplicar SIEMPRE a un PanelContainer usado como overlay/modal.
+	_panel.add_theme_stylebox_override(&"panel", ModalStyleGd.opaque_panel())
 	add_child(_panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
