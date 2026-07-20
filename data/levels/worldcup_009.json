@@ -5,85 +5,85 @@
   "grid_cols": 18,
   "grid_rows": 16,
   "starting_seeds": 50,
-  "par_turns": 18,
+  "par_turns": 10,
   "cells": [
     {
       "col": 4,
       "row": 2,
       "kind": "totopo",
-      "hp": 179
+      "hp": 75
     },
     {
       "col": 4,
       "row": 3,
       "kind": "totopo",
-      "hp": 124
+      "hp": 84
     },
     {
       "col": 4,
       "row": 4,
       "kind": "totopo",
-      "hp": 165
+      "hp": 115
     },
     {
       "col": 4,
       "row": 5,
       "kind": "totopo",
-      "hp": 204
+      "hp": 44
     },
     {
       "col": 4,
       "row": 6,
       "kind": "totopo",
-      "hp": 142
+      "hp": 86
     },
     {
       "col": 4,
       "row": 7,
       "kind": "totopo",
-      "hp": 82
+      "hp": 102
     },
     {
       "col": 4,
       "row": 8,
       "kind": "totopo",
-      "hp": 260
+      "hp": 42
     },
     {
       "col": 4,
       "row": 9,
       "kind": "totopo",
-      "hp": 206
+      "hp": 55
     },
     {
       "col": 4,
       "row": 10,
       "kind": "totopo",
-      "hp": 283
+      "hp": 86
     },
     {
       "col": 4,
       "row": 11,
       "kind": "totopo",
-      "hp": 92
+      "hp": 36
     },
     {
       "col": 4,
       "row": 12,
       "kind": "totopo",
-      "hp": 100
+      "hp": 40
     },
     {
       "col": 4,
       "row": 13,
       "kind": "totopo",
-      "hp": 249
+      "hp": 42
     },
     {
       "col": 5,
       "row": 3,
       "kind": "totopo",
-      "hp": 137
+      "hp": 89
     },
     {
       "col": 5,
@@ -100,13 +100,13 @@
       "col": 5,
       "row": 6,
       "kind": "totopo",
-      "hp": 131
+      "hp": 84
     },
     {
       "col": 6,
       "row": 3,
       "kind": "totopo",
-      "hp": 61
+      "hp": 57
     },
     {
       "col": 6,
@@ -118,19 +118,19 @@
       "col": 6,
       "row": 5,
       "kind": "totopo",
-      "hp": 65
+      "hp": 35
     },
     {
       "col": 6,
       "row": 6,
       "kind": "totopo",
-      "hp": 67
+      "hp": 173
     },
     {
       "col": 7,
       "row": 3,
       "kind": "totopo",
-      "hp": 114
+      "hp": 94
     },
     {
       "col": 7,
@@ -147,109 +147,109 @@
       "col": 7,
       "row": 6,
       "kind": "totopo",
-      "hp": 179
+      "hp": 55
     },
     {
       "col": 8,
       "row": 3,
       "kind": "totopo",
-      "hp": 214
+      "hp": 59
     },
     {
       "col": 8,
       "row": 4,
       "kind": "totopo",
-      "hp": 93
+      "hp": 87
     },
     {
       "col": 8,
       "row": 5,
       "kind": "totopo",
-      "hp": 110
+      "hp": 75
     },
     {
       "col": 8,
       "row": 6,
       "kind": "totopo",
-      "hp": 132
+      "hp": 35
     },
     {
       "col": 9,
       "row": 4,
       "kind": "totopo",
-      "hp": 80
+      "hp": 57
     },
     {
       "col": 9,
       "row": 5,
       "kind": "totopo",
-      "hp": 165
+      "hp": 135
     },
     {
       "col": 10,
       "row": 4,
       "kind": "totopo",
-      "hp": 167
+      "hp": 152
     },
     {
       "col": 10,
       "row": 5,
       "kind": "totopo",
-      "hp": 123
+      "hp": 70
     },
     {
       "col": 11,
       "row": 4,
       "kind": "totopo",
-      "hp": 180
+      "hp": 91
     },
     {
       "col": 11,
       "row": 5,
+      "kind": "totopo",
+      "hp": 88
+    },
+    {
+      "col": 12,
+      "row": 4,
       "kind": "totopo",
       "hp": 131
     },
     {
       "col": 12,
-      "row": 4,
-      "kind": "totopo",
-      "hp": 123
-    },
-    {
-      "col": 12,
       "row": 5,
       "kind": "totopo",
-      "hp": 203
+      "hp": 76
     },
     {
       "col": 7,
       "row": 8,
       "kind": "totopo",
-      "hp": 211
+      "hp": 69
     },
     {
       "col": 8,
       "row": 7,
       "kind": "totopo",
-      "hp": 258
+      "hp": 81
     },
     {
       "col": 8,
       "row": 8,
       "kind": "totopo",
-      "hp": 96
+      "hp": 104
     },
     {
       "col": 8,
       "row": 9,
       "kind": "totopo",
-      "hp": 133
+      "hp": 62
     },
     {
       "col": 9,
       "row": 8,
       "kind": "totopo",
-      "hp": 139
+      "hp": 89
     },
     {
       "col": 3,

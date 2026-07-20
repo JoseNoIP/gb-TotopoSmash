@@ -51,8 +51,12 @@ WIDE_SUBDIVISION = 3  # cancha: necesita más ancho para leerse bien
 TEXT_SUBDIVISION = 4  # "GOL": 3 letras necesitan más resolución que una silueta simple
 BASE_COLS = 7  # Constants.GRID_COLS
 
-HP_MIN = 60  # = totopo_hp_min_for_level(100) en gen_levels.py
-HP_MAX = 300  # = totopo_hp_max_for_level(100) en gen_levels.py
+# Pedido explícito del usuario: "bajemos la complejidad de los packs a un nivel 50" — usar
+# el mismo rango de HP que tendría un bloque del nivel 50 del roster numérico (antes usaba
+# el rango del nivel 100, el tope de la campaña) conservando las "ayudas" ya definidas
+# (sesgo 80/20, power-ups de entrada, semillas extra, decoraciones).
+HP_MIN = 35  # = totopo_hp_min_for_level(50) en gen_levels.py
+HP_MAX = 174  # = totopo_hp_max_for_level(50) en gen_levels.py
 # Pedido explícito del usuario tras jugar: con HP uniforme entre HP_MIN y HP_MAX la partida
 # se sentía larga/tediosa (un nivel `static` no tiene condición de derrota — se gana
 # despejando TODO, así que el HP promedio determina directamente cuánto dura la partida).

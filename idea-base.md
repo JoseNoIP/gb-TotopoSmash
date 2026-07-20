@@ -407,6 +407,43 @@ inicio". Reemplaza por completo el pack Mundial v1 (10 niveles, baja resolución
   la partida) — no se tocó `gen_levels.py` (roster numérico, `row_queue`, la duración ya
   está acotada por el número de turnos, no solo por HP).
 
+## Pulido de descubribilidad y ritmo del pack Mundial ✅
+
+Tres pedidos explícitos del usuario tras jugar el pack v3 ya corregido (fuente/molcajete/
+semillas de la ronda anterior):
+
+- **Botones del pack desalineados** ("los nombres no aparecen alineados, creo que es
+  porque están centrados sobre su columna... quizá deban estar alineados a la izquierda")
+  — `PackLevelsScreen`: cada botón centraba su texto dentro de su propio ancho, así que un
+  nombre corto ("1. Balón") y uno largo ("2. Copa del Mundo") arrancaban en columnas X
+  distintas, dando sensación de desorden al leer la lista de corrido. Fix: `btn.alignment =
+  HORIZONTAL_ALIGNMENT_LEFT` — todos los nombres ahora arrancan en la misma columna. Un
+  margen chico (dos espacios al inicio del texto) separa el texto del borde izquierdo del
+  botón sin tocar el `StyleBox` del tema (pisar el StyleBox "normal" con uno vacío para
+  simular un margen habría roto el fondo/borde/hover del botón — descartado a mitad de
+  implementación al notar el efecto secundario).
+- **Complejidad de HP bajada a "nivel 50"** (pedido explícito: "bajemos la complejidad de
+  los packs a un nivel 50, para que sean más divertidos, pero conservemos las 'ayudas'")
+  — `HP_MIN`/`HP_MAX` en `tools/gen_worldcup_pack.py` pasaron de los valores del nivel 100
+  (60-300, el tope de la campaña) a los del nivel 50 (`totopo_hp_min_for_level(50)`/
+  `totopo_hp_max_for_level(50)` de `gen_levels.py` = 35-174). Combinado con el sesgo 80/20
+  ya aplicado, el HP promedio real bajó de ~140-150 a ~80-87 por nivel, y `par_turns` cayó
+  proporcionalmente (ej. worldcup_002: 51 → 29 turnos). Las "ayudas" (decoraciones, puntos
+  de entrada, semillas extra abundantes, nombre visible) quedaron intactas — solo se tocó
+  el rango de HP.
+- **Los niveles de pack ya no aparecen en "Niveles"** (pedido explícito: "quita los
+  niveles que pertenecen a Packs de la pantalla de 'Niveles'. Que solo se muestren en la
+  pantalla de su pack correspondiente") — `LevelSelectScreen` antes mostraba una sección
+  aparte ("PACKS ESPECIALES") al final del roster numérico con los mismos niveles que ya
+  eran accesibles desde `PackSelectScreen`/`PackLevelsScreen` — contenido duplicado en dos
+  pantallas. Se quitó esa sección por completo (`_build_grid()` ahora hace `continue` en
+  cualquier id que no empiece con `level_`); los packs siguen siendo 100% accesibles, solo
+  que exclusivamente desde su pantalla dedicada. `_is_pack_level()` se conserva (se sigue
+  usando para filtrar, no para separar en dos secciones).
+- Verificado con captura real de las tres pantallas: nombres alineados en `PackLevelsScreen`,
+  `LevelSelectScreen` mostrando solo números 1-100 sin ningún botón de pack, y un nivel del
+  pack Mundial con HP visiblemente más bajo (mayormente 2 dígitos) que antes.
+
 ## Sistema de mejoras/oro/personajes ✅
 
 Pedido explícito del usuario — decisión de alcance previamente diferida, implementada esta
