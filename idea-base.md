@@ -578,6 +578,25 @@ tres opciones elegidas.
   con totopo/queso/salsa/triángulo visibles simultáneamente) y el molcajete con textura de
   piedra en la base de la pantalla — todos legibles y coherentes con el estilo del resto
   del juego.
+- **Bug real reportado jugando: el rebote de la semilla no calzaba con la silueta del
+  sprite** ("los nuevos elementos no son completamente cuadrados, pero la semilla al
+  golpearlos se comporta como si fueran cuadrados") — medido con datos reales: los 4
+  sprites de bloques nuevos (totopo/queso/salsa/piedra) solo tienen 34-57% de píxeles
+  opacos dentro de su lienzo de 64×64 (un totopo, un frasco, una roca con forma propia,
+  no un cuadrado relleno como los bloques de color plano de antes). La colisión SIEMPRE
+  fue (y debe seguir siendo) un `RectangleShape2D` cuadrado — es la grilla del tablero, no
+  la silueta del arte, la que define dónde rebota (regla de diseño no negociable, GDD
+  "Cálculo de Ángulos") — así que cambiar la colisión a la silueta real NO era una opción
+  considerada (rompería el rebote predecible que es el pilar del juego). El problema era
+  puramente visual: 40-65% del área que sí rebota se veía vacía. Fix:
+  `block_base.gd::_build_visual()` agrega un `ColorRect` de fondo (mismo color que el
+  bloque ya usaba antes de tener sprite, vía `_get_color()`) del mismo tamaño EXACTO que la
+  colisión, detrás del `Sprite2D` — la celda cuadrada vuelve a verse sólida donde
+  realmente rebota. El molcajete NO necesitó este fix — confirmado que no tiene ninguna
+  colisión física (las semillas "aterrizan" por posición Y, nunca chocan con su sprite),
+  así que su silueta irregular es puramente cosmética sin implicación de gameplay.
+  Verificado con captura real: cada bloque ahora se ve como un cuadrado sólido de color
+  (el mismo color que tenía antes de la IA) con el personaje/objeto dibujado encima.
 
 ## Pendientes
 

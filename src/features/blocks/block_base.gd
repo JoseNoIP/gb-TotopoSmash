@@ -75,10 +75,31 @@ func _build_shape(cell_size: float) -> void:
 
 ## Sprite2D con textura real si existe (ver tools/gen_assets.py); si no, cae al
 ## ColorRect plano de siempre — nunca crashea si falta el asset todavía.
+##
+## Los sprites de IA (totopo/queso/salsa/piedra) NO son cuadrados — son un totopo, una
+## cuña de queso, un frasco, una roca, con bastante transparencia alrededor (34-57% de
+## píxeles opacos medido en `assets/sprites/blocks/*.png`). La colisión (`_build_shape()`,
+## unas líneas abajo) SIEMPRE es un `RectangleShape2D` cuadrado — es la grilla del tablero,
+## no la silueta del sprite, la que define dónde rebota una semilla (regla de diseño no
+## negociable: todo bloque ocupa una celda cuadrada, el ángulo de rebote depende de qué
+## cara del cuadrado golpea, ver physics_math.gd). Sin un fondo que rellene ese cuadrado,
+## el jugador ve la semilla "rebotar en el aire" cerca de las esquinas, donde el sprite ya
+## terminó pero la celda cuadrada real sigue ahí — reportado jugando. Fix: un `ColorRect`
+## de fondo con el mismo color que usaba el bloque antes de tener sprite (`_get_color()`),
+## del mismo tamaño EXACTO que la colisión (`visual_size`), detrás del sprite — así el
+## área que realmente rebota siempre se ve sólida, sin importar qué tan irregular sea la
+## silueta del arte encima.
 func _build_visual(cell_size: float) -> void:
 	var visual_size: float = cell_size * 0.92
 	var texture_path: String = _get_texture_path()
 	if not texture_path.is_empty() and ResourceLoader.exists(texture_path):
+		var backing: ColorRect = ColorRect.new()
+		backing.size = Vector2(visual_size, visual_size)
+		backing.position = Vector2(visual_size, visual_size) * -0.5
+		backing.color = _get_color()
+		backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		backing.name = &"Backing"
+		add_child(backing)
 		var sprite: Sprite2D = Sprite2D.new()
 		sprite.texture = load(texture_path)
 		var tex_size: Vector2 = sprite.texture.get_size()
