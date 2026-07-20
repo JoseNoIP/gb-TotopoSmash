@@ -4,10 +4,14 @@ extends GutTest
 ## patrón que test_save_manager.gd: el estado persiste entre corridas en la misma máquina.
 
 
+## Regresión real (bug reportado por el usuario jugando): sin devolver el oro agregado,
+## CADA corrida de esta suite sumaba +50 de oro real para siempre (`MetaManager` es el
+## autoload real, persiste en user://meta.json — sin mock/aislamiento de test).
 func test_add_gold_increases_total() -> void:
 	var before: int = MetaManager.get_gold()
 	MetaManager.add_gold(50)
 	assert_eq(MetaManager.get_gold(), before + 50)
+	MetaManager.spend_gold(50)  ## deja el oro como estaba antes del test
 
 
 func test_add_gold_ignores_non_positive_amounts() -> void:
@@ -25,11 +29,14 @@ func test_spend_gold_fails_when_not_enough() -> void:
 
 
 func test_spend_gold_succeeds_and_deducts_exact_amount() -> void:
+	var original: int = MetaManager.get_gold()
 	MetaManager.add_gold(100)
 	var before: int = MetaManager.get_gold()
 	var spent: bool = MetaManager.spend_gold(40)
 	assert_true(spent)
 	assert_eq(MetaManager.get_gold(), before - 40)
+	MetaManager.spend_gold(60)  ## deja el oro como estaba antes del test (100 - 40 - 60 = 0 neto)
+	assert_eq(MetaManager.get_gold(), original)
 
 
 func test_upgrade_level_defaults_to_zero_for_unknown_id() -> void:
@@ -66,13 +73,18 @@ func test_classic_character_is_unlocked_by_default() -> void:
 	assert_true(Constants.CHARACTER_DEFAULT_ID in MetaManager.get_unlocked_characters())
 
 
+## Usa el personaje default (ya desbloqueado siempre) en vez de uno nuevo real
+## ("turquoise") — llamar unlock_character() en un personaje nuevo lo desbloquea para
+## siempre en el guardado real (bug real: contaminaba user://meta.json en cada corrida).
+## El default ya está desbloqueado de por sí, así que llamarlo de nuevo no cambia el
+## estado real y sigue ejercitando la misma lógica de "no duplicar".
 func test_unlock_character_adds_it_without_duplicating() -> void:
-	MetaManager.unlock_character("turquoise")
-	MetaManager.unlock_character("turquoise")
+	MetaManager.unlock_character(Constants.CHARACTER_DEFAULT_ID)
+	MetaManager.unlock_character(Constants.CHARACTER_DEFAULT_ID)
 	var unlocked: Array = MetaManager.get_unlocked_characters()
 	var count: int = 0
 	for character_id: String in unlocked:
-		if character_id == "turquoise":
+		if character_id == Constants.CHARACTER_DEFAULT_ID:
 			count += 1
 	assert_eq(count, 1, "unlock_character no debe duplicar una entrada ya desbloqueada")
 

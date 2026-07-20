@@ -1,8 +1,14 @@
 extends Control
 ## Grilla de niveles de UN pack temático específico (ver PackSelectScreen). El prefijo
 ## viene del buzón no destructivo LevelManager.get_pending_pack_prefix() — mismo patrón
-## que LevelManager.get_pending_level() para Modo Nivel. Todos los niveles de un pack
-## están SIEMPRE desbloqueados (son contenido opcional/bonus, no la campaña numérica).
+## que LevelManager.get_pending_level() para Modo Nivel.
+##
+## Desbloqueo SECUENCIAL dentro del pack (pedido explícito del usuario tras jugar: "todos
+## los niveles me aparecen habilitados desde el inicio... solo se deben ir habilitando
+## conforme vaya pasando los diferentes niveles, pero sí debo poder volver a jugar niveles
+## ya completados") — mismo criterio que LevelSelectScreen para el roster numérico, pero
+## con su propio contador vía LevelManager.get_pack_highest_unlocked(prefix), independiente
+## por pack (terminar el pack navideño no afecta el desbloqueo del pack Mundial).
 
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const TUTORIAL_SCENE: String = "res://src/scenes/TutorialGame.tscn"
@@ -82,6 +88,7 @@ func _build_grid(prefix: String) -> void:
 	grid.add_theme_constant_override(&"v_separation", int(BUTTON_GAP))
 	scroll.add_child(grid)
 
+	var highest_unlocked: int = LevelManager.get_pack_highest_unlocked(prefix)
 	var position_in_pack: int = 0
 	for i: int in manifest.size():
 		var level_id: String = manifest[i]
@@ -98,7 +105,10 @@ func _build_grid(prefix: String) -> void:
 		btn.text = "  " + _level_button_text(level_id, position_in_pack)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.custom_minimum_size = Vector2(BUTTON_WIDTH, BUTTON_HEIGHT)
-		btn.pressed.connect(_on_level_pressed.bind(level_id))
+		if position_in_pack <= highest_unlocked:
+			btn.pressed.connect(_on_level_pressed.bind(level_id))
+		else:
+			btn.disabled = true
 		grid.add_child(btn)
 
 

@@ -598,6 +598,70 @@ tres opciones elegidas.
   Verificado con captura real: cada bloque ahora se ve como un cuadrado sólido de color
   (el mismo color que tenía antes de la IA) con el personaje/objeto dibujado encima.
 
+## Desbloqueo secuencial de niveles y packs + guardado real contaminado por tests ✅
+
+Pedido explícito del usuario tras jugar: "cuando entro a los niveles y a los packs
+especiales, todos me aparecen habilitados desde el inicio... solo se deben ir habilitando
+conforme vaya pasando los diferentes niveles, pero sí debo poder volver a jugar niveles ya
+completados." La investigación encontró DOS causas reales distintas, no una sola:
+
+- **Causa 1 (bug de producción real): `LevelManager.mark_level_completed()` desbloqueaba
+  el roster numérico usando la posición GLOBAL en el manifiesto de 115 niveles** (`cells`
+  → `row_queue` de dificultad progresiva) en vez de distinguir roster numérico de packs.
+  Completar UN SOLO nivel de pack (posición ~100+ en el manifiesto, ya que los packs se
+  appendean después de los 100 numéricos) desbloqueaba de un tirón casi toda la campaña
+  numérica (`highest_level_unlocked` saltaba a 101+ solo por terminar, por ejemplo,
+  `holiday_001`). Fix: `mark_level_completed()` ahora bifurca por prefijo — un id
+  `level_NNN` sigue actualizando `SaveManager.highest_level_unlocked` (acotado contra el
+  conteo real de niveles numéricos, no el tamaño total del manifiesto — antes también
+  estaba mal acotado, aunque de forma menos visible); un id de pack (`holiday_NNN`/
+  `worldcup_NNN`) actualiza un contador NUEVO y SEPARADO por pack.
+- **Los packs NUNCA habían tenido ningún desbloqueo progresivo** — desde que se creó la
+  navegación dedicada a packs, todos sus niveles estaban SIEMPRE habilitados a propósito
+  (decisión mía anterior: "son contenido opcional/bonus"). El usuario aclaró que prefiere
+  desbloqueo secuencial también ahí. Fix: `LevelManager` gana un nuevo `Dictionary`
+  `_pack_progress` (prefix → posición 1-based más alta desbloqueada DENTRO de ese pack,
+  independiente entre packs — terminar el navideño no afecta el Mundial), persistido en
+  su propio `user://pack_progress.json` (NO se agregó a `SaveManager`, que ya está en el
+  límite de 20 métodos públicos de `gdlint` — mismo motivo que la separación de
+  `MetaManager`, regla CLAUDE.md #51). Nuevo método público `get_pack_highest_unlocked(prefix)`.
+  Los ids de pack siguen la convención `prefix_NNN` (`/level-designer` PASO 4), así que la
+  posición dentro del pack se lee directo del sufijo numérico del id, sin recorrer el
+  manifiesto. `PackLevelsScreen` ahora deshabilita los botones por encima de ese umbral,
+  igual que `LevelSelectScreen` ya hacía para el roster numérico — "poder volver a jugar
+  niveles ya completados" no necesitó ningún cambio adicional: la comparación siempre fue
+  `posición <= desbloqueado`, así que cualquier nivel ya superado se mantiene jugable.
+- **Causa 2 (bug de higiene de tests, la razón por la que el síntoma se veía TAN extremo):
+  `SaveManager`/`MetaManager` son autoloads reales que persisten en `user://save.json`/
+  `meta.json` — el MISMO archivo que usa una partida jugada a mano. GUT no aísla ese
+  estado entre corridas.** Varios tests (`test_best_score_only_updates_when_strictly_higher`,
+  `test_max_wave_only_updates_when_strictly_higher`, `test_total_games_played_increments_by_one`,
+  `test_highest_level_unlocked_only_updates_when_strictly_higher`, `test_add_gold_increases_total`,
+  `test_spend_gold_succeeds_and_deducts_exact_amount`, `test_unlock_character_adds_it_without_duplicating`)
+  subían un valor "solo si es mayor" o agregaban oro/desbloqueaban un personaje SIN
+  restaurarlo al final — cada corrida de la suite (decenas a lo largo de esta sesión)
+  sumaba permanentemente progreso real que el usuario nunca ganó jugando. El guardado
+  real llegó a tener `highest_level_unlocked=128` (más alto que los 100 niveles que
+  existen), `gold=9987`, y el personaje "turquesa" desbloqueado sin haberlo comprado.
+  Doble fix: (1) los 7 tests identificados ahora restauran el valor original al final
+  (usando `Autoload.get(&"_data")["campo"] = valor; Autoload.save()` cuando la API pública
+  es deliberadamente de una sola vía — solo aceptable en tests); (2) como red de
+  seguridad contra tests NUEVOS que reintroduzcan lo mismo sin que nadie lo note, nuevo
+  `tools/run_tests.sh` — respalda `save.json`/`meta.json`/`pack_progress.json` antes de
+  correr la suite y los restaura después pase lo que pase. **Este script es ahora el
+  comando canónico de tests** (`CLAUDE.md` actualizado) — nunca invocar
+  `godot --headless -s addons/gut/gut_cmdln.gd` directo.
+- **Guardado real reseteado** con confirmación explícita del usuario (eligió "resetear
+  todo a estado limpio" entre 3 opciones presentadas): `highest_level_unlocked=1`,
+  `best_score=0`, `max_wave=0`, `total_games_played=0`, `gold=0`,
+  `unlocked_characters=["classic"]` — sin tocar `language`/`sound_enabled`/
+  `vibration_enabled`/`swipe_sensitivity`/`tutorial_shown` (esas sí estaban correctamente
+  aisladas por sus propios tests, no hacía falta tocarlas). Respaldo del estado inflado
+  guardado antes de resetear, por si acaso.
+- Verificado con captura real: `LevelSelectScreen` mostrando SOLO el nivel 1 habilitado
+  (2-32+ atenuados/deshabilitados) y `PackLevelsScreen` del pack Mundial mostrando SOLO
+  "1. Balón" habilitado — exactamente el comportamiento pedido.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
