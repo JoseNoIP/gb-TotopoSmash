@@ -515,12 +515,159 @@ defecto del tema de Godot — el texto se mezclaba visualmente con el fondo real
 - Verificado con captura real: `SettingsScreen` abierto sobre `MainMenu`, texto
   completamente legible (antes se mezclaba con el fondo detrás).
 
+## Pulido de assets (IA + música de fondo) ✅
+
+Pedido explícito del usuario ("continúa con Assets"), alcance decidido con una pregunta
+estructurada: ícono del láser + música de fondo + pulir sprites existentes con IA — las
+tres opciones elegidas.
+
+- **Ícono del power-up láser** — nunca había tenido sprite propio (usaba un `_draw()`
+  procedural en runtime como fallback). Generado con `gen_assets.py::make_laser_icon()`
+  (mismo estilo pixel-art que lemon/seed_extra) en **DOS variantes**
+  (`laser_horizontal.png`/`laser_vertical.png`), nunca una sola imagen genérica — la
+  orientación real del láser es información de gameplay que el jugador debe poder leer
+  ANTES de tocarlo (el `_draw()` que reemplaza ya lo hacía bien, así que el sprite nuevo
+  tenía que preservar esa distinción, no solo "verse mejor"). `laser_icon.gd` elige la
+  textura en runtime según `is_horizontal`.
+- **Música de fondo** — `AudioManager.play_music()` existía desde antes pero nunca se
+  llamaba y no había ningún archivo en `assets/audio/music/`. Se compuso
+  `music_theme()` en `gen_assets.py`: loop de ~7.3s a 132 BPM, melodía pentatónica simple
+  (onda triangular, más suave que cuadrada para no fatigar en loop) + bajo de dos notas +
+  un "shaker" de ruido en el contratiempo (guiño al tema mexicano) — todo sintetizado con
+  la misma stdlib `wave` que ya usan los SFX, sin dependencias nuevas. `edit/loop_mode=1`
+  en el `.import` para que loopee de verdad. `AudioManager._ready()` la arranca sola
+  (autoload, vive toda la sesión) a -8dB para no competir con los SFX; el interruptor de
+  sonido en `SettingsScreen` ahora también para/reanuda la música (antes solo silenciaba
+  SFX futuros — sin este ajuste, apagar "sonido" no habría sido realmente silencio total).
+- **Sprites existentes pulidos con IA** — corrige una suposición de una sesión anterior
+  que asumía "sprites ≤96px = la IA sale borrosa, dejarlos procedurales" sin haber probado
+  la técnica real de pedir la imagen a 512×512 y reducirla con `Image.LANCZOS` (la misma
+  que ya usaba el fondo de menú). Probado con evidencia real ANTES de comprometerse: 2
+  fetches de prueba (totopo, molcajete) mostraron resultados nítidos y legibles incluso a
+  64px/96px — la suposición anterior era demasiado conservadora. Con esa confirmación:
+  - **Con cara/personaje** (elegido por el usuario sobre las otras 2 opciones — "todo sin
+    cara" o "todo con cara"): `totopo.png`, `queso.png` — bloques de comida como
+    personajes tiernos (ojos, sonrisa), consistente con el estilo "vector toony" del GDD.
+  - **Sin cara, objeto con textura**: `salsa.png` (frasco con etiqueta), `stone.png`
+    (roca agrietada), `molcajete.png` (vista CENITAL estricta — el primer intento salió en
+    ángulo 3/4 y no calzaba con la silueta circular que el juego necesita; se corrigió el
+    prompt pidiendo explícitamente "top-down orthographic view, no perspective, no shading
+    depth").
+  - **`seed.png` (16×16) se quedó procedural, a propósito** — se intentó con IA pidiendo
+    explícitamente "no face, no character" y el modelo devolvió una calabaza completa CON
+    cara de todos modos (ignoró la instrucción); además a 16px el resultado no se
+    distinguía de el círculo procedural ya existente. No vale la pena insistir para un
+    sprite tan chico — documentado como excepción en `tools/fetch_ai_assets.py` y en la
+    skill `/gen-ai-art` (corregida, ya no dice "≤64×64 siempre procedural" a secas).
+  - **Bloque triángulo sin cambios** — sigue siendo un `Polygon2D` de color plano
+    (`triangle_block.gd`), variante geométrica del totopo sin necesidad de textura propia.
+  - `tools/fetch_ai_assets.py` reescrito con los 5 prompts/seeds finales documentados
+    (reproducibilidad) + función `chroma_key()` movida ahí (antes solo en un script de
+    prueba descartable).
+- **Advertencia benigna de "leak" en tests** — desde que la música arranca sola en
+  `AudioManager._ready()` (autoload, nunca se detiene), `godot --headless -s
+  addons/gut/gut_cmdln.gd -gexit` termina con `WARNING: 2 ObjectDB instances were leaked
+  at exit` / `ERROR: 1 resources still in use at exit` (el `AudioStreamWAV`/
+  `AudioStreamPlaybackWAV` del loop de música, todavía "en uso" en el momento exacto en que
+  el proceso corta). **No es un bug** — exit code sigue siendo 0, los 204 tests siguen en
+  verde, y es el comportamiento esperado de CUALQUIER autoload con música en loop que nunca
+  se detiene explícitamente (correcto para un juego real, donde la música debe sonar hasta
+  que se cierra la app). No intentar "arreglarlo" deteniendo la música en algún hook de
+  shutdown artificial — sería complejidad sin beneficio real.
+- Verificado con captura real: los 5 sprites nuevos dentro de una partida real (`level_040`,
+  con totopo/queso/salsa/triángulo visibles simultáneamente) y el molcajete con textura de
+  piedra en la base de la pantalla — todos legibles y coherentes con el estilo del resto
+  del juego.
+- **Bug real reportado jugando: el rebote de la semilla no calzaba con la silueta del
+  sprite** ("los nuevos elementos no son completamente cuadrados, pero la semilla al
+  golpearlos se comporta como si fueran cuadrados") — medido con datos reales: los 4
+  sprites de bloques nuevos (totopo/queso/salsa/piedra) solo tienen 34-57% de píxeles
+  opacos dentro de su lienzo de 64×64 (un totopo, un frasco, una roca con forma propia,
+  no un cuadrado relleno como los bloques de color plano de antes). La colisión SIEMPRE
+  fue (y debe seguir siendo) un `RectangleShape2D` cuadrado — es la grilla del tablero, no
+  la silueta del arte, la que define dónde rebota (regla de diseño no negociable, GDD
+  "Cálculo de Ángulos") — así que cambiar la colisión a la silueta real NO era una opción
+  considerada (rompería el rebote predecible que es el pilar del juego). El problema era
+  puramente visual: 40-65% del área que sí rebota se veía vacía. Fix:
+  `block_base.gd::_build_visual()` agrega un `ColorRect` de fondo (mismo color que el
+  bloque ya usaba antes de tener sprite, vía `_get_color()`) del mismo tamaño EXACTO que la
+  colisión, detrás del `Sprite2D` — la celda cuadrada vuelve a verse sólida donde
+  realmente rebota. El molcajete NO necesitó este fix — confirmado que no tiene ninguna
+  colisión física (las semillas "aterrizan" por posición Y, nunca chocan con su sprite),
+  así que su silueta irregular es puramente cosmética sin implicación de gameplay.
+  Verificado con captura real: cada bloque ahora se ve como un cuadrado sólido de color
+  (el mismo color que tenía antes de la IA) con el personaje/objeto dibujado encima.
+
+## Desbloqueo secuencial de niveles y packs + guardado real contaminado por tests ✅
+
+Pedido explícito del usuario tras jugar: "cuando entro a los niveles y a los packs
+especiales, todos me aparecen habilitados desde el inicio... solo se deben ir habilitando
+conforme vaya pasando los diferentes niveles, pero sí debo poder volver a jugar niveles ya
+completados." La investigación encontró DOS causas reales distintas, no una sola:
+
+- **Causa 1 (bug de producción real): `LevelManager.mark_level_completed()` desbloqueaba
+  el roster numérico usando la posición GLOBAL en el manifiesto de 115 niveles** (`cells`
+  → `row_queue` de dificultad progresiva) en vez de distinguir roster numérico de packs.
+  Completar UN SOLO nivel de pack (posición ~100+ en el manifiesto, ya que los packs se
+  appendean después de los 100 numéricos) desbloqueaba de un tirón casi toda la campaña
+  numérica (`highest_level_unlocked` saltaba a 101+ solo por terminar, por ejemplo,
+  `holiday_001`). Fix: `mark_level_completed()` ahora bifurca por prefijo — un id
+  `level_NNN` sigue actualizando `SaveManager.highest_level_unlocked` (acotado contra el
+  conteo real de niveles numéricos, no el tamaño total del manifiesto — antes también
+  estaba mal acotado, aunque de forma menos visible); un id de pack (`holiday_NNN`/
+  `worldcup_NNN`) actualiza un contador NUEVO y SEPARADO por pack.
+- **Los packs NUNCA habían tenido ningún desbloqueo progresivo** — desde que se creó la
+  navegación dedicada a packs, todos sus niveles estaban SIEMPRE habilitados a propósito
+  (decisión mía anterior: "son contenido opcional/bonus"). El usuario aclaró que prefiere
+  desbloqueo secuencial también ahí. Fix: `LevelManager` gana un nuevo `Dictionary`
+  `_pack_progress` (prefix → posición 1-based más alta desbloqueada DENTRO de ese pack,
+  independiente entre packs — terminar el navideño no afecta el Mundial), persistido en
+  su propio `user://pack_progress.json` (NO se agregó a `SaveManager`, que ya está en el
+  límite de 20 métodos públicos de `gdlint` — mismo motivo que la separación de
+  `MetaManager`, regla CLAUDE.md #51). Nuevo método público `get_pack_highest_unlocked(prefix)`.
+  Los ids de pack siguen la convención `prefix_NNN` (`/level-designer` PASO 4), así que la
+  posición dentro del pack se lee directo del sufijo numérico del id, sin recorrer el
+  manifiesto. `PackLevelsScreen` ahora deshabilita los botones por encima de ese umbral,
+  igual que `LevelSelectScreen` ya hacía para el roster numérico — "poder volver a jugar
+  niveles ya completados" no necesitó ningún cambio adicional: la comparación siempre fue
+  `posición <= desbloqueado`, así que cualquier nivel ya superado se mantiene jugable.
+- **Causa 2 (bug de higiene de tests, la razón por la que el síntoma se veía TAN extremo):
+  `SaveManager`/`MetaManager` son autoloads reales que persisten en `user://save.json`/
+  `meta.json` — el MISMO archivo que usa una partida jugada a mano. GUT no aísla ese
+  estado entre corridas.** Varios tests (`test_best_score_only_updates_when_strictly_higher`,
+  `test_max_wave_only_updates_when_strictly_higher`, `test_total_games_played_increments_by_one`,
+  `test_highest_level_unlocked_only_updates_when_strictly_higher`, `test_add_gold_increases_total`,
+  `test_spend_gold_succeeds_and_deducts_exact_amount`, `test_unlock_character_adds_it_without_duplicating`)
+  subían un valor "solo si es mayor" o agregaban oro/desbloqueaban un personaje SIN
+  restaurarlo al final — cada corrida de la suite (decenas a lo largo de esta sesión)
+  sumaba permanentemente progreso real que el usuario nunca ganó jugando. El guardado
+  real llegó a tener `highest_level_unlocked=128` (más alto que los 100 niveles que
+  existen), `gold=9987`, y el personaje "turquesa" desbloqueado sin haberlo comprado.
+  Doble fix: (1) los 7 tests identificados ahora restauran el valor original al final
+  (usando `Autoload.get(&"_data")["campo"] = valor; Autoload.save()` cuando la API pública
+  es deliberadamente de una sola vía — solo aceptable en tests); (2) como red de
+  seguridad contra tests NUEVOS que reintroduzcan lo mismo sin que nadie lo note, nuevo
+  `tools/run_tests.sh` — respalda `save.json`/`meta.json`/`pack_progress.json` antes de
+  correr la suite y los restaura después pase lo que pase. **Este script es ahora el
+  comando canónico de tests** (`CLAUDE.md` actualizado) — nunca invocar
+  `godot --headless -s addons/gut/gut_cmdln.gd` directo.
+- **Guardado real reseteado** con confirmación explícita del usuario (eligió "resetear
+  todo a estado limpio" entre 3 opciones presentadas): `highest_level_unlocked=1`,
+  `best_score=0`, `max_wave=0`, `total_games_played=0`, `gold=0`,
+  `unlocked_characters=["classic"]` — sin tocar `language`/`sound_enabled`/
+  `vibration_enabled`/`swipe_sensitivity`/`tutorial_shown` (esas sí estaban correctamente
+  aisladas por sus propios tests, no hacía falta tocarlas). Respaldo del estado inflado
+  guardado antes de resetear, por si acaso.
+- Verificado con captura real: `LevelSelectScreen` mostrando SOLO el nivel 1 habilitado
+  (2-32+ atenuados/deshabilitados) y `PackLevelsScreen` del pack Mundial mostrando SOLO
+  "1. Balón" habilitado — exactamente el comportamiento pedido.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
-- **Pulido de assets** — los sprites/audio actuales son una primera pasada sólida pero simple (formas geométricas + specks, sonidos sintetizados); se puede seguir iterando el detalle visual/sonoro con el mismo pipeline (`tools/gen_assets.py`) si se quiere más fidelidad.
+- **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
-- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 60-300, 50 semillas iniciales, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos tres números está verificado jugando de verdad. Como estos niveles ya no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 300 HP?).
+- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 35-174 (rango del nivel 50, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (2 rondas de ajuste ya). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 174 HP?).
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
 - **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 

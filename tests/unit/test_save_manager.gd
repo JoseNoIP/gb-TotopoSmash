@@ -39,6 +39,14 @@ func test_swipe_sensitivity_accepts_edge_values() -> void:
 	SaveManager.set_swipe_sensitivity(1.0)
 
 
+## Regresión real (bug reportado por el usuario jugando): `set_*_if_higher()` es
+## deliberadamente de una sola vía (nunca baja un valor) — correcto para producción, pero
+## sin restaurar el valor original acá, CADA corrida de esta suite sumaba +100 al mejor
+## puntaje real del usuario para siempre (`SaveManager` es el autoload real, persiste en
+## user://save.json — no hay ningún mock/aislamiento de test). Como la API pública no
+## puede bajar el valor, se restaura escribiendo directo en `_data` (el Dictionary interno
+## no es realmente privado en GDScript, solo por convención) + `save()` — únicamente
+## aceptable en un test, nunca en código de producción.
 func test_best_score_only_updates_when_strictly_higher() -> void:
 	var current: int = SaveManager.get_best_score()
 	var lower_or_equal: bool = SaveManager.set_best_score_if_higher(current)
@@ -47,6 +55,8 @@ func test_best_score_only_updates_when_strictly_higher() -> void:
 	var higher: bool = SaveManager.set_best_score_if_higher(higher_value)
 	assert_true(higher, "un valor mayor sí debe reemplazar el mejor puntaje")
 	assert_eq(SaveManager.get_best_score(), higher_value)
+	SaveManager.get(&"_data")["best_score"] = current
+	SaveManager.save()
 
 
 func test_max_wave_only_updates_when_strictly_higher() -> void:
@@ -57,6 +67,8 @@ func test_max_wave_only_updates_when_strictly_higher() -> void:
 	assert_eq(SaveManager.get_max_wave(), higher_value)
 	var not_higher: bool = SaveManager.set_max_wave_if_higher(0)
 	assert_false(not_higher, "0 nunca debe superar una oleada máxima ya alcanzada")
+	SaveManager.get(&"_data")["max_wave"] = current
+	SaveManager.save()
 
 
 func test_language_roundtrip() -> void:
@@ -70,6 +82,8 @@ func test_total_games_played_increments_by_one() -> void:
 	var before: int = SaveManager.get_total_games_played()
 	SaveManager.increment_total_games_played()
 	assert_eq(SaveManager.get_total_games_played(), before + 1)
+	SaveManager.get(&"_data")["total_games_played"] = before
+	SaveManager.save()
 
 
 func test_highest_level_unlocked_only_updates_when_strictly_higher() -> void:
@@ -80,3 +94,5 @@ func test_highest_level_unlocked_only_updates_when_strictly_higher() -> void:
 	var higher: bool = SaveManager.set_highest_level_unlocked_if_higher(higher_value)
 	assert_true(higher)
 	assert_eq(SaveManager.get_highest_level_unlocked(), higher_value)
+	SaveManager.get(&"_data")["highest_level_unlocked"] = current
+	SaveManager.save()

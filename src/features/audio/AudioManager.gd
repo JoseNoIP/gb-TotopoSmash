@@ -36,10 +36,18 @@ var _bounce_streak: int = 0
 func _ready() -> void:
 	_music_player.name = &"MusicPlayer"
 	_music_player.bus = &"Master"
+	## Discreta a propósito (-8dB) — es fondo, no debe competir con los SFX del GDD, que se
+	## reproducen a volumen normal por encima.
+	_music_player.volume_db = -8.0
 	add_child(_music_player)
 	EventBus.seed_bounced.connect(_on_seed_bounced)
 	EventBus.salsa_exploded.connect(_on_salsa_exploded)
 	EventBus.burst_fired.connect(_on_burst_fired)
+	## Autoload — vive toda la sesión, así que arrancarla acá (en vez de en MainMenu/Game)
+	## la deja sonando de fondo en cualquier pantalla desde el arranque, en loop
+	## (`edit/loop_mode=1` en theme.wav.import), sin necesidad de re-lanzarla en cada
+	## cambio de escena. `play_music()` ya respeta `SaveManager.get_sound_enabled()`.
+	play_music()
 
 
 func play_sfx(sfx_name: StringName, pitch_scale: float = 1.0) -> void:

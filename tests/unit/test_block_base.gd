@@ -113,6 +113,24 @@ func test_salsa_explodes_and_destroys_on_death() -> void:
 	assert_signal_emitted(EventBus, "block_destroyed")
 
 
+## Regresión directa del bug real reportado jugando: los sprites de IA (totopo/queso/
+## salsa/piedra) no son cuadrados — tienen transparencia real alrededor de la silueta —
+## pero la colisión SIEMPRE es un RectangleShape2D cuadrado (la grilla del tablero define
+## el rebote, no la silueta del arte). Sin un fondo sólido del mismo tamaño que la
+## colisión, la semilla rebotaba "en el aire" cerca de las esquinas donde el sprite ya
+## había terminado. `totopo.png` es un sprite real en este repo (no un placeholder), así
+## que este test ejercita la rama con textura de verdad, no el ColorRect de fallback.
+func test_block_with_texture_gets_a_backing_rect_matching_the_collision_size() -> void:
+	var block: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(block)
+	block.call(&"setup", Vector2i(0, 0), 3, CELL_SIZE)
+	var backing: ColorRect = block.get_node(^"Backing") as ColorRect
+	assert_not_null(backing, "un bloque con sprite real debe tener un ColorRect de respaldo")
+	var expected_size: float = CELL_SIZE * 0.92
+	assert_eq(backing.size, Vector2(expected_size, expected_size))
+	assert_eq(backing.color, Constants.COLOR_TOTOPO)
+
+
 func test_triangle_cutting_one_corner_leaves_a_triangle() -> void:
 	var block: StaticBody2D = TriangleBlockGd.new()
 	block.set(&"corner", 1)

@@ -430,6 +430,28 @@ def make_seed_extra_icon(size=48):
     return _flat(g)
 
 
+def make_laser_icon(size=48, horizontal=True):
+    """Láser (Constants.COLOR_LASER) — ícono de poder, dispara en línea recta a toda la
+    fila/columna donde está. DOS variantes (horizontal/vertical), nunca una sola imagen
+    genérica para ambas: laser_icon.gd la usa para que el jugador vea la orientación real
+    ANTES de tocarlo (no es información oculta — ver el comentario de _draw() en ese
+    archivo, que este sprite reemplaza sin perder esa distinción)."""
+    CORE = (230, 38, 217, 255)  # Constants.COLOR_LASER = Color(0.9, 0.15, 0.85)
+    GLOW = (255, 255, 255, 210)
+    g = _grid(size, size, T)
+    cx = cy = size // 2
+    beam_half_len = int(size * 0.44)
+    beam_half_w = max(1, int(size * 0.07))
+    if horizontal:
+        _rect(g, cx - beam_half_len, cy - beam_half_w, cx + beam_half_len, cy + beam_half_w, CORE)
+    else:
+        _rect(g, cx - beam_half_w, cy - beam_half_len, cx + beam_half_w, cy + beam_half_len, CORE)
+    r = int(size * 0.2)
+    _circle(g, cx, cy, r, CORE)
+    _circle(g, cx, cy, int(r * 0.45), GLOW)
+    return _flat(g)
+
+
 # ---------------------------------------------------------------------------
 # Audio synthesis (stdlib `wave`, sin dependencias — sin encoder OGG disponible,
 # por eso AudioManager reproduce .wav directamente en vez de .ogg)
@@ -524,6 +546,76 @@ def sfx_salsa_splash():
 
 
 # ---------------------------------------------------------------------------
+# Música de fondo (mismo criterio que los SFX: sintetizada con stdlib, sin dependencias
+# ni assets de terceros — AudioManager.play_music() ya existía pero nunca se llamaba ni
+# tenía ningún archivo real en assets/audio/music/).
+# ---------------------------------------------------------------------------
+
+NOTE_FREQS = {
+    "C3": 130.81, "D3": 146.83, "E3": 164.81, "G3": 196.00, "A3": 220.00,
+    "C4": 261.63, "D4": 293.66, "E4": 329.63, "G4": 392.00, "A4": 440.00, "C5": 523.25,
+}
+
+
+def _triangle(freq, dur, amp=0.3):
+    """Onda triangular — más suave que cuadrada, mejor para un loop de fondo (una cuadrada
+    fatiga el oído mucho más rápido al repetirse varios minutos)."""
+    n = int(dur * RATE)
+    period = RATE / freq
+    out = []
+    for i in range(n):
+        phase = (i % period) / period
+        out.append(amp * (4 * abs(phase - 0.5) - 1))
+    return out
+
+
+def _seq(notes, beat_dur, wave_fn=_triangle, amp=0.3, gap_ratio=0.12):
+    """notes: lista de (nombre_de_NOTE_FREQS o None, num_beats). None = silencio."""
+    out = []
+    for name, beats in notes:
+        dur = beat_dur * beats
+        if name is None:
+            out.extend([0.0] * int(dur * RATE))
+            continue
+        note_dur = dur * (1.0 - gap_ratio)
+        gap_dur = dur - note_dur
+        tone = _env(wave_fn(NOTE_FREQS[name], note_dur, amp), attack=0.01, release=note_dur * 0.3)
+        out.extend(tone)
+        out.extend([0.0] * int(gap_dur * RATE))
+    return out
+
+
+def music_theme():
+    """Loop corto y alegre (~7s, 132 BPM) para menú/juego — melodía pentatónica simple
+    sobre un bajo de dos notas, con un "shaker" de ruido en el contratiempo (guiño al sabor
+    mexicano del juego). 16 beats en las 3 capas para que el loop encaje sin cortes. Volumen
+    deliberadamente discreto (ver _mix) — es fondo, no debe competir con los SFX del GDD."""
+    beat = 60.0 / 132
+    melody_notes = [
+        ("C4", 1), ("E4", 1), ("G4", 1), ("E4", 1),
+        ("A4", 1), ("G4", 1), ("E4", 1), ("D4", 1),
+        ("C4", 1), ("D4", 1), ("E4", 1), ("G4", 1),
+        ("E4", 2), (None, 2),
+    ]
+    bass_notes = [
+        ("C3", 2), ("G3", 2),
+        ("C3", 2), ("G3", 2),
+        ("C3", 2), ("A3", 2),
+        ("G3", 4),
+    ]
+    melody = _seq(melody_notes, beat, wave_fn=_triangle, amp=0.26)
+    bass = _seq(bass_notes, beat, wave_fn=_sine, amp=0.20)
+    shaker = []
+    for _ in range(16):
+        burst_dur = beat * 0.4
+        burst = _env(_noise(burst_dur, amp=0.05), attack=0.001, release=burst_dur * 0.3)
+        shaker.extend([0.0] * int(beat * 0.5 * RATE))
+        shaker.extend(burst)
+        shaker.extend([0.0] * max(0, int(beat * 0.5 * RATE) - len(burst)))
+    return _mix(melody, bass, shaker)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -544,6 +636,8 @@ def main():
     icons = {
         "assets/sprites/powerup_icons/lemon.png": (48, 48, make_lemon_icon(48)),
         "assets/sprites/powerup_icons/seed_extra.png": (48, 48, make_seed_extra_icon(48)),
+        "assets/sprites/powerup_icons/laser_horizontal.png": (48, 48, make_laser_icon(48, True)),
+        "assets/sprites/powerup_icons/laser_vertical.png": (48, 48, make_laser_icon(48, False)),
     }
     for path, (w, h, pixels) in icons.items():
         save_png(path, w, h, pixels)
@@ -557,6 +651,9 @@ def main():
     }
     for path, samples in sfx.items():
         save_wav(path, samples)
+
+    print("\n=== Generating music ===")
+    save_wav("assets/audio/music/theme.wav", music_theme())
 
     print("\n=== Generating studio branding ===")
     save_png("assets/splash.png", 512, 512, make_splash(512, 512))
