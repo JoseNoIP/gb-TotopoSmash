@@ -1,0 +1,253 @@
+{
+  "id": "worldcup_009",
+  "name": "LEVEL_NAME_PENNANT_FLAG",
+  "static": true,
+  "grid_cols": 18,
+  "grid_rows": 16,
+  "starting_seeds": 50,
+  "par_turns": 22,
+  "cells": [
+    {
+      "col": 4,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 227
+    },
+    {
+      "col": 4,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 84
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 97
+    },
+    {
+      "col": 4,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 131
+    },
+    {
+      "col": 4,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 141
+    },
+    {
+      "col": 4,
+      "row": 7,
+      "kind": "totopo",
+      "hp": 159
+    },
+    {
+      "col": 4,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 237
+    },
+    {
+      "col": 4,
+      "row": 9,
+      "kind": "totopo",
+      "hp": 133
+    },
+    {
+      "col": 4,
+      "row": 10,
+      "kind": "totopo",
+      "hp": 191
+    },
+    {
+      "col": 4,
+      "row": 11,
+      "kind": "totopo",
+      "hp": 132
+    },
+    {
+      "col": 4,
+      "row": 12,
+      "kind": "totopo",
+      "hp": 264
+    },
+    {
+      "col": 4,
+      "row": 13,
+      "kind": "totopo",
+      "hp": 99
+    },
+    {
+      "col": 5,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 160
+    },
+    {
+      "col": 5,
+      "row": 4,
+      "kind": "lemon"
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 5,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 229
+    },
+    {
+      "col": 6,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 95
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "kind": "seed_extra"
+    },
+    {
+      "col": 6,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 294
+    },
+    {
+      "col": 6,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 62
+    },
+    {
+      "col": 7,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 230
+    },
+    {
+      "col": 7,
+      "row": 4,
+      "kind": "laser",
+      "orientation": "horizontal"
+    },
+    {
+      "col": 7,
+      "row": 5,
+      "kind": "lemon"
+    },
+    {
+      "col": 7,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 192
+    },
+    {
+      "col": 8,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 269
+    },
+    {
+      "col": 8,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 264
+    },
+    {
+      "col": 8,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 246
+    },
+    {
+      "col": 8,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 165
+    },
+    {
+      "col": 9,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 103
+    },
+    {
+      "col": 9,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 242
+    },
+    {
+      "col": 10,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 256
+    },
+    {
+      "col": 10,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 110
+    },
+    {
+      "col": 11,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 219
+    },
+    {
+      "col": 11,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 160
+    },
+    {
+      "col": 12,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 68
+    },
+    {
+      "col": 12,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 147
+    },
+    {
+      "col": 7,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 103
+    },
+    {
+      "col": 8,
+      "row": 7,
+      "kind": "totopo",
+      "hp": 295
+    },
+    {
+      "col": 8,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 275
+    },
+    {
+      "col": 8,
+      "row": 9,
+      "kind": "totopo",
+      "hp": 269
+    },
+    {
+      "col": 9,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 227
+    }
+  ]
+}

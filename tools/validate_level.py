@@ -15,7 +15,6 @@ import sys
 GRID_COLS = 7
 MOLCAJETE_ROW = 8  # Constants.MOLCAJETE_ROW (GRID_ROWS=9, última fila)
 MAX_CONTENT_ROW = MOLCAJETE_ROW - 1
-STATIC_LEVEL_MAX_ROW = 300  # ver level_loader.gd::STATIC_LEVEL_MAX_ROW
 
 KNOWN_KINDS = {"totopo", "queso", "salsa", "stone", "triangle", "lemon", "seed_extra", "laser"}
 KINDS_NEEDING_HP = {"totopo", "queso", "salsa", "triangle"}
@@ -46,12 +45,18 @@ def validate_level(data: dict, expected_id: str) -> list:
 
     is_static = data.get("static", False) is True
     max_col = GRID_COLS - 1
+    max_row = MAX_CONTENT_ROW
     if is_static:
         grid_cols = data.get("grid_cols")
         if not _is_whole_number(grid_cols) or int(grid_cols) <= 0:
             errors.append("nivel 'static' requiere 'grid_cols' entero > 0")
         else:
             max_col = int(grid_cols) - 1
+        grid_rows = data.get("grid_rows")
+        if not _is_whole_number(grid_rows) or int(grid_rows) <= 0:
+            errors.append("nivel 'static' requiere 'grid_rows' entero > 0")
+        else:
+            max_row = int(grid_rows) - 1
         if "par_turns" in data:
             par_turns = data.get("par_turns")
             if not _is_whole_number(par_turns) or int(par_turns) <= 0:
@@ -77,7 +82,7 @@ def validate_level(data: dict, expected_id: str) -> list:
                     errors.append(f"cells[{i}]: no es un objeto")
                     continue
                 errors.extend(
-                    _validate_cell(cell, f"cells[{i}]", True, seen_positions, max_col, is_static)
+                    _validate_cell(cell, f"cells[{i}]", True, seen_positions, max_col, max_row)
                 )
 
     if "row_queue" in data:
@@ -97,7 +102,8 @@ def validate_level(data: dict, expected_id: str) -> list:
                         continue
                     errors.extend(
                         _validate_cell(
-                            cell, f"row_queue[{r}][{i}]", False, seen_cols, GRID_COLS - 1, False
+                            cell, f"row_queue[{r}][{i}]", False, seen_cols,
+                            GRID_COLS - 1, MAX_CONTENT_ROW
                         )
                     )
 
@@ -105,7 +111,7 @@ def validate_level(data: dict, expected_id: str) -> list:
 
 
 def _validate_cell(
-    cell: dict, label: str, require_row: bool, seen_positions: set, max_col: int, is_static: bool
+    cell: dict, label: str, require_row: bool, seen_positions: set, max_col: int, max_row: int
 ) -> list:
     errors = []
 
@@ -115,7 +121,6 @@ def _validate_cell(
         errors.append(f"{label}: 'col' fuera de rango [0, {max_col}]")
 
     if require_row:
-        max_row = STATIC_LEVEL_MAX_ROW if is_static else MAX_CONTENT_ROW
         row = cell.get("row")
         row_ok = _is_whole_number(row) and 0 <= int(row) <= max_row
         if not row_ok:

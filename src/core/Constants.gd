@@ -131,6 +131,16 @@ const CHARACTERS: Array = [
 # --- Niveles "static" (figuras de alta resolución, sin condición de derrota — ver
 # BoardManager/level_loader.gd) ---
 const STATIC_LEVEL_PAR_BONUS_MULTIPLIER: float = 1.5  ## ×score si se limpia en <= par_turns
+## Espacio reservado ABAJO para que la figura nunca se dibuje encima del molcajete (bug
+## real: un nivel `static` muy alto tapaba visualmente el molcajete). BoardManager calcula
+## el cell_size más grande que quepa en ancho Y alto dentro de esta área, así que ningún
+## nivel puede violar esto sin importar qué grid_cols/grid_rows pida.
+const STATIC_LEVEL_BOTTOM_MARGIN: float = 144.0
+## Tamaño de una celda del tablero NORMAL (7 columnas) — referencia para que el tamaño de
+## celda de un nivel `static` sea "proporcional" (pedido explícito del usuario): dividir
+## una celda normal en NxN sub-celdas da grid_cols = GRID_COLS * N. N=2 (celdas a la mitad
+## de tamaño, 14 columnas) es el default recomendado — suficiente detalle sin saturar.
+const STATIC_LEVEL_DEFAULT_SUBDIVISION: int = 2
 
 # --- Packs temáticos de niveles (ver PackSelectScreen/PackLevelsScreen/LevelSelectScreen) ---
 ## Registro central de packs — un nivel nuevo agregado por /level-designer con un prefijo

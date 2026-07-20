@@ -8,10 +8,6 @@ const WaveScalingGd := preload("res://src/features/board/wave_scaling.gd")
 
 const LEVELS_DIR: String = "res://data/levels/"
 const MANIFEST_PATH: String = "res://data/levels/manifest.json"
-## Tope de fila defensivo para niveles `static` (grilla propia, mucho más alta que
-## Constants.GRID_ROWS — ver validate_level) — solo atrapa datos corruptos/absurdos, no es
-## una restricción de diseño real.
-const STATIC_LEVEL_MAX_ROW: int = 300
 
 
 ## Nunca referenciar un autoload (Constants) dentro de un `const` — no es una expresión
@@ -94,12 +90,22 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 
 	var is_static: bool = data.get("static", false) == true
 	var max_col: int = Constants.GRID_COLS - 1
+	var max_row: int = max_content_row()
 	if is_static:
 		var grid_cols: Variant = data.get("grid_cols")
 		if not _is_whole_number(grid_cols) or int(grid_cols) <= 0:
 			errors.append("nivel 'static' requiere 'grid_cols' entero > 0")
 		else:
 			max_col = int(grid_cols) - 1
+		## grid_rows es obligatorio (no inferido del máximo `row` usado) para que
+		## BoardManager pueda centrar la figura verticalmente y escalarla a un cell_size
+		## que nunca invada el área del molcajete SIN tener que recorrer todas las celdas
+		## primero — bug real corregido: un nivel muy alto tapaba el molcajete.
+		var grid_rows: Variant = data.get("grid_rows")
+		if not _is_whole_number(grid_rows) or int(grid_rows) <= 0:
+			errors.append("nivel 'static' requiere 'grid_rows' entero > 0")
+		else:
+			max_row = int(grid_rows) - 1
 		if data.has("par_turns"):
 			var par_turns: Variant = data.get("par_turns")
 			if not _is_whole_number(par_turns) or int(par_turns) <= 0:
@@ -127,7 +133,7 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 					continue
 				errors.append_array(
 					_validate_cell(
-						cell as Dictionary, "cells[%d]" % i, true, seen_positions, max_col, is_static
+						cell as Dictionary, "cells[%d]" % i, true, seen_positions, max_col, max_row
 					)
 				)
 
@@ -151,7 +157,7 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 					errors.append_array(
 						_validate_cell(
 							cell as Dictionary, "row_queue[%d][%d]" % [r, i], false, seen_cols,
-							Constants.GRID_COLS - 1, false
+							Constants.GRID_COLS - 1, max_content_row()
 						)
 					)
 
@@ -161,11 +167,11 @@ static func validate_level(data: Dictionary, expected_id: String) -> Array:
 ## `require_row`: true para `cells` (posición absoluta, valida col+row+duplicados por
 ## (col,row)). false para celdas de `row_queue` (la fila es implícita — siempre "la
 ## próxima fila que aparece arriba" — así que solo se valida `col` y duplicados por col).
-## `max_col`/`is_static`: un nivel `static` usa su propia grilla (ver validate_level), así
-## que el rango válido de columnas/filas es distinto al de un nivel-figura normal.
+## `max_col`/`max_row`: un nivel `static` usa su propia grilla (`grid_cols`/`grid_rows`,
+## ver validate_level), así que el rango válido es distinto al de un nivel-figura normal.
 static func _validate_cell(
 	cell: Dictionary, label: String, require_row: bool, seen_positions: Dictionary,
-	max_col: int, is_static: bool
+	max_col: int, max_row: int
 ) -> Array:
 	var errors: Array = []
 
@@ -175,7 +181,6 @@ static func _validate_cell(
 		errors.append("%s: 'col' fuera de rango [0, %d]" % [label, max_col])
 
 	if require_row:
-		var max_row: int = STATIC_LEVEL_MAX_ROW if is_static else max_content_row()
 		var row: Variant = cell.get("row")
 		var row_ok: bool = _is_whole_number(row) and int(row) >= 0 and int(row) <= max_row
 		if not row_ok:
