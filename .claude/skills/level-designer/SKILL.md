@@ -238,9 +238,17 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
   de semillas siga siendo consistente con el HP — un nivel nuevo de este tipo debe usar
   estas funciones juntas, nunca HP alto con semillas bajas a mano.
 - **HP (niveles `static`)**: alto y variado (60-300 por bloque es el precedente del pack
-  Mundial v2, sorteado con `rng.randint(HP_MIN, HP_MAX)` — nunca fijo, mismo criterio que
-  `row_queue`) — como no hay condición de derrota, "difícil" solo significa "toma más
-  turnos", no "imposible", así que hay más margen para HP alto que en los otros dos tipos.
+  Mundial, sorteado — nunca fijo, mismo criterio que `row_queue`) — como no hay condición de
+  derrota, "difícil" solo significa "toma más turnos", no "imposible", así que hay más
+  margen para HP alto que en los otros dos tipos. **Sesgar hacia golpes baratos** (pedido
+  explícito del usuario tras jugar el pack Mundial: "la mayoría de bloques no deberían
+  requerir tantos golpes... si no, cada partida se vuelve larga y tediosa") — NO usar
+  `rng.randint(HP_MIN, HP_MAX)` uniforme; usar una distribución sesgada tipo
+  `_random_hp()` en `tools/gen_worldcup_pack.py` (80% de probabilidad en la mitad BAJA del
+  rango declarado, 20% en la mitad alta) para cualquier nivel `static` nuevo — sin este
+  sesgo, el HP promedio uniforme (~180 en el rango 60-300) hace que una partida sin
+  condición de derrota se sienta larga. El rango declarado (HP_MIN/HP_MAX) sigue siendo el
+  mismo, solo cambia qué tan seguido se sortea cada extremo.
 - **Variedad**: sembrar `lemon`/`seed_extra` en ~10-15% de las celdas destructibles (nunca
   en TODAS — pierden gracia). En niveles `static`, sembrar además en los HUECOS (celdas
   vacías dentro del recuadro de la figura, no parte de la silueta) — incluir algo de
@@ -256,7 +264,7 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
    - Roster principal: `level_0NN` (siguiente número libre en `manifest.json`).
    - Pack temático (ej. navideño): namespace propio, `holiday_001`, `holiday_002`, ... — no reutilizar `level_0NN` para packs, para no chocar con el roster principal si crece. **`LevelSelectScreen._is_pack_level()` decide qué es un pack por este prefijo** — cualquier id que NO empiece con `level_` se muestra en la sección "PACKS ESPECIALES" y queda SIEMPRE desbloqueado (sin depender de `highest_level_unlocked`, ver regla siguiente).
 2. Escribir `data/levels/<id>.json` directo con `Write` (JSON con indentación de 2 espacios, UTF-8, sin BOM — igual que los generados por `tools/gen_levels.py`).
-3. Si el nivel tiene `name`, agregar la key de traducción a `assets/translations/translations.txt` (es/en/pt_BR/fr — ver skill `/mobile-i18n` para el formato CSV con comillas si el texto lleva comas).
+3. Si el nivel tiene `name`, agregar la key de traducción a `assets/translations/translations.txt` (es/en/pt_BR/fr — ver skill `/mobile-i18n` para el formato CSV con comillas si el texto lleva comas). **`name` es visible en juego, no solo metadata**: el HUD lo muestra junto al número ("Nivel 107 · Copa del Mundo", `LABEL_LEVEL_NUMBER_NAMED`) y `PackLevelsScreen` lo usa en el texto del botón ("2. Copa del Mundo") — para niveles-figura o de pack, siempre dar un `name` corto y descriptivo (ayuda al jugador a reconocer qué representa la figura, pedido explícito del usuario), no dejarlo vacío salvo que el nivel sea genérico (roster numérico sin figura).
 4. Agregar el `id` a `data/levels/manifest.json` en la posición pedida (default: al final del array). `tools/gen_levels.py::main()` ya preserva cualquier id que no empiece con `level_` al regenerarse (bug real corregido: antes sobreescribía el manifiesto completo y borraba los packs agregados a mano) — sigue siendo buena práctica no correrlo sin necesidad, pero ya no destruye packs existentes si se corre.
 
 ---

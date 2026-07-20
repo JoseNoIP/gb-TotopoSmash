@@ -17,6 +17,7 @@ var _fire_direction: Vector2 = Vector2.UP
 var _seeds_to_fire: int = 0
 var _active_seeds: int = 0
 var _first_landed_this_turn: bool = false
+var _first_landed_x: float = 0.0
 var _fire_timer: Timer = Timer.new()
 
 
@@ -122,12 +123,19 @@ func _on_split_requested(mirrored_velocity: Vector2, source_seed: Node2D) -> voi
 func _on_seed_landed(_seed_node: Node2D, x_position: float) -> void:
 	if not _first_landed_this_turn:
 		_first_landed_this_turn = true
-		EventBus.molcajete_position_changed.emit(x_position)
+		_first_landed_x = x_position
 		if _phase == Phase.RESOLVING:
 			_set_phase(Phase.RETURNING)
 	_active_seeds -= 1
 	if _active_seeds <= 0 and _seeds_to_fire <= 0:
 		_set_phase(Phase.ADVANCING)
+		# El molcajete se reposiciona recién aquí (no en el primer aterrizaje) — pedido
+		# explícito del usuario tras verlo jugando: moverlo mientras todavía quedan
+		# semillas en el aire se ve raro (el molcajete "abandona" la posición donde
+		# siguen cayendo semillas). Sigue usando la posición de la PRIMERA semilla en
+		# aterrizar (mismo criterio de siempre para "dónde atajar"), solo que la señal se
+		# emite una vez que ya no queda ninguna semilla activa.
+		EventBus.molcajete_position_changed.emit(_first_landed_x)
 		# BoardManager escucha esta señal y responde de forma síncrona (desplaza el
 		# tablero, revela/spawnea contenido nuevo y emite turn_advanced si la partida
 		# sigue), lo cual dispara _on_turn_advanced() más abajo antes de que este emit()

@@ -28,9 +28,18 @@ func _ready() -> void:
 ## Modo Nivel: wave_advanced nunca se emite después de esto (no aparecen filas nuevas,
 ## ver board_manager.gd) — el label se fija una sola vez a "NIVEL N". Modo Infinito: no
 ## hace falta nada aquí, wave_advanced(1) ya llega por separado desde BoardManager.
+## Si el nivel tiene `name` (niveles-figura y packs temáticos, ver LevelManager) se agrega
+## el nombre traducido junto al número — pedido explícito del usuario: al ver una figura
+## abstracta (ej. la Copa del Mundo a baja resolución) ayuda a saber a qué se refiere.
 func _on_game_started() -> void:
-	if GameManager.is_level_mode():
-		var index: int = LevelManager.get_level_index(GameManager.get_current_level_id())
+	if not GameManager.is_level_mode():
+		return
+	var level_id: String = GameManager.get_current_level_id()
+	var index: int = LevelManager.get_level_index(level_id)
+	var name_key: Variant = LevelManager.get_level_data(level_id).get("name")
+	if name_key is String and not (name_key as String).is_empty():
+		_wave_label.text = tr(&"LABEL_LEVEL_NUMBER_NAMED") % [index + 1, tr(name_key as String)]
+	else:
 		_wave_label.text = tr(&"LABEL_LEVEL_NUMBER") % (index + 1)
 
 

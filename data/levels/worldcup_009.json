@@ -5,85 +5,85 @@
   "grid_cols": 18,
   "grid_rows": 16,
   "starting_seeds": 50,
-  "par_turns": 22,
+  "par_turns": 18,
   "cells": [
     {
       "col": 4,
       "row": 2,
       "kind": "totopo",
-      "hp": 216
+      "hp": 179
     },
     {
       "col": 4,
       "row": 3,
       "kind": "totopo",
-      "hp": 68
+      "hp": 124
     },
     {
       "col": 4,
       "row": 4,
       "kind": "totopo",
-      "hp": 299
+      "hp": 165
     },
     {
       "col": 4,
       "row": 5,
       "kind": "totopo",
-      "hp": 141
+      "hp": 204
     },
     {
       "col": 4,
       "row": 6,
       "kind": "totopo",
-      "hp": 116
+      "hp": 142
     },
     {
       "col": 4,
       "row": 7,
       "kind": "totopo",
-      "hp": 188
+      "hp": 82
     },
     {
       "col": 4,
       "row": 8,
       "kind": "totopo",
-      "hp": 228
+      "hp": 260
     },
     {
       "col": 4,
       "row": 9,
       "kind": "totopo",
-      "hp": 159
+      "hp": 206
     },
     {
       "col": 4,
       "row": 10,
       "kind": "totopo",
-      "hp": 270
+      "hp": 283
     },
     {
       "col": 4,
       "row": 11,
       "kind": "totopo",
-      "hp": 290
+      "hp": 92
     },
     {
       "col": 4,
       "row": 12,
       "kind": "totopo",
-      "hp": 81
+      "hp": 100
     },
     {
       "col": 4,
       "row": 13,
       "kind": "totopo",
-      "hp": 106
+      "hp": 249
     },
     {
       "col": 5,
       "row": 3,
       "kind": "totopo",
-      "hp": 72
+      "hp": 137
     },
     {
       "col": 5,
@@ -100,13 +100,13 @@
       "col": 5,
       "row": 6,
       "kind": "totopo",
-      "hp": 284
+      "hp": 131
     },
     {
       "col": 6,
       "row": 3,
       "kind": "totopo",
-      "hp": 225
+      "hp": 61
     },
     {
       "col": 6,
@@ -118,19 +118,19 @@
       "col": 6,
       "row": 5,
       "kind": "totopo",
-      "hp": 214
+      "hp": 65
     },
     {
       "col": 6,
       "row": 6,
       "kind": "totopo",
-      "hp": 79
+      "hp": 67
     },
     {
       "col": 7,
       "row": 3,
       "kind": "totopo",
-      "hp": 105
+      "hp": 114
     },
     {
       "col": 7,
@@ -147,109 +147,109 @@
       "col": 7,
       "row": 6,
       "kind": "totopo",
-      "hp": 218
+      "hp": 179
     },
     {
       "col": 8,
       "row": 3,
       "kind": "totopo",
-      "hp": 285
+      "hp": 214
     },
     {
       "col": 8,
       "row": 4,
       "kind": "totopo",
-      "hp": 162
+      "hp": 93
     },
     {
       "col": 8,
       "row": 5,
       "kind": "totopo",
-      "hp": 111
+      "hp": 110
     },
     {
       "col": 8,
       "row": 6,
       "kind": "totopo",
-      "hp": 268
+      "hp": 132
     },
     {
       "col": 9,
       "row": 4,
       "kind": "totopo",
-      "hp": 287
+      "hp": 80
     },
     {
       "col": 9,
       "row": 5,
       "kind": "totopo",
-      "hp": 264
+      "hp": 165
     },
     {
       "col": 10,
       "row": 4,
       "kind": "totopo",
-      "hp": 195
+      "hp": 167
     },
     {
       "col": 10,
       "row": 5,
       "kind": "totopo",
-      "hp": 87
+      "hp": 123
     },
     {
       "col": 11,
       "row": 4,
       "kind": "totopo",
-      "hp": 125
+      "hp": 180
     },
     {
       "col": 11,
       "row": 5,
       "kind": "totopo",
-      "hp": 225
+      "hp": 131
     },
     {
       "col": 12,
       "row": 4,
       "kind": "totopo",
-      "hp": 75
+      "hp": 123
     },
     {
       "col": 12,
       "row": 5,
       "kind": "totopo",
-      "hp": 141
+      "hp": 203
     },
     {
       "col": 7,
       "row": 8,
       "kind": "totopo",
-      "hp": 100
+      "hp": 211
     },
     {
       "col": 8,
       "row": 7,
       "kind": "totopo",
-      "hp": 196
+      "hp": 258
     },
     {
       "col": 8,
       "row": 8,
       "kind": "totopo",
-      "hp": 156
+      "hp": 96
     },
     {
       "col": 8,
       "row": 9,
       "kind": "totopo",
-      "hp": 262
+      "hp": 133
     },
     {
       "col": 9,
       "row": 8,
       "kind": "totopo",
-      "hp": 215
+      "hp": 139
     },
     {
       "col": 3,

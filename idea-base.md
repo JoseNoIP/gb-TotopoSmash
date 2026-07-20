@@ -314,23 +314,98 @@ inicio". Reemplaza por completo el pack Mundial v1 (10 niveles, baja resolución
   Portería, Camiseta, Estrella del Mundial, **Silueta abstracta de futbolista** (nueva,
   pedida explícitamente — cabeza + torso + pierna de apoyo + pierna de patada extendida,
   geometría pura), Cancha de Fútbol (geometría reutilizada de v2), texto "¡GOL!" (único que
-  usa Pillow), Bandera a Cuadros, Medalla. Las imágenes de referencia que compartió el
+  usa Pillow), Banderín de esquina, Medalla. Las imágenes de referencia que compartió el
   usuario (cancha/copa/GOL) se tratan como **ejemplos de estilo**, no specs a replicar
   celda por celda ("no se trataba de que los crearas exactamente igual con la misma
   cantidad de bloques" — aclaración explícita del usuario). HP variado 60-300 por bloque
   (igual filosofía que el resto del roster: sorteado, nunca fijo).
+  - Dos formas descartadas por no leerse bien en el juego (detectado con captura real, no a
+    priori): una "malla" en la portería con suficiente densidad para leerse como red
+    terminaba rellenando casi todo el marco (se simplificó a marco limpio, sin malla); una
+    "bandera a cuadros" no se distinguía como tal porque el juego solo tiene un color de
+    bloque por tipo (sin alternancia de color no hay efecto ajedrezado) — se reemplazó por
+    un banderín de esquina (asta + triángulo), que sí se lee en monocromo.
 - **Bug real encontrado con captura de pantalla (v2):** a la resolución de un nivel
   `static` (~9px por celda), el número de HP que `block_base.gd` siempre dibuja sobre cada
   bloque se volvía ilegible y convertía la figura en ruido visual — arruinaba el propósito
-  completo de la feature. Fix: `Constants.UI_MIN_READABLE_CELL_SIZE = 20.0`;
+  completo de la feature. Fix inicial: `Constants.UI_MIN_READABLE_CELL_SIZE = 20.0`;
   `block_base.gd` guarda su `_cell_size` real en `setup()` y oculta el label de HP por
-  debajo de ese umbral. Generalizado (no es específico de niveles `static`) — cualquier
-  bloque futuro suficientemente chico se beneficia automáticamente.
+  debajo de ese umbral.
 - **Bug real reportado jugando (v2 → v3): el nivel de la Copa tapaba el molcajete** — ver
   el punto "`grid_rows` obligatorio + auto-escalado en 2 ejes" más arriba; root cause y fix
   completos ahí.
-- Verificado con captura real de varios niveles del pack v3 tras el fix de auto-escalado —
-  ninguno invade el área del molcajete, figuras centradas verticalmente.
+- **Bug real reportado jugando (v3): los números de HP excedían el tamaño de los cuadros**
+  — el fix anterior solo ocultaba el label por debajo de 20px, pero para niveles `static`
+  con celdas de ~21-22px (la mayoría del pack Mundial v3) el label SÍ se mostraba, con un
+  `font_size` FIJO de 18px (pensado para el tablero normal, ~56px de celda) — un HP de 3
+  dígitos a 18px desbordaba visualmente cualquier celda por debajo de ese tamaño. Fix:
+  `Constants.UI_HP_FONT_SIZE_RATIO = 0.4` — el font_size ahora escala con
+  `_cell_size * UI_HP_FONT_SIZE_RATIO` (capado por `UI_MIN_FONT_SIZE=18`, piso
+  `UI_HP_FONT_MIN_SIZE=8`). Con la fuente ya escalando, el umbral de "ocultar por completo"
+  se pudo bajar de 20.0 a 15.0 (antes ocultaba de más — con el número ya chico, celdas de
+  ~15-19px se leen perfectamente bien) — recuperó los números en el nivel de la Copa
+  (~19.5px), que antes quedaba oculto de más. Verificado con captura real: números
+  legibles y CLARAMENTE variados (ej. "61 43 260 255 167 193…" en el mismo nivel) — esto
+  también resuelve, sin tocar datos, la percepción reportada de "todos los cuadrados
+  requieren la misma cantidad de golpes": el HP siempre estuvo sorteado por celda
+  (`rng.randint(HP_MIN, HP_MAX)` en `build_static_level()`, confirmado con datos reales:
+  106 celdas, 89 valores únicos, rango 63-300) — lo que hacía parecer "todos iguales" era
+  que los números overflowing/ilegibles no dejaban comparar valores, no que faltara
+  variedad real.
+- **Semillas extra abundantes** (pedido explícito tras jugar: "en una partida de este tipo
+  de exhibición deberíamos poder llegar por lo menos a unas 300 semillas al finalizar el
+  nivel") — con `Constants.SEED_EXTRA_AMOUNT` fijo en +1 (pensado para Modo Infinito/
+  campaña numérica) habría hecho falta sembrar ~250 íconos por nivel, poco práctico. En vez
+  de tocar esa constante global (arriesgaría el balance ya ajustado de los otros dos
+  modos), `EventBus.seed_extra_touched` ganó un segundo parámetro (`amount: int`) y
+  `seed_extra_icon.gd` expone una propiedad `amount` (default = la constante global,
+  overridable por celda vía el campo opcional `"amount"` en el JSON del nivel, mismo patrón
+  que `corner`/`orientation` en triangle/laser). `gen_worldcup_pack.py` v3 siembra
+  `SEED_BOUNTY_COUNT=12` íconos por nivel en el fondo (fácil de alcanzar, sin necesidad de
+  abrirse paso) más los que caigan en puntos de entrada, cada uno con
+  `"amount": SEED_EXTRA_ICON_AMOUNT=20` — la mayoría de los 10 niveles llega a 290-330
+  semillas máximas si se recolectan todos.
+- **Bug real reportado jugando: el molcajete se reposicionaba antes de que terminara la
+  ráfaga** — `TurnManager` emitía `EventBus.molcajete_position_changed` en cuanto ATERRIZABA
+  LA PRIMERA semilla, mientras el resto de la ráfaga seguía rebotando en el aire — se veía
+  raro (el molcajete "abandonaba" la posición con semillas todavía cayendo ahí). Fix: la
+  posición de destino se sigue calculando con la primera semilla en aterrizar (mismo
+  criterio de siempre para "dónde atajar"), pero la señal que mueve el molcajete
+  (`Mortar._on_molcajete_position_changed`) ahora se emite junto con `all_seeds_returned`
+  — recién cuando ya no queda ninguna semilla activa. No es específico de niveles `static`
+  (afecta a los 3 modos por igual, ver `turn_manager.gd::_on_seed_landed()`).
+- Verificado con captura real de varios niveles del pack v3 tras todos los fixes de esta
+  ronda — ninguno invade el área del molcajete, figuras centradas verticalmente, números de
+  HP legibles y variados donde el tamaño de celda lo permite.
+- **Nombre del nivel visible al jugar** (pedido explícito: "poner el nombre de lo que
+  representa la imagen abstracta para ayudar al jugador a relacionar la imagen... por
+  ejemplo, donde está la copa, poner 'Copa'") — `HUD._on_game_started()` ahora arma
+  "Nivel N · Nombre" (`LABEL_LEVEL_NUMBER_NAMED`, nueva key i18n) cuando el nivel trae
+  `name` (niveles-figura del roster numérico y AMBOS packs temáticos); sin `name` (la
+  mayoría de los 100 niveles numéricos) sigue mostrando solo "Nivel N" como antes. Mismo
+  criterio en `PackLevelsScreen`: los botones pasaron de mostrar solo un número a
+  "N. Nombre" (ej. "2. Copa del Mundo") — ayuda a reconocer qué figura es ANTES de entrar a
+  jugarla, no solo durante. Grilla de botones angostos-cuadrados (4 columnas) a
+  botones anchos (2 columnas, `PackLevelsScreen.BUTTON_WIDTH=172`) para que el nombre
+  quepa. La numeración de estos botones es LOCAL al pack (1, 2, 3...), no la posición
+  global en el manifiesto de 115 niveles — más intuitiva para explorar un pack temático
+  como colección propia, aunque no coincida con el "Nivel 107" que se ve una vez adentro
+  (ese número sigue siendo la posición real en el manifiesto, consistente con el resto de
+  la campaña). Verificado con captura real: HUD mostrando "Nivel 107 · Copa del Mundo",
+  grilla del pack con los 10 nombres legibles.
+- **HP sesgado hacia golpes baratos** (pedido explícito tras jugar: "lo ideal sería que la
+  mayoría de bloques no requirieran tantos golpes... el 80% por debajo de la mitad del
+  rango, y solo el 20% por encima, porque si no cada partida se vuelve demasiado larga y
+  tediosa") — antes `hp = rng.randint(HP_MIN, HP_MAX)` uniforme (HP promedio ~180); ahora
+  `_random_hp()` en `tools/gen_worldcup_pack.py`: 80% de probabilidad de caer en la mitad
+  baja del rango (`[HP_MIN, HP_MID]`), 20% en la mitad alta — HP promedio real tras
+  regenerar ~140-150 (~20% menos), con la proporción real medida en un nivel: 85% de los
+  bloques por debajo de la mitad, 78 valores únicos de 106 celdas (sigue siendo sorteado,
+  nunca fijo, solo con el sesgo). `par_turns` (calculado a partir de `total_hp`) bajó en la
+  misma proporción automáticamente, sin tocar esa fórmula. Aplicado solo al pack Mundial
+  (`static`, sin condición de derrota — el HP promedio determina directamente cuánto dura
+  la partida) — no se tocó `gen_levels.py` (roster numérico, `row_queue`, la duración ya
+  está acotada por el número de turnos, no solo por HP).
 
 ## Sistema de mejoras/oro/personajes ✅
 
