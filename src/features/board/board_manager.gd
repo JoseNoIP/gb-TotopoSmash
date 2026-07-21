@@ -235,6 +235,15 @@ func _shift_down() -> void:
 			node.queue_free()
 			continue
 		new_icons[new_key] = node
+		## Bug real reportado jugando: "el láser horizontal siempre afecta solo a la
+		## primera línea (de arriba)" — a diferencia del bloque de arriba, este `.set()`
+		## faltaba acá. laser_icon.gd usa su propiedad `grid_pos` (fijada solo al spawnear,
+		## en _spawn_icon()) para decidir qué fila/columna disparar en
+		## _on_body_entered() — sin actualizarla en cada bajada, quedaba congelada en la
+		## fila de spawn (típicamente 0) para siempre, aunque el ícono se siguiera viendo
+		## bajar visualmente (_tween_to_row solo mueve la posición en pantalla, no el dato
+		## lógico). No-op silencioso en LemonIcon/SeedExtraIcon (regla CLAUDE.md #15).
+		node.set(&"grid_pos", new_key)
 		_tween_to_row(node, new_key.y)
 	_icons = new_icons
 

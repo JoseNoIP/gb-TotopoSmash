@@ -182,6 +182,27 @@ func test_laser_triggered_both_damages_row_and_column() -> void:
 	assert_eq(int(neither.get(&"current_hp")), 100, "ni la fila ni la columna coinciden")
 
 
+## Regresión directa del bug real reportado jugando: "el láser horizontal siempre afecta
+## solo a la primera línea (de arriba), independientemente en qué posición esté" —
+## BoardManager._shift_down() actualizaba `grid_pos` en los bloques al bajar de fila, pero
+## NO en los íconos (laser_icon.gd usa esa propiedad para saber qué fila/columna disparar
+## en _on_body_entered()). El láser se veía bajar visualmente (_tween_to_row) pero su dato
+## lógico quedaba congelado en la fila de spawn (típicamente 0) para siempre.
+func test_shift_down_updates_a_laser_icons_grid_pos() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game()
+	var laser: Area2D = LaserIconGd.new()
+	add_child_autofree(laser)
+	laser.set(&"grid_pos", Vector2i(3, 0))
+	var icons: Dictionary = board.get(&"_icons")
+	icons.clear()
+	icons[Vector2i(3, 0)] = laser
+	EventBus.all_seeds_returned.emit(0.0)
+	var msg: String = "grid_pos del láser debe actualizarse al bajar, no quedar congelado"
+	assert_eq(laser.get(&"grid_pos"), Vector2i(3, 1), msg)
+
+
 ## Regresión de un crash real jugando ("Invalid access to property or key" en
 ## _on_laser_triggered): un frasco de salsa en la línea del láser puede morir por el
 ## propio daño del láser y explotar SÍNCRONAMENTE (_on_salsa_exploded destruye a sus
