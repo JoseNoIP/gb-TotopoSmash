@@ -430,21 +430,22 @@ def make_seed_extra_icon(size=48):
     return _flat(g)
 
 
-def make_laser_icon(size=48, horizontal=True):
+def make_laser_icon(size=48, orientation="horizontal"):
     """Láser (Constants.COLOR_LASER) — ícono de poder, dispara en línea recta a toda la
-    fila/columna donde está. DOS variantes (horizontal/vertical), nunca una sola imagen
-    genérica para ambas: laser_icon.gd la usa para que el jugador vea la orientación real
+    fila/columna/AMBAS donde está. TRES variantes ("horizontal"/"vertical"/"both"), nunca
+    una sola imagen genérica: laser_icon.gd la usa para que el jugador vea el alcance real
     ANTES de tocarlo (no es información oculta — ver el comentario de _draw() en ese
-    archivo, que este sprite reemplaza sin perder esa distinción)."""
+    archivo, que este sprite reemplaza sin perder esa distinción). Persistente (pedido
+    explícito del usuario): a diferencia de lemon/seed_extra, este ícono no se consume."""
     CORE = (230, 38, 217, 255)  # Constants.COLOR_LASER = Color(0.9, 0.15, 0.85)
     GLOW = (255, 255, 255, 210)
     g = _grid(size, size, T)
     cx = cy = size // 2
     beam_half_len = int(size * 0.44)
     beam_half_w = max(1, int(size * 0.07))
-    if horizontal:
+    if orientation != "vertical":
         _rect(g, cx - beam_half_len, cy - beam_half_w, cx + beam_half_len, cy + beam_half_w, CORE)
-    else:
+    if orientation != "horizontal":
         _rect(g, cx - beam_half_w, cy - beam_half_len, cx + beam_half_w, cy + beam_half_len, CORE)
     r = int(size * 0.2)
     _circle(g, cx, cy, r, CORE)
@@ -636,8 +637,9 @@ def main():
     icons = {
         "assets/sprites/powerup_icons/lemon.png": (48, 48, make_lemon_icon(48)),
         "assets/sprites/powerup_icons/seed_extra.png": (48, 48, make_seed_extra_icon(48)),
-        "assets/sprites/powerup_icons/laser_horizontal.png": (48, 48, make_laser_icon(48, True)),
-        "assets/sprites/powerup_icons/laser_vertical.png": (48, 48, make_laser_icon(48, False)),
+        "assets/sprites/powerup_icons/laser_horizontal.png": (48, 48, make_laser_icon(48, "horizontal")),
+        "assets/sprites/powerup_icons/laser_vertical.png": (48, 48, make_laser_icon(48, "vertical")),
+        "assets/sprites/powerup_icons/laser_both.png": (48, 48, make_laser_icon(48, "both")),
     }
     for path, (w, h, pixels) in icons.items():
         save_png(path, w, h, pixels)

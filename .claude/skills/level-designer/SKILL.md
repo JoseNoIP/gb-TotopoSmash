@@ -113,7 +113,7 @@ Incompatible con `row_queue`.
 | `cells[].col` (en `static`) | Entero en `[0, grid_cols-1]` — NO `[0,6]` como en niveles normales. |
 | `cells[].row` (en `static`) | Entero en `[0, grid_rows-1]` — NO limitado a `Constants.MOLCAJETE_ROW` (no hay fila de molcajete prohibida, no hay condición de derrota), pero SÍ acotado por `grid_rows` de este nivel. |
 | `par_turns` | Opcional. Si se limpia el nivel en <= este número de turnos, el score final se multiplica por `Constants.STATIC_LEVEL_PAR_BONUS_MULTIPLIER`. |
-| `cells[].kind: "laser"` | Power-up — al tocarlo, daña TODA la fila (`"orientation": "horizontal"`, default) o columna (`"vertical"`) donde está. Sin `hp`. |
+| `cells[].kind: "laser"` | Power-up PERSISTENTE (pedido explícito del usuario — a diferencia de lemon/seed_extra, NUNCA se libera al tocarse: sigue en el tablero y se dispara de nuevo cada vez que una semilla vuelve a entrar). Daña TODA la fila (`"orientation": "horizontal"`, default), columna (`"vertical"`), o AMBAS (`"both"` — cada bloque de esa fila O columna, un alcance mucho mayor que la cruz local de la salsa). Sin `hp`. |
 | `cells[].kind: "seed_extra"` + `"amount"` | Opcional, entero > 0. Cuántas semillas otorga ESE ícono en particular — default `Constants.SEED_EXTRA_AMOUNT` (+1, pensado para Modo Infinito/campaña numérica) si se omite. Niveles `static` de exhibición (sin presión de tiempo, muchas celdas) pueden pedir bonos grandes (ej. 20-25) para que una partida completa acumule varios cientos de semillas — ver "Semillas extra abundantes" más abajo. |
 
 **Tamaño proporcional (pedido explícito del usuario — corrige un error real de la v1 de
@@ -239,11 +239,12 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
   estas funciones juntas, nunca HP alto con semillas bajas a mano.
 - **HP (niveles `static`)**: variado, sorteado — nunca fijo, mismo criterio que
   `row_queue`. **NO usar el rango del nivel 100** (60-300, el tope de la campaña) como
-  default — el pack Mundial lo probó y el usuario pidió bajarlo: "bajemos la complejidad de
-  los packs a un nivel 50" — usar `totopo_hp_min_for_level(50)`/`totopo_hp_max_for_level(50)`
-  de `tools/gen_levels.py` (35-174 al momento de escribir esto) como punto de partida para
-  packs nuevos, no el nivel 100. Como no hay condición de derrota, "difícil" solo significa
-  "toma más turnos", no "imposible" — pedir un nivel de referencia más alto (75, 100) sigue
+  default — el pack Mundial lo probó y el usuario pidió bajarlo, primero a nivel 50 y
+  después a nivel 30 (dos rondas de ajuste tras jugarlo) — usar
+  `totopo_hp_min_for_level(30)`/`totopo_hp_max_for_level(30)` de `tools/gen_levels.py`
+  (25-123 al momento de escribir esto) como punto de partida para packs nuevos, no el
+  nivel 100 ni el 50. Como no hay condición de derrota, "difícil" solo significa "toma más
+  turnos", no "imposible" — pedir un nivel de referencia más alto (50, 75, 100) sigue
   siendo válido si el usuario lo pide explícitamente para un pack más desafiante. **Sesgar
   hacia golpes baratos** (pedido explícito del usuario tras jugar el pack Mundial: "la
   mayoría de bloques no deberían requerir tantos golpes... si no, cada partida se vuelve
@@ -296,7 +297,7 @@ el nivel nuevo (y el manifiesto actualizado) quedaron bien.
 - [ ] `id` único en todo `manifest.json`, igual al nombre de archivo.
 - [ ] Ninguna celda en `row: 8` (fila del molcajete) — NO aplica a niveles `static`.
 - [ ] Todo `kind` existe en `CellFactoryGd.KNOWN_KINDS` — si es nuevo, se agregó su caso ahí primero.
-- [ ] `hp` presente en totopo/queso/salsa/triangle; `corner` presente en triangle; `orientation` de laser (si se usa) es `"horizontal"` o `"vertical"`.
+- [ ] `hp` presente en totopo/queso/salsa/triangle; `corner` presente en triangle; `orientation` de laser (si se usa) es `"horizontal"`, `"vertical"` o `"both"`.
 - [ ] `starting_seeds` entero > 0.
 - [ ] Contenido dentro de ~6 filas (niveles-figura, `cells`) o cola de filas balanceada según `tools/gen_levels.py::total_rows_for_level()` (dificultad progresiva, `row_queue`) — NO aplica a niveles `static` (sin límite de filas).
 - [ ] `row_queue[][]` sin campo `row` (implícito); duplicados validados por columna dentro de cada fila, no por posición global.

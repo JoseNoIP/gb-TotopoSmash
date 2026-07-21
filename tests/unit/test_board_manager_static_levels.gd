@@ -6,6 +6,7 @@ extends GutTest
 
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TotopoBlockGd := preload("res://src/features/blocks/totopo_block.gd")
+const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
 
 const CELL_SIZE: float = 55.7
 
@@ -99,7 +100,7 @@ func test_laser_triggered_horizontal_damages_only_the_same_row() -> void:
 	blocks[Vector2i(2, 5)] = same_row_a
 	blocks[Vector2i(9, 5)] = same_row_b
 	blocks[Vector2i(2, 6)] = other_row
-	EventBus.laser_triggered.emit(Vector2i(4, 5), true)
+	EventBus.laser_triggered.emit(Vector2i(4, 5), "horizontal")
 	assert_eq(int(same_row_a.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
 	assert_eq(int(same_row_b.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
 	assert_eq(int(other_row.get(&"current_hp")), 100, "otra fila no debe recibir daño")
@@ -117,6 +118,50 @@ func test_laser_triggered_vertical_damages_only_the_same_column() -> void:
 	var blocks: Dictionary = board.get(&"_blocks")
 	blocks[Vector2i(3, 1)] = same_col
 	blocks[Vector2i(4, 1)] = other_col
-	EventBus.laser_triggered.emit(Vector2i(3, 9), false)
+	EventBus.laser_triggered.emit(Vector2i(3, 9), "vertical")
 	assert_eq(int(same_col.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
 	assert_eq(int(other_col.get(&"current_hp")), 100, "otra columna no debe recibir daño")
+
+
+## "both" (pedido explícito del usuario): el mismo golpe debe alcanzar fila Y columna a la
+## vez, no solo una — un bloque que comparte fila O columna con el origen recibe daño.
+func test_laser_triggered_both_damages_row_and_column() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	var same_row: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(same_row)
+	same_row.call(&"setup", Vector2i(8, 5), 100, CELL_SIZE)
+	var same_col: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(same_col)
+	same_col.call(&"setup", Vector2i(3, 1), 100, CELL_SIZE)
+	var neither: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(neither)
+	neither.call(&"setup", Vector2i(8, 1), 100, CELL_SIZE)
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks[Vector2i(8, 5)] = same_row
+	blocks[Vector2i(3, 1)] = same_col
+	blocks[Vector2i(8, 1)] = neither
+	EventBus.laser_triggered.emit(Vector2i(3, 5), "both")
+	assert_eq(int(same_row.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
+	assert_eq(int(same_col.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
+	assert_eq(int(neither.get(&"current_hp")), 100, "ni la fila ni la columna coinciden")
+
+
+## Regresión directa del bug real reportado jugando: el ícono NO debe desaparecer al
+## primer toque — debe seguir existiendo y disparar de nuevo cada vez que una semilla
+## vuelva a tocarlo.
+func test_laser_icon_persists_and_retriggers_on_repeated_touch() -> void:
+	var icon: Area2D = LaserIconGd.new()
+	add_child_autofree(icon)
+	icon.call(&"setup", CELL_SIZE)
+	var seed_node: Node2D = Node2D.new()
+	seed_node.add_to_group(&"seeds")
+	add_child_autofree(seed_node)
+	watch_signals(EventBus)
+	icon.call(&"_on_body_entered", seed_node)
+	assert_true(is_instance_valid(icon), "el láser no debe autodestruirse al tocarse")
+	icon.call(&"_on_body_entered", seed_node)
+	assert_true(is_instance_valid(icon), "sigue vivo tras un segundo toque")
+	assert_signal_emit_count(
+		EventBus, "laser_triggered", 2, "debe disparar una vez por cada toque, no solo el primero"
+	)

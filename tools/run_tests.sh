@@ -28,6 +28,7 @@ USER_DATA_DIR="$HOME/Library/Application Support/Godot/app_userdata/Totopo Smash
 SAVE_FILE="$USER_DATA_DIR/save.json"
 META_FILE="$USER_DATA_DIR/meta.json"
 PACK_PROGRESS_FILE="$USER_DATA_DIR/pack_progress.json"
+AUDIO_SETTINGS_FILE="$USER_DATA_DIR/audio_settings.json"
 BACKUP_DIR=$(mktemp -d)
 
 _backup() {
@@ -52,6 +53,7 @@ _restore() {
 _backup "$SAVE_FILE" "save.json"
 _backup "$META_FILE" "meta.json"
 _backup "$PACK_PROGRESS_FILE" "pack_progress.json"
+_backup "$AUDIO_SETTINGS_FILE" "audio_settings.json"
 
 godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit -glog=2 "$@"
 EXIT_CODE=$?
@@ -59,6 +61,7 @@ EXIT_CODE=$?
 _restore "$SAVE_FILE" "save.json"
 _restore "$META_FILE" "meta.json"
 _restore "$PACK_PROGRESS_FILE" "pack_progress.json"
+_restore "$AUDIO_SETTINGS_FILE" "audio_settings.json"
 rm -rf "$BACKUP_DIR"
 
 exit $EXIT_CODE

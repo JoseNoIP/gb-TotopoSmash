@@ -37,15 +37,10 @@ func set_tutorial_shown(value: bool) -> void:
 
 
 # --- Settings ---
-func get_sound_enabled() -> bool:
-	return _data.get("sound_enabled", true) as bool
-
-
-func set_sound_enabled(value: bool) -> void:
-	_data["sound_enabled"] = value
-	save()
-
-
+## El sonido combinado (música + SFX en un solo interruptor) se separó en
+## AudioManager.get_music_enabled()/get_sfx_enabled() (pedido explícito del usuario: poder
+## silenciar cada uno por separado) — no vive acá porque SaveManager ya está en el límite
+## de 20 métodos públicos de gdlint (regla CLAUDE.md #51).
 func get_vibration_enabled() -> bool:
 	return _data.get("vibration_enabled", true) as bool
 

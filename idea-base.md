@@ -696,6 +696,76 @@ que ya no queda nada que destruir.
   (incluido el turno completo `all_seeds_returned` → `turn_advanced` → vuelta a `AIMING`)
   se resuelve de forma síncrona en el mismo clic, sin ningún paso intermedio visible.
 
+## Láser persistente + 3 orientaciones, tutorial ampliado, audio dividido, nivel 30, salsa destructiva ✅
+
+Cinco pedidos explícitos del usuario en un mismo mensaje, atendidos en orden.
+
+- **Láser persistente** ("los elementos láser no deben desaparecer al primer toque... debe
+  permanecer y ejecutarse cada vez que una semilla lo toque") — `laser_icon.gd` ya no
+  llama `queue_free()` al tocarse; sigue en el tablero y `EventBus.laser_triggered` se
+  emite de nuevo cada vez que una semilla vuelve a entrar en su área. A diferencia de
+  lemon/seed_extra (un solo uso, sí se liberan), el láser es la ÚNICA excepción.
+- **Tercera orientación "both"** ("debe afectar... en horizontal, en vertical o ambos,
+  dependiente el tipo de láser") — `is_horizontal: bool` (2 estados) se reemplazó por
+  `orientation: String` (`"horizontal"`/`"vertical"`/`"both"`) en todo el flujo: icono,
+  `EventBus.laser_triggered`, validación (`level_loader.gd`/`validate_level.py`),
+  `BoardManager._on_laser_triggered()` (con `"both"`, un bloque recibe daño si comparte
+  FILA **o** COLUMNA con el origen — un alcance mucho mayor que la cruz local de la
+  salsa). Nuevo sprite `laser_both.png` (cruz completa, generado con
+  `gen_assets.py::make_laser_icon()` extendido a 3 variantes). `gen_worldcup_pack.py`
+  sortea entre las 3 orientaciones (antes solo 2).
+- **Tutorial ampliado** ("complementar el tutorial para que se expliquen todas las nuevas
+  funcionalidades") — 3 pasos informativos nuevos (`Step.SPEED_INFO`/`POWERUPS_INFO`/
+  `META_INFO`, no interactivos — el tablero del tutorial es Modo Infinito oleada 1, solo
+  totopos, así que power-ups/láser pueden no aparecer ahí de verdad) insertados entre
+  `ADVANCE` y `COMPLETE`: acelerar/recoger semillas, power-ups del tablero (limón/semilla
+  extra/láser), y qué más explorar (Tienda, Packs Especiales, Modo Infinito).
+- **Música y efectos silenciables por separado** ("silenciar solo la música... solo los
+  efectos... o ambos") — el interruptor único `SaveManager.sound_enabled` (apagaba las dos
+  cosas juntas) se reemplazó por `AudioManager.get/set_music_enabled()` y
+  `get/set_sfx_enabled()`, cada uno independiente, persistidos en
+  `user://audio_settings.json` propio de `AudioManager` (NO en `SaveManager`, que ya está
+  en el límite de 20 métodos públicos de `gdlint` — mismo motivo que
+  `MetaManager`/`LevelManager` antes). `SettingsScreen` ahora tiene 2 checkboxes
+  ("Música"/"Efectos de sonido") en vez de 1.
+- **Complejidad de los packs bajada a nivel 30** ("baja la complejidad... equivalentes a
+  un nivel 30") — segunda vuelta de ajuste (primero se pidió nivel 50). `HP_MIN`/`HP_MAX`
+  en `gen_worldcup_pack.py` = 25/123 (antes 35/174, valores de nivel 50). HP promedio real
+  medido tras regenerar: ~56-65 por nivel (antes ~80-87 con nivel 50), `par_turns` bajó en
+  la misma proporción.
+- **Salsa destruye todo alrededor, no daña en cruz** ("cuando la salsa explote debe
+  destruir todos los bloques que estén alrededor (los que estén pegados). A excepción de
+  si es un láser, un bloque de piedra u otro comodín") — cambio de mecánica GDD real, no
+  solo un ajuste de balance:
+  - `GridMathGd.cross_neighbors()` (4 direcciones, con bounds-check contra
+    `Constants.GRID_COLS/GRID_ROWS` — INCORRECTO para niveles `static` con su propia
+    grilla más ancha, aunque nunca llegó a manifestarse como bug real porque ningún nivel
+    `static` usaba salsa todavía) se reemplazó por `GridMathGd.surrounding_neighbors()`
+    (8 direcciones, cruz + diagonales, SIN bounds-check — el `Dictionary.has()` disperso
+    de `BoardManager` ya es el único chequeo de límites que hace falta, mismo criterio que
+    el resto del archivo).
+  - Nuevo `block_base.gd::destroy_instantly()` — destrucción SIN pasar por HP/daño
+    parcial (a diferencia de `take_explosion_damage()`, que sigue existiendo para el
+    láser). Mismo guard de `is_indestructible` que ya usaba `_apply_damage()` — la piedra
+    queda exenta automáticamente, sin lógica nueva ("a excepción de... un bloque de
+    piedra" ya resuelto gratis).
+  - Los power-ups (`lemon`/`seed_extra`/`laser`) NUNCA estuvieron en riesgo — viven en
+    `_icons`, un `Dictionary` separado de `_blocks` que `_on_salsa_exploded()` ni siquiera
+    recorre — "a excepción de... un láser u otro comodín" ya estaba resuelto por la
+    arquitectura existente, sin cambios.
+  - `Constants.BLOCK_SALSA_EXPLOSION_DAMAGE` (ya no se usa) eliminado — no se dejó como
+    constante muerta.
+  - Si un segundo Frasco de Salsa cae dentro del radio de 8 vecinos, también se destruye
+    (mismo `destroy_instantly()` → `_die()` virtual → `salsa_jar_block._die()` reemite
+    `salsa_exploded` para su propia posición) — reacción en cadena real, no prevenida a
+    propósito (el usuario no pidió evitarla y es un comportamiento emergente razonable
+    para un juego de este género).
+- Verificado con captura real: checkboxes de Música/Efectos independientes en
+  Configuración, los 2 pasos nuevos del tutorial mostrando el texto correcto, y el
+  ícono de láser "both" (cruz magenta) en un nivel real del pack Mundial. `gdlint` limpio,
+  217/217 tests (incluye regresión directa para cada pieza: persistencia del láser,
+  destrucción de los 8 vecinos, exención de piedra, independencia música/SFX).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
@@ -716,7 +786,7 @@ que ya no queda nada que destruir.
 ### Bloques
 - Totopo: `HP = oleada` (ej. oleada 10 → HP 10)
 - Queso: `HP = ceil(oleada * 1.5)` (ej. oleada 10 → HP 15), daño x2 por impacto, -15% velocidad de semilla al rebotar
-- Frasco de Salsa: 10 de daño en cruz al explotar
+- Frasco de Salsa: al explotar, DESTRUYE (no daña) los 8 bloques pegados alrededor — cruz + diagonales — excepto piedra y power-ups (ver sección "Salsa destruye alrededor" más abajo, GDD actualizado tras feedback del usuario)
 - Piedra de Molcajete: indestructible (oleada 16+)
 
 ### Progresión de oleadas

@@ -51,12 +51,12 @@ WIDE_SUBDIVISION = 3  # cancha: necesita más ancho para leerse bien
 TEXT_SUBDIVISION = 4  # "GOL": 3 letras necesitan más resolución que una silueta simple
 BASE_COLS = 7  # Constants.GRID_COLS
 
-# Pedido explícito del usuario: "bajemos la complejidad de los packs a un nivel 50" — usar
-# el mismo rango de HP que tendría un bloque del nivel 50 del roster numérico (antes usaba
-# el rango del nivel 100, el tope de la campaña) conservando las "ayudas" ya definidas
-# (sesgo 80/20, power-ups de entrada, semillas extra, decoraciones).
-HP_MIN = 35  # = totopo_hp_min_for_level(50) en gen_levels.py
-HP_MAX = 174  # = totopo_hp_max_for_level(50) en gen_levels.py
+# Pedido explícito del usuario, segunda vuelta: "baja la complejidad de los packs, que
+# sean equivalentes a un nivel 30" (primero se pidió nivel 50, después bajarlo más) — usar
+# el mismo rango de HP que tendría un bloque del nivel 30 del roster numérico, conservando
+# las "ayudas" ya definidas (sesgo 80/20, power-ups de entrada, semillas extra, decoraciones).
+HP_MIN = 25  # = totopo_hp_min_for_level(30) en gen_levels.py
+HP_MAX = 123  # = totopo_hp_max_for_level(30) en gen_levels.py
 # Pedido explícito del usuario tras jugar: con HP uniforme entre HP_MIN y HP_MAX la partida
 # se sentía larga/tediosa (un nivel `static` no tiene condición de derrota — se gana
 # despejando TODO, así que el HP promedio determina directamente cuánto dura la partida).
@@ -417,7 +417,10 @@ def build_static_level(level_id: str, name_key: str, shape_fn, work_cols: int, w
             icon_i += 1
             cell = {"col": c, "row": r, "kind": kind}
             if kind == "laser":
-                cell["orientation"] = "horizontal" if rng.random() < 0.5 else "vertical"
+                # "both" incluido a propósito (pedido explícito del usuario: el láser debe
+                # poder afectar fila, columna, o ambas según el tipo) — variedad real entre
+                # los 3, no solo horizontal/vertical como antes.
+                cell["orientation"] = rng.choice(["horizontal", "vertical", "both"])
             if kind == "seed_extra":
                 cell["amount"] = SEED_EXTRA_ICON_AMOUNT
             cells.append(cell)

@@ -5,259 +5,259 @@
   "grid_cols": 18,
   "grid_rows": 20,
   "starting_seeds": 50,
-  "par_turns": 37,
+  "par_turns": 26,
   "cells": [
     {
       "col": 2,
       "row": 3,
       "kind": "totopo",
-      "hp": 100
+      "hp": 57
     },
     {
       "col": 2,
       "row": 4,
       "kind": "totopo",
-      "hp": 47
-    },
-    {
-      "col": 3,
-      "row": 3,
-      "kind": "totopo",
-      "hp": 70
-    },
-    {
-      "col": 3,
-      "row": 4,
-      "kind": "totopo",
-      "hp": 163
-    },
-    {
-      "col": 4,
-      "row": 3,
-      "kind": "totopo",
-      "hp": 39
-    },
-    {
-      "col": 4,
-      "row": 4,
-      "kind": "totopo",
-      "hp": 44
-    },
-    {
-      "col": 5,
-      "row": 2,
-      "kind": "totopo",
       "hp": 69
     },
     {
-      "col": 5,
+      "col": 3,
       "row": 3,
       "kind": "totopo",
-      "hp": 99
+      "hp": 37
     },
     {
-      "col": 5,
+      "col": 3,
       "row": 4,
       "kind": "totopo",
-      "hp": 74
+      "hp": 42
+    },
+    {
+      "col": 4,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 104
+    },
+    {
+      "col": 4,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 27
     },
     {
       "col": 5,
-      "row": 5,
-      "kind": "totopo",
-      "hp": 93
-    },
-    {
-      "col": 5,
-      "row": 6,
-      "kind": "totopo",
-      "hp": 35
-    },
-    {
-      "col": 5,
-      "row": 7,
-      "kind": "totopo",
-      "hp": 55
-    },
-    {
-      "col": 5,
-      "row": 8,
-      "kind": "totopo",
-      "hp": 60
-    },
-    {
-      "col": 5,
-      "row": 9,
-      "kind": "totopo",
-      "hp": 56
-    },
-    {
-      "col": 5,
-      "row": 10,
-      "kind": "totopo",
-      "hp": 96
-    },
-    {
-      "col": 5,
-      "row": 11,
-      "kind": "totopo",
-      "hp": 66
-    },
-    {
-      "col": 5,
-      "row": 12,
-      "kind": "totopo",
-      "hp": 139
-    },
-    {
-      "col": 5,
-      "row": 13,
-      "kind": "totopo",
-      "hp": 79
-    },
-    {
-      "col": 5,
-      "row": 14,
-      "kind": "totopo",
-      "hp": 53
-    },
-    {
-      "col": 5,
-      "row": 15,
-      "kind": "totopo",
-      "hp": 89
-    },
-    {
-      "col": 5,
-      "row": 16,
-      "kind": "totopo",
-      "hp": 39
-    },
-    {
-      "col": 5,
-      "row": 17,
-      "kind": "totopo",
-      "hp": 62
-    },
-    {
-      "col": 6,
       "row": 2,
       "kind": "totopo",
-      "hp": 45
+      "hp": 29
     },
     {
-      "col": 6,
-      "row": 3,
-      "kind": "totopo",
-      "hp": 95
-    },
-    {
-      "col": 6,
-      "row": 4,
-      "kind": "totopo",
-      "hp": 77
-    },
-    {
-      "col": 6,
-      "row": 5,
-      "kind": "totopo",
-      "hp": 148
-    },
-    {
-      "col": 6,
-      "row": 6,
-      "kind": "totopo",
-      "hp": 39
-    },
-    {
-      "col": 6,
-      "row": 7,
-      "kind": "totopo",
-      "hp": 84
-    },
-    {
-      "col": 6,
-      "row": 8,
-      "kind": "totopo",
-      "hp": 76
-    },
-    {
-      "col": 6,
-      "row": 9,
-      "kind": "totopo",
-      "hp": 89
-    },
-    {
-      "col": 6,
-      "row": 10,
-      "kind": "totopo",
-      "hp": 116
-    },
-    {
-      "col": 6,
-      "row": 11,
-      "kind": "totopo",
-      "hp": 70
-    },
-    {
-      "col": 6,
-      "row": 12,
-      "kind": "totopo",
-      "hp": 36
-    },
-    {
-      "col": 6,
-      "row": 13,
-      "kind": "totopo",
-      "hp": 63
-    },
-    {
-      "col": 6,
-      "row": 14,
-      "kind": "totopo",
-      "hp": 154
-    },
-    {
-      "col": 6,
-      "row": 15,
-      "kind": "totopo",
-      "hp": 80
-    },
-    {
-      "col": 6,
-      "row": 16,
-      "kind": "totopo",
-      "hp": 73
-    },
-    {
-      "col": 6,
-      "row": 17,
-      "kind": "totopo",
-      "hp": 76
-    },
-    {
-      "col": 7,
+      "col": 5,
       "row": 3,
       "kind": "totopo",
       "hp": 42
     },
     {
-      "col": 7,
+      "col": 5,
       "row": 4,
+      "kind": "totopo",
+      "hp": 65
+    },
+    {
+      "col": 5,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 61
+    },
+    {
+      "col": 5,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 41
+    },
+    {
+      "col": 5,
+      "row": 7,
+      "kind": "totopo",
+      "hp": 107
+    },
+    {
+      "col": 5,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 75
+    },
+    {
+      "col": 5,
+      "row": 9,
+      "kind": "totopo",
+      "hp": 64
+    },
+    {
+      "col": 5,
+      "row": 10,
+      "kind": "totopo",
+      "hp": 107
+    },
+    {
+      "col": 5,
+      "row": 11,
+      "kind": "totopo",
+      "hp": 99
+    },
+    {
+      "col": 5,
+      "row": 12,
+      "kind": "totopo",
+      "hp": 35
+    },
+    {
+      "col": 5,
+      "row": 13,
+      "kind": "totopo",
+      "hp": 61
+    },
+    {
+      "col": 5,
+      "row": 14,
+      "kind": "totopo",
+      "hp": 51
+    },
+    {
+      "col": 5,
+      "row": 15,
+      "kind": "totopo",
+      "hp": 49
+    },
+    {
+      "col": 5,
+      "row": 16,
+      "kind": "totopo",
+      "hp": 42
+    },
+    {
+      "col": 5,
+      "row": 17,
+      "kind": "totopo",
+      "hp": 62
+    },
+    {
+      "col": 6,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 68
+    },
+    {
+      "col": 6,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 34
+    },
+    {
+      "col": 6,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 52
+    },
+    {
+      "col": 6,
+      "row": 5,
+      "kind": "totopo",
+      "hp": 68
+    },
+    {
+      "col": 6,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 42
+    },
+    {
+      "col": 6,
+      "row": 7,
+      "kind": "totopo",
+      "hp": 30
+    },
+    {
+      "col": 6,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 55
+    },
+    {
+      "col": 6,
+      "row": 9,
+      "kind": "totopo",
+      "hp": 46
+    },
+    {
+      "col": 6,
+      "row": 10,
+      "kind": "totopo",
+      "hp": 96
+    },
+    {
+      "col": 6,
+      "row": 11,
+      "kind": "totopo",
+      "hp": 27
+    },
+    {
+      "col": 6,
+      "row": 12,
+      "kind": "totopo",
+      "hp": 72
+    },
+    {
+      "col": 6,
+      "row": 13,
+      "kind": "totopo",
+      "hp": 32
+    },
+    {
+      "col": 6,
+      "row": 14,
+      "kind": "totopo",
+      "hp": 58
+    },
+    {
+      "col": 6,
+      "row": 15,
+      "kind": "totopo",
+      "hp": 52
+    },
+    {
+      "col": 6,
+      "row": 16,
+      "kind": "totopo",
+      "hp": 80
+    },
+    {
+      "col": 6,
+      "row": 17,
       "kind": "totopo",
       "hp": 67
     },
     {
       "col": 7,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 28
+    },
+    {
+      "col": 7,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 63
+    },
+    {
+      "col": 7,
       "row": 5,
       "kind": "totopo",
-      "hp": 96
+      "hp": 29
     },
     {
       "col": 7,
       "row": 6,
       "kind": "totopo",
-      "hp": 72
+      "hp": 37
     },
     {
       "col": 7,
@@ -268,211 +268,211 @@
       "col": 7,
       "row": 8,
       "kind": "totopo",
-      "hp": 104
+      "hp": 56
     },
     {
       "col": 7,
       "row": 9,
       "kind": "totopo",
-      "hp": 129
+      "hp": 65
     },
     {
       "col": 7,
       "row": 10,
       "kind": "totopo",
-      "hp": 86
+      "hp": 43
     },
     {
       "col": 7,
       "row": 11,
       "kind": "totopo",
-      "hp": 102
+      "hp": 28
     },
     {
       "col": 7,
       "row": 12,
       "kind": "totopo",
-      "hp": 39
+      "hp": 41
     },
     {
       "col": 7,
       "row": 13,
       "kind": "totopo",
-      "hp": 72
+      "hp": 55
     },
     {
       "col": 7,
       "row": 14,
       "kind": "totopo",
-      "hp": 81
+      "hp": 61
     },
     {
       "col": 7,
       "row": 15,
       "kind": "totopo",
-      "hp": 137
+      "hp": 43
     },
     {
       "col": 7,
       "row": 16,
       "kind": "totopo",
-      "hp": 137
+      "hp": 59
     },
     {
       "col": 7,
       "row": 17,
+      "kind": "totopo",
+      "hp": 87
+    },
+    {
+      "col": 8,
+      "row": 3,
       "kind": "totopo",
       "hp": 50
     },
     {
       "col": 8,
-      "row": 3,
-      "kind": "totopo",
-      "hp": 163
-    },
-    {
-      "col": 8,
       "row": 4,
       "kind": "totopo",
-      "hp": 61
+      "hp": 58
     },
     {
       "col": 8,
       "row": 5,
       "kind": "totopo",
-      "hp": 38
+      "hp": 27
     },
     {
       "col": 8,
       "row": 6,
       "kind": "totopo",
-      "hp": 104
+      "hp": 69
     },
     {
       "col": 8,
       "row": 7,
       "kind": "totopo",
-      "hp": 84
+      "hp": 43
     },
     {
       "col": 8,
       "row": 8,
       "kind": "totopo",
-      "hp": 44
+      "hp": 67
     },
     {
       "col": 8,
       "row": 9,
       "kind": "totopo",
-      "hp": 36
+      "hp": 41
     },
     {
       "col": 8,
       "row": 10,
       "kind": "totopo",
-      "hp": 92
+      "hp": 91
     },
     {
       "col": 8,
       "row": 11,
       "kind": "totopo",
-      "hp": 94
+      "hp": 32
     },
     {
       "col": 8,
       "row": 12,
       "kind": "totopo",
-      "hp": 85
+      "hp": 110
     },
     {
       "col": 8,
       "row": 13,
       "kind": "totopo",
-      "hp": 78
+      "hp": 41
     },
     {
       "col": 8,
       "row": 14,
       "kind": "totopo",
-      "hp": 64
+      "hp": 66
     },
     {
       "col": 8,
       "row": 15,
       "kind": "totopo",
-      "hp": 40
+      "hp": 26
     },
     {
       "col": 8,
       "row": 16,
       "kind": "totopo",
-      "hp": 35
+      "hp": 59
     },
     {
       "col": 8,
       "row": 17,
       "kind": "totopo",
-      "hp": 74
+      "hp": 49
     },
     {
       "col": 9,
       "row": 3,
       "kind": "totopo",
-      "hp": 128
+      "hp": 29
     },
     {
       "col": 9,
       "row": 4,
       "kind": "totopo",
-      "hp": 73
+      "hp": 25
     },
     {
       "col": 9,
       "row": 5,
       "kind": "totopo",
-      "hp": 150
+      "hp": 53
     },
     {
       "col": 9,
       "row": 6,
+      "kind": "totopo",
+      "hp": 54
+    },
+    {
+      "col": 9,
+      "row": 7,
+      "kind": "totopo",
+      "hp": 50
+    },
+    {
+      "col": 9,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 60
+    },
+    {
+      "col": 9,
+      "row": 9,
+      "kind": "totopo",
+      "hp": 67
+    },
+    {
+      "col": 9,
+      "row": 10,
+      "kind": "totopo",
+      "hp": 112
+    },
+    {
+      "col": 9,
+      "row": 11,
       "kind": "totopo",
       "hp": 46
     },
     {
       "col": 9,
-      "row": 7,
-      "kind": "totopo",
-      "hp": 158
-    },
-    {
-      "col": 9,
-      "row": 8,
-      "kind": "totopo",
-      "hp": 62
-    },
-    {
-      "col": 9,
-      "row": 9,
-      "kind": "totopo",
-      "hp": 161
-    },
-    {
-      "col": 9,
-      "row": 10,
-      "kind": "totopo",
-      "hp": 61
-    },
-    {
-      "col": 9,
-      "row": 11,
-      "kind": "totopo",
-      "hp": 38
-    },
-    {
-      "col": 9,
       "row": 12,
       "kind": "totopo",
-      "hp": 145
+      "hp": 52
     },
     {
       "col": 9,
@@ -484,13 +484,13 @@
       "col": 9,
       "row": 14,
       "kind": "totopo",
-      "hp": 86
+      "hp": 103
     },
     {
       "col": 9,
       "row": 15,
       "kind": "totopo",
-      "hp": 93
+      "hp": 86
     },
     {
       "col": 9,
@@ -501,164 +501,164 @@
     {
       "col": 9,
       "row": 17,
-      "kind": "totopo",
-      "hp": 173
-    },
-    {
-      "col": 10,
-      "row": 2,
-      "kind": "totopo",
-      "hp": 84
-    },
-    {
-      "col": 10,
-      "row": 3,
-      "kind": "totopo",
-      "hp": 135
-    },
-    {
-      "col": 10,
-      "row": 4,
-      "kind": "totopo",
-      "hp": 102
-    },
-    {
-      "col": 10,
-      "row": 5,
-      "kind": "laser",
-      "orientation": "horizontal"
-    },
-    {
-      "col": 10,
-      "row": 6,
-      "kind": "totopo",
-      "hp": 156
-    },
-    {
-      "col": 10,
-      "row": 7,
-      "kind": "totopo",
-      "hp": 98
-    },
-    {
-      "col": 10,
-      "row": 8,
-      "kind": "totopo",
-      "hp": 75
-    },
-    {
-      "col": 10,
-      "row": 9,
-      "kind": "totopo",
-      "hp": 43
-    },
-    {
-      "col": 10,
-      "row": 10,
-      "kind": "totopo",
-      "hp": 76
-    },
-    {
-      "col": 10,
-      "row": 11,
-      "kind": "totopo",
-      "hp": 58
-    },
-    {
-      "col": 10,
-      "row": 12,
-      "kind": "totopo",
-      "hp": 88
-    },
-    {
-      "col": 10,
-      "row": 13,
       "kind": "totopo",
       "hp": 69
     },
     {
       "col": 10,
+      "row": 2,
+      "kind": "totopo",
+      "hp": 66
+    },
+    {
+      "col": 10,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 89
+    },
+    {
+      "col": 10,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 39
+    },
+    {
+      "col": 10,
+      "row": 5,
+      "kind": "laser",
+      "orientation": "vertical"
+    },
+    {
+      "col": 10,
+      "row": 6,
+      "kind": "totopo",
+      "hp": 38
+    },
+    {
+      "col": 10,
+      "row": 7,
+      "kind": "totopo",
+      "hp": 114
+    },
+    {
+      "col": 10,
+      "row": 8,
+      "kind": "totopo",
+      "hp": 60
+    },
+    {
+      "col": 10,
+      "row": 9,
+      "kind": "totopo",
+      "hp": 26
+    },
+    {
+      "col": 10,
+      "row": 10,
+      "kind": "totopo",
+      "hp": 95
+    },
+    {
+      "col": 10,
+      "row": 11,
+      "kind": "totopo",
+      "hp": 70
+    },
+    {
+      "col": 10,
+      "row": 12,
+      "kind": "totopo",
+      "hp": 82
+    },
+    {
+      "col": 10,
+      "row": 13,
+      "kind": "totopo",
+      "hp": 60
+    },
+    {
+      "col": 10,
       "row": 14,
       "kind": "totopo",
-      "hp": 57
+      "hp": 109
     },
     {
       "col": 10,
       "row": 15,
       "kind": "totopo",
-      "hp": 53
+      "hp": 49
     },
     {
       "col": 10,
       "row": 16,
       "kind": "totopo",
-      "hp": 86
+      "hp": 90
     },
     {
       "col": 10,
       "row": 17,
       "kind": "totopo",
-      "hp": 83
+      "hp": 58
     },
     {
       "col": 11,
       "row": 2,
       "kind": "totopo",
-      "hp": 100
+      "hp": 57
     },
     {
       "col": 11,
       "row": 3,
       "kind": "totopo",
-      "hp": 157
+      "hp": 25
     },
     {
       "col": 11,
       "row": 4,
       "kind": "totopo",
-      "hp": 44
+      "hp": 63
     },
     {
       "col": 11,
       "row": 5,
       "kind": "totopo",
-      "hp": 126
+      "hp": 45
     },
     {
       "col": 11,
       "row": 6,
       "kind": "totopo",
-      "hp": 147
+      "hp": 67
     },
     {
       "col": 11,
       "row": 7,
       "kind": "totopo",
-      "hp": 143
+      "hp": 26
     },
     {
       "col": 11,
       "row": 8,
       "kind": "totopo",
-      "hp": 75
+      "hp": 62
     },
     {
       "col": 11,
       "row": 9,
       "kind": "totopo",
-      "hp": 40
+      "hp": 51
     },
     {
       "col": 11,
       "row": 10,
       "kind": "totopo",
-      "hp": 44
+      "hp": 60
     },
     {
       "col": 11,
       "row": 11,
       "kind": "totopo",
-      "hp": 80
+      "hp": 44
     },
     {
       "col": 11,
@@ -675,157 +675,157 @@
       "col": 11,
       "row": 14,
       "kind": "totopo",
-      "hp": 148
+      "hp": 116
     },
     {
       "col": 11,
       "row": 15,
       "kind": "totopo",
-      "hp": 82
+      "hp": 67
     },
     {
       "col": 11,
       "row": 16,
       "kind": "totopo",
-      "hp": 44
+      "hp": 49
     },
     {
       "col": 11,
       "row": 17,
       "kind": "totopo",
-      "hp": 101
+      "hp": 57
     },
     {
       "col": 12,
       "row": 2,
       "kind": "totopo",
-      "hp": 75
+      "hp": 101
     },
     {
       "col": 12,
       "row": 3,
       "kind": "totopo",
-      "hp": 79
+      "hp": 29
     },
     {
       "col": 12,
       "row": 4,
       "kind": "totopo",
-      "hp": 82
+      "hp": 85
     },
     {
       "col": 12,
       "row": 5,
       "kind": "totopo",
-      "hp": 128
+      "hp": 96
     },
     {
       "col": 12,
       "row": 6,
       "kind": "totopo",
-      "hp": 64
+      "hp": 94
     },
     {
       "col": 12,
       "row": 7,
       "kind": "totopo",
-      "hp": 70
+      "hp": 45
     },
     {
       "col": 12,
       "row": 8,
       "kind": "totopo",
-      "hp": 62
+      "hp": 68
     },
     {
       "col": 12,
       "row": 9,
       "kind": "totopo",
-      "hp": 38
+      "hp": 66
     },
     {
       "col": 12,
       "row": 10,
       "kind": "totopo",
-      "hp": 68
+      "hp": 29
     },
     {
       "col": 12,
       "row": 11,
       "kind": "totopo",
-      "hp": 174
+      "hp": 62
     },
     {
       "col": 12,
       "row": 12,
       "kind": "totopo",
-      "hp": 70
+      "hp": 65
     },
     {
       "col": 12,
       "row": 13,
       "kind": "totopo",
-      "hp": 122
+      "hp": 53
     },
     {
       "col": 12,
       "row": 14,
       "kind": "totopo",
-      "hp": 37
+      "hp": 57
     },
     {
       "col": 12,
       "row": 15,
       "kind": "totopo",
-      "hp": 69
+      "hp": 78
     },
     {
       "col": 12,
       "row": 16,
       "kind": "totopo",
-      "hp": 90
+      "hp": 29
     },
     {
       "col": 12,
       "row": 17,
       "kind": "totopo",
-      "hp": 37
+      "hp": 58
     },
     {
       "col": 13,
       "row": 3,
       "kind": "totopo",
-      "hp": 53
+      "hp": 45
     },
     {
       "col": 13,
       "row": 4,
       "kind": "totopo",
-      "hp": 102
+      "hp": 47
     },
     {
       "col": 14,
       "row": 3,
       "kind": "totopo",
-      "hp": 74
+      "hp": 48
     },
     {
       "col": 14,
-      "row": 4,
-      "kind": "totopo",
-      "hp": 41
-    },
-    {
-      "col": 15,
-      "row": 3,
-      "kind": "totopo",
-      "hp": 77
-    },
-    {
-      "col": 15,
       "row": 4,
       "kind": "totopo",
       "hp": 86
+    },
+    {
+      "col": 15,
+      "row": 3,
+      "kind": "totopo",
+      "hp": 72
+    },
+    {
+      "col": 15,
+      "row": 4,
+      "kind": "totopo",
+      "hp": 44
     },
     {
       "col": 3,

@@ -81,6 +81,29 @@ func test_indestructible_stone_ignores_all_damage() -> void:
 	assert_false(block.is_queued_for_deletion(), "una piedra nunca debe destruirse")
 
 
+## GDD actualizado (pedido explícito del usuario): la explosión de la salsa destruye de
+## un tirón, sin importar cuánto HP le quede al bloque — usado por
+## board_manager.gd::_on_salsa_exploded().
+func test_destroy_instantly_destroys_regardless_of_remaining_hp() -> void:
+	var block: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(block)
+	block.call(&"setup", Vector2i(2, 2), 500, CELL_SIZE)
+	watch_signals(EventBus)
+	block.call(&"destroy_instantly")
+	assert_signal_emitted(EventBus, "block_destroyed")
+	assert_true(block.is_queued_for_deletion())
+
+
+func test_destroy_instantly_never_destroys_an_indestructible_stone() -> void:
+	var block: StaticBody2D = StoneBlockGd.new()
+	add_child_autofree(block)
+	block.call(&"setup", Vector2i(1, 1), 1, CELL_SIZE)
+	watch_signals(EventBus)
+	block.call(&"destroy_instantly")
+	assert_signal_not_emitted(EventBus, "block_destroyed")
+	assert_false(block.is_queued_for_deletion(), "una piedra nunca debe destruirse")
+
+
 func test_queso_takes_double_damage_per_hit() -> void:
 	MetaManager.set_upgrade_level("damage", 0)  ## arreglo del test: sin mejora de la tienda
 	var block: StaticBody2D = QuesoBlockGd.new()

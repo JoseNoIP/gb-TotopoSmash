@@ -5,85 +5,85 @@
   "grid_cols": 18,
   "grid_rows": 16,
   "starting_seeds": 50,
-  "par_turns": 10,
+  "par_turns": 7,
   "cells": [
     {
       "col": 4,
       "row": 2,
       "kind": "totopo",
-      "hp": 75
+      "hp": 45
     },
     {
       "col": 4,
       "row": 3,
       "kind": "totopo",
-      "hp": 84
+      "hp": 67
     },
     {
       "col": 4,
       "row": 4,
       "kind": "totopo",
-      "hp": 115
+      "hp": 30
     },
     {
       "col": 4,
       "row": 5,
       "kind": "totopo",
-      "hp": 44
+      "hp": 66
     },
     {
       "col": 4,
       "row": 6,
       "kind": "totopo",
-      "hp": 86
+      "hp": 36
     },
     {
       "col": 4,
       "row": 7,
       "kind": "totopo",
-      "hp": 102
+      "hp": 114
     },
     {
       "col": 4,
       "row": 8,
       "kind": "totopo",
-      "hp": 42
+      "hp": 87
     },
     {
       "col": 4,
       "row": 9,
       "kind": "totopo",
-      "hp": 55
+      "hp": 108
     },
     {
       "col": 4,
       "row": 10,
       "kind": "totopo",
-      "hp": 86
+      "hp": 66
     },
     {
       "col": 4,
       "row": 11,
       "kind": "totopo",
-      "hp": 36
+      "hp": 35
     },
     {
       "col": 4,
       "row": 12,
       "kind": "totopo",
-      "hp": 40
+      "hp": 63
     },
     {
       "col": 4,
       "row": 13,
       "kind": "totopo",
-      "hp": 42
+      "hp": 60
     },
     {
       "col": 5,
       "row": 3,
       "kind": "totopo",
-      "hp": 89
+      "hp": 25
     },
     {
       "col": 5,
@@ -100,13 +100,13 @@
       "col": 5,
       "row": 6,
       "kind": "totopo",
-      "hp": 84
+      "hp": 27
     },
     {
       "col": 6,
       "row": 3,
       "kind": "totopo",
-      "hp": 57
+      "hp": 28
     },
     {
       "col": 6,
@@ -118,19 +118,19 @@
       "col": 6,
       "row": 5,
       "kind": "totopo",
-      "hp": 35
+      "hp": 52
     },
     {
       "col": 6,
       "row": 6,
       "kind": "totopo",
-      "hp": 173
+      "hp": 49
     },
     {
       "col": 7,
       "row": 3,
       "kind": "totopo",
-      "hp": 94
+      "hp": 36
     },
     {
       "col": 7,
@@ -147,109 +147,109 @@
       "col": 7,
       "row": 6,
       "kind": "totopo",
-      "hp": 55
+      "hp": 41
     },
     {
       "col": 8,
       "row": 3,
       "kind": "totopo",
-      "hp": 59
+      "hp": 50
     },
     {
       "col": 8,
       "row": 4,
       "kind": "totopo",
-      "hp": 87
+      "hp": 61
     },
     {
       "col": 8,
       "row": 5,
       "kind": "totopo",
-      "hp": 75
+      "hp": 35
     },
     {
       "col": 8,
       "row": 6,
       "kind": "totopo",
-      "hp": 35
+      "hp": 72
     },
     {
       "col": 9,
       "row": 4,
       "kind": "totopo",
-      "hp": 57
+      "hp": 37
     },
     {
       "col": 9,
       "row": 5,
       "kind": "totopo",
-      "hp": 135
+      "hp": 51
     },
     {
       "col": 10,
       "row": 4,
       "kind": "totopo",
-      "hp": 152
+      "hp": 45
     },
     {
       "col": 10,
       "row": 5,
       "kind": "totopo",
-      "hp": 70
+      "hp": 25
     },
     {
       "col": 11,
       "row": 4,
       "kind": "totopo",
-      "hp": 91
+      "hp": 64
     },
     {
       "col": 11,
       "row": 5,
       "kind": "totopo",
-      "hp": 88
+      "hp": 40
     },
     {
       "col": 12,
       "row": 4,
       "kind": "totopo",
-      "hp": 131
+      "hp": 113
     },
     {
       "col": 12,
       "row": 5,
       "kind": "totopo",
-      "hp": 76
+      "hp": 43
     },
     {
       "col": 7,
       "row": 8,
       "kind": "totopo",
-      "hp": 69
+      "hp": 61
     },
     {
       "col": 8,
       "row": 7,
       "kind": "totopo",
-      "hp": 81
+      "hp": 64
     },
     {
       "col": 8,
       "row": 8,
       "kind": "totopo",
-      "hp": 104
+      "hp": 103
     },
     {
       "col": 8,
       "row": 9,
       "kind": "totopo",
-      "hp": 62
+      "hp": 74
     },
     {
       "col": 9,
       "row": 8,
       "kind": "totopo",
-      "hp": 89
+      "hp": 33
     },
     {
       "col": 3,

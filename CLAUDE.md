@@ -272,7 +272,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 - **Sistema de mejoras/oro/personajes** (`MetaManager`, autoload separado de `SaveManager` — persiste en `user://meta.json`): oro ganado al terminar cualquier run/nivel (`Constants.GOLD_PER_SCORE_POINT` × score), 3 mejoras permanentes compradas con oro (Semillas Extra / Daño Base / Velocidad, 5 niveles cada una, ver `src/features/meta/upgrade_shop.gd` para costos/bonos puros) aplicadas en `TurnManager`/`block_base.gd`, y 4 personajes cosméticos (tinte de color del molcajete vía `modulate`, sin efecto en gameplay) desbloqueables/seleccionables desde `UpgradeShopScreen.tscn` (accesible desde `MainMenu`, botón TIENDA).
 - **Multi-idioma:** es/en/pt_BR/fr vía `/mobile-i18n` — `LocalizationManager` + `assets/translations/translations.txt`. `MainMenu` redirige a `LanguageSelectScreen` en la primera ejecución.
 - **Assets:** bloques (totopo/queso con cara, salsa/piedra sin cara) + molcajete generados con IA (Pollinations.ai, 512px→`LANCZOS` al tamaño real — ver `tools/fetch_ai_assets.py`) + semilla procedural (la IA no dio buen resultado a 16px) + íconos de power-up procedurales (`tools/gen_assets.py`, incluye 2 variantes de láser por orientación) + fondo de menú por IA + SFX y música de fondo reales (`.wav` sintetizado, `AudioManager`, loop a -8dB). Ver sección "Pulido de assets" en `idea-base.md`.
-- **Build:** `gdlint` 0 errores · GUT 209/209 tests (correr SIEMPRE vía `./tools/run_tests.sh`, no invocar GUT directo — ver sección "Desbloqueo secuencial..." en `idea-base.md`) · `--export-debug Android` genera APK válido · `deploy-playstore.yml` probado (subió a Play Store Internal Testing).
+- **Build:** `gdlint` 0 errores · GUT 217/217 tests (correr SIEMPRE vía `./tools/run_tests.sh`, no invocar GUT directo — ver sección "Desbloqueo secuencial..." en `idea-base.md`) · `--export-debug Android` genera APK válido · `deploy-playstore.yml` probado (subió a Play Store Internal Testing).
 
 ### Señales clave en EventBus
 
@@ -293,7 +293,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 | `seed_count_changed(n)` | `TurnManager` | `HUD` |
 | `block_damaged(pos, hp, max_hp)` | `block_base._apply_damage()` | (feedback visual propio del bloque) |
 | `block_destroyed(pos, type, score)` | `block_base._die()` | `GameManager` (score), `BoardManager` (borra de la grilla), `VFXSpawner`, `HapticManager` |
-| `salsa_exploded(pos)` | `salsa_jar_block._die()` | `BoardManager` (daño en cruz), `VFXSpawner`, `HapticManager` |
+| `salsa_exploded(pos)` | `salsa_jar_block._die()` | `BoardManager` (destruye los 8 bloques alrededor vía `destroy_instantly()`, excepto piedra/power-ups — GDD actualizado), `VFXSpawner`, `HapticManager` |
 | `laser_triggered(grid_pos, is_horizontal)` | `laser_icon.gd` al ser tocado | `BoardManager` (daño en línea recta, fila u columna completa) |
 | `board_reached_bottom` | `BoardManager` (game over) | `GameManager` |
 | `seed_bounced(block_type)` | `Seed._handle_collision()` en cada rebote | `AudioManager` (tono de rebote o crunch/thud según el material) |
@@ -309,7 +309,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 ### Referencia Rápida del GDD
 
 - **Molcajete:** 10 semillas iniciales, velocidad 640px/s, ráfaga cada 0.06s, cono de apuntado ±15° respecto a la horizontal.
-- **Totopo:** `HP = oleada`. **Queso:** `HP = ceil(oleada * 1.5)`, daño x2, -15% velocidad de semilla al rebotar (piso `SEED_MIN_SPEED_RATIO = 0.35`). **Salsa:** 10 de daño en cruz al morir. **Piedra:** indestructible. Esto rige `wave_scaling.gd` (Modo Infinito); Modo Nivel usa su propia escala VARIADA por NÚMERO DE NIVEL, ver `tools/gen_levels.py::random_totopo_hp()`.
+- **Totopo:** `HP = oleada`. **Queso:** `HP = ceil(oleada * 1.5)`, daño x2, -15% velocidad de semilla al rebotar (piso `SEED_MIN_SPEED_RATIO = 0.35`). **Salsa:** al morir, DESTRUYE (no daña) los 8 bloques pegados alrededor — cruz + diagonales (GDD actualizado, pedido explícito del usuario) — excepto piedra (exenta vía `is_indestructible`) y power-ups (viven en `_icons`, un Dictionary aparte que la explosión ni recorre). **Piedra:** indestructible. Esto rige `wave_scaling.gd` (Modo Infinito); Modo Nivel usa su propia escala VARIADA por NÚMERO DE NIVEL, ver `tools/gen_levels.py::random_totopo_hp()`.
 - **Oleadas:** 1–5 introducción (solo totopo) · 6–15 geometría (triángulo + queso + salsa) · 16–30 piedra · 31+ espaciado ajustado.
 - **Grid:** 7 columnas × 9 filas (`Constants.GRID_COLS/GRID_ROWS`), diseño base 390×844.
 - **Metagame de oro/mejoras/personajes** — pedido explícito del usuario, agregado en esta sesión (no estaba en el GDD original). Ver `MetaManager`/`src/features/meta/upgrade_shop.gd` y la sección "Estado Actual del Juego" arriba.
@@ -325,7 +325,7 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 | `MetaManager` | `src/core/MetaManager.gd` | Persistencia `user://meta.json` — oro, mejoras permanentes, personajes (separado de SaveManager por el límite de 20 métodos públicos de gdlint + responsabilidad propia) |
 | `LevelManager` | `src/core/LevelManager.gd` | Cache de niveles cargados, buzón de nivel pendiente (no destructivo), manifiesto, progreso de desbloqueo por pack (`user://pack_progress.json`) |
 | `LocalizationManager` | `src/core/LocalizationManager.gd` | Carga `translations.txt`, aplica locale (es/en/pt_BR/fr) |
-| `AudioManager` | `src/features/audio/AudioManager.gd` | SFX + música de fondo en loop (arranca sola en `_ready()`, no crashea sin `.ogg`) |
+| `AudioManager` | `src/features/audio/AudioManager.gd` | SFX + música de fondo en loop (arranca sola en `_ready()`, no crashea sin `.ogg`); dueña de sus propias preferencias música/SFX independientes (`user://audio_settings.json` — pedido explícito del usuario, no vive en SaveManager por el límite de 20 métodos públicos de gdlint) |
 | `HapticManager` | `src/features/audio/HapticManager.gd` | Vibración sutil solo en destrucción/explosión |
 
 ### Skills y Agentes Disponibles

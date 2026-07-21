@@ -93,22 +93,46 @@ func test_block_reaching_molcajete_row_triggers_game_over_and_stops_the_wave() -
 	)
 
 
-func test_salsa_explosion_damages_only_cross_neighbors() -> void:
+## GDD actualizado (pedido explícito del usuario): la salsa destruye TODOS los bloques
+## pegados alrededor (los 8 vecinos, incluidas diagonales), no solo daña en cruz. Un
+## bloque diagonal (antes ignorado) ahora también debe ser destruido; uno lejano sigue sin
+## recibir nada.
+func test_salsa_explosion_destroys_all_eight_surrounding_neighbors() -> void:
 	var board: Node2D = BoardManagerGd.new()
 	add_child_autofree(board)
-	var neighbor: StaticBody2D = TotopoBlockGd.new()
-	add_child_autofree(neighbor)
-	neighbor.call(&"setup", Vector2i(3, 4), 50, CELL_SIZE)
+	var cross_neighbor: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(cross_neighbor)
+	cross_neighbor.call(&"setup", Vector2i(3, 4), 50, CELL_SIZE)
+	var diagonal_neighbor: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(diagonal_neighbor)
+	diagonal_neighbor.call(&"setup", Vector2i(4, 4), 50, CELL_SIZE)
 	var far_block: StaticBody2D = TotopoBlockGd.new()
 	add_child_autofree(far_block)
 	far_block.call(&"setup", Vector2i(6, 8), 50, CELL_SIZE)
 	var blocks: Dictionary = board.get(&"_blocks")
-	blocks[Vector2i(3, 4)] = neighbor
+	blocks[Vector2i(3, 4)] = cross_neighbor
+	blocks[Vector2i(4, 4)] = diagonal_neighbor
 	blocks[Vector2i(6, 8)] = far_block
-	EventBus.salsa_exploded.emit(Vector2i(3, 3))  # arriba del vecino, en cruz
-	var msg: String = "vecino en cruz debe recibir BLOCK_SALSA_EXPLOSION_DAMAGE"
-	assert_eq(int(neighbor.get(&"current_hp")), 40, msg)
-	assert_eq(int(far_block.get(&"current_hp")), 50, "un bloque lejano no debe recibir daño")
+	watch_signals(EventBus)
+	EventBus.salsa_exploded.emit(Vector2i(3, 3))  # (3,4) es vecino en cruz, (4,4) es diagonal
+	assert_true(int(cross_neighbor.get(&"current_hp")) <= 0, "vecino en cruz debe destruirse")
+	assert_true(int(diagonal_neighbor.get(&"current_hp")) <= 0, "vecino diagonal debe destruirse")
+	assert_eq(int(far_block.get(&"current_hp")), 50, "un bloque lejano no debe recibir nada")
+
+
+## "A excepción de... un bloque de piedra" (pedido explícito del usuario) — ya exento
+## gratis vía el guard de is_indestructible en destroy_instantly(), sin lógica especial.
+func test_salsa_explosion_never_destroys_an_indestructible_stone_neighbor() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	var stone: StaticBody2D = StoneBlockGd.new()
+	add_child_autofree(stone)
+	stone.call(&"setup", Vector2i(3, 4), 1, CELL_SIZE)
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks[Vector2i(3, 4)] = stone
+	EventBus.salsa_exploded.emit(Vector2i(3, 3))
+	assert_true(is_instance_valid(stone), "la piedra nunca debe destruirse por la explosión")
+	assert_true(bool(stone.get(&"is_indestructible")))
 
 
 ## Regresión: LemonIcon/SeedExtraIcon se autodestruyen (queue_free) al ser tocados por una

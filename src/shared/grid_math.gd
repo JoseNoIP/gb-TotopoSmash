@@ -39,16 +39,18 @@ static func is_in_bounds(col: int, row: int) -> bool:
 	return col >= 0 and col < Constants.GRID_COLS and row >= 0 and row < Constants.GRID_ROWS
 
 
-## Vecinos en cruz (arriba, abajo, izquierda, derecha) para la explosión de salsa.
-static func cross_neighbors(col: int, row: int) -> Array:
+## Los 8 vecinos alrededor de (col,row) — arriba/abajo/izq/der + las 4 diagonales — para
+## la explosión de salsa (GDD actualizado, pedido explícito del usuario: "debe destruir
+## todos los bloques que estén alrededor... los que estén pegados", no solo en cruz).
+## SIN filtrar por is_in_bounds(): esa función usa Constants.GRID_COLS/GRID_ROWS (la
+## grilla del tablero NORMAL), que da resultados incorrectos para niveles `static` con su
+## propia grilla más ancha (ver board_manager.gd) — el propio Dictionary disperso de
+## BoardManager (`_blocks.has(neighbor)`) ya es el único chequeo de límites que hace falta.
+static func surrounding_neighbors(col: int, row: int) -> Array:
 	var result: Array = []
-	var candidates: Array = [
-		Vector2i(col, row - 1),
-		Vector2i(col, row + 1),
-		Vector2i(col - 1, row),
-		Vector2i(col + 1, row),
-	]
-	for candidate: Vector2i in candidates:
-		if is_in_bounds(candidate.x, candidate.y):
-			result.append(candidate)
+	for dy: int in range(-1, 2):
+		for dx: int in range(-1, 2):
+			if dx == 0 and dy == 0:
+				continue
+			result.append(Vector2i(col + dx, row + dy))
 	return result

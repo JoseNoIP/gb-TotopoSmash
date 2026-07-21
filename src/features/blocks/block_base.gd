@@ -38,9 +38,23 @@ func take_damage() -> void:
 	_apply_damage(amount)
 
 
-## Daño explícito (usado por la explosión en cruz del Frasco de Salsa).
+## Daño explícito en cantidad fija (usado por el power-up láser: Constants.LASER_DAMAGE a
+## toda una fila/columna).
 func take_explosion_damage(amount: int) -> void:
 	_apply_damage(amount)
+
+
+## Destrucción instantánea SIN pasar por daño/HP — usada por la explosión del Frasco de
+## Salsa (GDD actualizado, pedido explícito del usuario: "debe destruir todos los bloques
+## que estén alrededor... a excepción de... un bloque de piedra"). El guard de
+## `is_indestructible` es el mismo que ya usa `_apply_damage()` — la piedra queda exenta
+## automáticamente sin necesitar lógica nueva. Otorga el mismo score que morir por daño
+## normal (mismo cálculo que `_die()`), no un valor especial por "instantáneo".
+func destroy_instantly() -> void:
+	if is_indestructible or current_hp <= 0:
+		return
+	current_hp = 0
+	_die()
 
 
 ## Hook para efectos al rebotar (Queso lo usa para frenar la semilla). No-op por defecto.

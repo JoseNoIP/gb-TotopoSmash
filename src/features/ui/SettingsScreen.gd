@@ -10,7 +10,8 @@ const LANG_CODES: Array = ["es", "en", "pt_BR", "fr"]
 const LANG_NAME_KEYS: Array = ["LANG_NAME_ES", "LANG_NAME_EN", "LANG_NAME_PT_BR", "LANG_NAME_FR"]
 
 var _panel: PanelContainer = PanelContainer.new()
-var _sound_check: CheckButton = CheckButton.new()
+var _music_check: CheckButton = CheckButton.new()
+var _sfx_check: CheckButton = CheckButton.new()
 var _vibration_check: CheckButton = CheckButton.new()
 var _sensitivity_slider: HSlider = HSlider.new()
 var _lang_button: Button = Button.new()
@@ -24,7 +25,8 @@ func _ready() -> void:
 
 
 func open() -> void:
-	_sound_check.button_pressed = SaveManager.get_sound_enabled()
+	_music_check.button_pressed = AudioManager.get_music_enabled()
+	_sfx_check.button_pressed = AudioManager.get_sfx_enabled()
 	_vibration_check.button_pressed = SaveManager.get_vibration_enabled()
 	_sensitivity_slider.value = SaveManager.get_swipe_sensitivity()
 	_refresh_lang_button()
@@ -33,7 +35,9 @@ func open() -> void:
 
 func _build_ui() -> void:
 	var panel_w: float = 300.0
-	var panel_h: float = 340.0
+	## +36 respecto al valor anterior (340) — el interruptor único de sonido se separó en
+	## dos (música/efectos), pedido explícito del usuario.
+	var panel_h: float = 376.0
 	var origin_x: float = (Constants.DESIGN_WIDTH - panel_w) * 0.5
 	var origin_y: float = (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	_panel.position = Vector2(origin_x, origin_y)
@@ -58,9 +62,13 @@ func _build_ui() -> void:
 	title.add_theme_font_size_override(&"font_size", 20)
 	vbox.add_child(title)
 
-	_sound_check.text = "SETTINGS_SOUND"
-	_sound_check.toggled.connect(_on_sound_toggled)
-	vbox.add_child(_sound_check)
+	_music_check.text = "SETTINGS_MUSIC"
+	_music_check.toggled.connect(_on_music_toggled)
+	vbox.add_child(_music_check)
+
+	_sfx_check.text = "SETTINGS_SFX"
+	_sfx_check.toggled.connect(_on_sfx_toggled)
+	vbox.add_child(_sfx_check)
 
 	_vibration_check.text = "SETTINGS_VIBRATION"
 	_vibration_check.toggled.connect(_on_vibration_toggled)
@@ -98,16 +106,16 @@ func _build_ui() -> void:
 	vbox.add_child(close_btn)
 
 
-## La música de fondo (AudioManager, en loop desde el arranque) no se detiene sola al
-## desactivar el sonido — a diferencia de los SFX (uno solo, ya terminan por su cuenta),
-## sin este toque explícito seguiría sonando con el interruptor en "apagado", lo cual el
-## jugador razonablemente esperaría que silenciara TODO.
-func _on_sound_toggled(enabled: bool) -> void:
-	SaveManager.set_sound_enabled(enabled)
-	if enabled:
-		AudioManager.play_music()
-	else:
-		AudioManager.stop_music()
+## AudioManager.set_music_enabled() ya se encarga de parar/reanudar la música en loop —
+## pedido explícito del usuario: poder silenciar SOLO la música al abrir la app, SOLO los
+## efectos durante la partida, o ambos, cada uno por separado (antes un único interruptor
+## apagaba las dos cosas juntas).
+func _on_music_toggled(enabled: bool) -> void:
+	AudioManager.set_music_enabled(enabled)
+
+
+func _on_sfx_toggled(enabled: bool) -> void:
+	AudioManager.set_sfx_enabled(enabled)
 
 
 func _on_vibration_toggled(enabled: bool) -> void:
