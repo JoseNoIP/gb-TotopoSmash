@@ -35,12 +35,23 @@ const BLOCK_TYPE_TO_SFX: Dictionary = {
 
 ## GDD: "rebotes normales en escala ascendente... para que las ráfagas largas suenen como
 ## una melodía rítmica" — un solo sample con pitch_scale creciente por rebote, en vez de
-## varios archivos de tonos distintos. Techo bajado (pedido explícito del usuario: el
-## sonido de rebote se sentía "ruidoso" con muchas semillas) — antes llegaba hasta 1.42x
-## (7 pasos de 0.06), demasiado agudo/chillón al acumularse en una ráfaga larga; ahora tope
-## de 1.20x (5 pasos de 0.04), sigue sonando a "escala ascendente" sin volverse molesto.
-const BOUNCE_PITCH_STEP: float = 0.04
-const BOUNCE_PITCH_MAX_STEPS: int = 5
+## varios archivos de tonos distintos. Revertido a los valores originales (0.06/7) tras
+## feedback directo del usuario ("me agradaba más cómo sonaba la primer versión") — un
+## intento anterior de bajar el techo no gustó más que el original. La molestia real con
+## muchas semillas viene del volumen de rebotes contra PARED, no de esta escala — ver
+## WALL_BOUNCE_PITCH_SCALE/VOLUME_DB más abajo.
+const BOUNCE_PITCH_STEP: float = 0.06
+const BOUNCE_PITCH_MAX_STEPS: int = 7
+
+## Pedido explícito del usuario: "también al rebotar en las paredes es molesto" — las
+## paredes/techo se golpean MUCHÍSIMO más seguido que un bloque real (casi cualquier
+## rebote que no sea contra un bloque termina siendo contra el borde del tablero), así que
+## acumulan volumen/escalada de tono mucho más rápido que el resto de los SFX. Un tono fijo
+## (SIN escalar, `_bounce_streak` no se toca acá) y más silencioso reduce esa acumulación
+## sin quitarle feedback al rebote contra un bloque real, que sigue sonando igual que
+## siempre.
+const WALL_BOUNCE_PITCH_SCALE: float = 0.85
+const WALL_BOUNCE_VOLUME_DB: float = -9.0
 
 var _music_player: AudioStreamPlayer = AudioStreamPlayer.new()
 var _bounce_streak: int = 0
@@ -88,7 +99,7 @@ func set_sfx_enabled(value: bool) -> void:
 	_save_settings()
 
 
-func play_sfx(sfx_name: StringName, pitch_scale: float = 1.0) -> void:
+func play_sfx(sfx_name: StringName, pitch_scale: float = 1.0, volume_db: float = 0.0) -> void:
 	if not get_sfx_enabled():
 		return
 	var filename: String = SFX_FILES.get(sfx_name, "")
@@ -100,6 +111,7 @@ func play_sfx(sfx_name: StringName, pitch_scale: float = 1.0) -> void:
 	var player: AudioStreamPlayer = AudioStreamPlayer.new()
 	player.stream = load(path)
 	player.pitch_scale = pitch_scale
+	player.volume_db = volume_db
 	player.bus = &"Master"
 	add_child(player)
 	player.finished.connect(player.queue_free)
@@ -124,10 +136,19 @@ func _on_burst_fired(_seed_count: int) -> void:
 	_bounce_streak = 0
 
 
+## `block_type == ""` es SIEMPRE pared/techo (WorldBounds, sin esa propiedad — todos los
+## bloques reales la declaran, incluso stone/salsa/triangle, ver block_base.gd) — pedido
+## explícito del usuario: rebotar contra pared se sentía molesto, mucho más frecuente que
+## contra un bloque real. Ese caso usa un tono fijo y más silencioso, SIN sumar a
+## `_bounce_streak` (no tiene sentido que la pared "robe" pasos de la escala ascendente
+## pensada para rebotes contra bloques).
 func _on_seed_bounced(block_type: String) -> void:
 	var mapped: Variant = BLOCK_TYPE_TO_SFX.get(block_type)
 	if mapped != null:
 		play_sfx(mapped)
+		return
+	if block_type == "":
+		play_sfx(&"bounce", WALL_BOUNCE_PITCH_SCALE, WALL_BOUNCE_VOLUME_DB)
 		return
 	var step: int = _bounce_streak % (BOUNCE_PITCH_MAX_STEPS + 1)
 	play_sfx(&"bounce", 1.0 + step * BOUNCE_PITCH_STEP)

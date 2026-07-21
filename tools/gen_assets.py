@@ -519,17 +519,19 @@ def save_wav(path, samples):
 # ---------------------------------------------------------------------------
 
 def sfx_seed_bounce():
-    """Rebote normal — tono corto y suave (pop/gota de agua). Pedido explícito del
-    usuario tras jugar: "cuando hay muchas semillas [rebotando], tiende a ser un poco
-    molesto... se siente ruidoso" — la versión anterior (1046Hz, ataque casi instantáneo
-    de 1ms) sonaba como un "click" agudo que se acumulaba mal al superponerse muchas veces
-    seguidas (niveles con decenas/cientos de semillas). Fix: más grave (740Hz en vez de
-    1046Hz — un poco más de una quinta abajo, menos chillón), ataque más suave (12ms en
-    vez de 1ms, sin transiente de "click"), release un poco más largo (cae más redondo en
-    vez de cortarse en seco) y amplitud más baja. AudioManager sigue subiendo pitch_scale
-    en cada rebote sucesivo (ver BOUNCE_PITCH_STEP/MAX_STEPS, también reducidos)."""
-    s = _sine(740, 0.11, 0.3)
-    return _env(s, 0.012, 0.07)
+    """Rebote normal — tono corto y brillante (xilófono/gota de agua). AudioManager
+    sube pitch_scale en cada rebote sucesivo para el efecto de "escala ascendente".
+
+    Revertido a la versión original (1046Hz) tras feedback directo del usuario: un
+    intento anterior de hacerlo "menos ruidoso" (740Hz, ataque más suave, ver historial
+    de git) resultó en un sonido que le gustaba MENOS que el original — "me agradaba más
+    cómo sonaba la primer versión". La molestia real reportada ("el rebote aún es
+    molesto... también al rebotar en las paredes") no era el tono en sí, sino la cantidad
+    de rebotes contra PAREDES específicamente (mucho más frecuentes que contra bloques) —
+    solucionado en AudioManager.gd (rebote contra pared más silencioso y sin escalar de
+    tono), no cambiando este sonido de nuevo."""
+    s = _sine(1046, 0.09, 0.4)
+    return _env(s, 0.001, 0.09)
 
 
 def sfx_totopo_crunch():
