@@ -58,3 +58,22 @@ func test_laser_triggered_plays_the_laser_zap_sfx() -> void:
 	EventBus.laser_triggered.emit(Vector2i.ZERO, "horizontal")
 	var msg: String = "laser_triggered debe crear un AudioStreamPlayer para laser_zap.wav"
 	assert_gt(AudioManager.get_child_count(), children_before, msg)
+
+
+## Regresión directa del pedido del usuario: "también al rebotar en las paredes es
+## molesto" — block_type == "" es SIEMPRE pared/techo (ningún bloque real llega con ese
+## valor, ver block_base.gd) y no debe sumar a la escalada de tono pensada para rebotes
+## contra bloques reales (mucho menos frecuentes).
+func test_wall_bounce_does_not_increment_the_pitch_escalation_streak() -> void:
+	AudioManager.set(&"_bounce_streak", 0)
+	EventBus.seed_bounced.emit("")
+	assert_eq(int(AudioManager.get(&"_bounce_streak")), 0)
+	EventBus.seed_bounced.emit("")
+	var msg: String = "varios rebotes contra pared seguidos tampoco deben sumar"
+	assert_eq(int(AudioManager.get(&"_bounce_streak")), 0, msg)
+
+
+func test_block_bounce_increments_the_pitch_escalation_streak() -> void:
+	AudioManager.set(&"_bounce_streak", 0)
+	EventBus.seed_bounced.emit("some_untyped_block")  # no está en BLOCK_TYPE_TO_SFX
+	assert_eq(int(AudioManager.get(&"_bounce_streak")), 1)

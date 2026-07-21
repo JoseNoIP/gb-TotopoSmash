@@ -868,13 +868,65 @@ Pedido explícito del usuario tras jugar: "en el pack de navidad todos los bloqu
   solo datos regenerados — el test `test_level_manifest_integrity.gd` ya valida el
   catálogo completo). Los 115 niveles vueltos a validar con `validate_level.py`.
 
+## Revert del sonido de rebote + rebote contra pared separado ✅
+
+Pedido explícito del usuario tras escuchar el cambio anterior: "el rebote aún es
+molesto, me agradaba más cómo sonaba la primer versión del sonido del juego. También al
+rebotar en las paredes es molesto." Feedback importante: el ajuste de la ronda anterior
+(bajar frecuencia/suavizar ataque/bajar el techo de escalada) no fue una mejora — el
+usuario prefería el sonido original, y el problema real no era el tono en sí.
+
+- **`sfx_seed_bounce()` revertido a los valores originales** (1046Hz, ataque 1ms, release
+  90ms, amplitud 0.4) — se deshizo por completo el cambio de la ronda anterior.
+  `AudioManager.BOUNCE_PITCH_STEP`/`BOUNCE_PITCH_MAX_STEPS` también revertidos a 0.06/7
+  (el techo original de escalada de tono, 1.42x).
+- **Rebote contra PARED separado del rebote contra bloque** (pedido explícito: "también
+  al rebotar en las paredes es molesto") — `block_type == ""` (WorldBounds, ningún bloque
+  real llega con ese valor — todos, incluso stone/salsa/triangle, declaran su propio
+  `block_type`) ahora usa un tono fijo y más silencioso
+  (`WALL_BOUNCE_PITCH_SCALE=0.85`/`WALL_BOUNCE_VOLUME_DB=-9.0`) y NO suma a
+  `_bounce_streak` — la escalada ascendente de tono queda reservada para rebotes contra
+  bloques reales (mucho menos frecuentes que contra el borde del tablero, así que tiene
+  más sentido ahí como "melodía rítmica" sin saturar). `play_sfx()` ganó un parámetro
+  `volume_db` nuevo para soportar esto.
+- Verificado con `gdlint` + 223/223 tests (2 regresiones nuevas: un rebote contra pared no
+  incrementa la escalada; uno contra bloque sí) — no se pudo confirmar escuchando de
+  verdad (sin acceso a audio real desde acá), pedirle al usuario que confirme jugando.
+
+## Impacto de bloque: golpe de marimba en vez de crujido ✅
+
+Confirmación del usuario tras probar el fix anterior: "el de la pared no es tan molesto,
+pero el de los bloques, sí" — el rebote contra pared quedó bien, pero el sonido al
+golpear un bloque real (`sfx_totopo_crunch()`, usado por totopo Y triángulo — el bloque
+más común del juego, con mucho el que más se escucha) seguía siendo el problema real.
+Pedido explícito: "puedes poner una especie de golpe de marimba pero seco (sin eco) y
+que no esté fuerte."
+
+- **`sfx_totopo_crunch()` rediseñado por completo** — de "ruido + snap agudo
+  descendente" (crujido duro/áspero) a un golpe de marimba: una fundamental (294Hz, D4,
+  registro medio-grave de una barra real) mezclada con su armónico característico
+  (~3.93x la fundamental, el modo de vibración que le da a una marimba su timbre "de
+  madera" en vez de metálico/xilófono), envolvente corta (13ms release, prácticamente
+  toda la duración de 0.13s) para que sea "seco" — sin cola larga sonando.
+- **Bug real encontrado de paso: `_mix()` SIEMPRE normaliza al 90% del pico**, sin
+  importar las amplitudes de entrada — el primer intento (amplitudes 0.22/0.08 antes de
+  mezclar) salió sonando al 90% del volumen máximo de todas formas ("que no esté fuerte"
+  incumplido). Las amplitudes elegidas antes de `_mix()` solo controlan el BALANCE entre
+  las capas mezcladas, nunca el volumen final del resultado — cualquier sonido nuevo que
+  use `_mix()` y necesite quedar bajo de volumen debe escalar el resultado DESPUÉS de
+  `_env()`, no confiar en las amplitudes de entrada. Fix: `x * 0.45` aplicado al final —
+  pico real bajó de ~90% a ~40% del máximo.
+- No verificado escuchando de verdad todavía (solo con forma de onda/pico/RMS) — pedirle
+  al usuario que confirme jugando si el marimba se siente bien o necesita otro ajuste
+  (frecuencia, duración, volumen).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
 - **Balance de los niveles `static` (pack Mundial v3)** — HP variado 25-123 (rango del nivel 30, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (3 rondas de ajuste ya: nivel 100 → 50 → 30). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=1` (bajado de 25, pedido explícito del usuario: "un punto por cada semilla que lo toque, no destruirlos de golpe") también es un valor sin verificar jugando — ¿se siente débil considerando que el láser es persistente y puede tocarse muchas veces en una misma ráfaga?
-- **Sonido de rebote de semillas** — recién ajustado (más grave, ataque más suave, tope de escalada de tono más bajo) por feedback directo del usuario ("se siente ruidoso" con muchas semillas), pero nunca escuchado por el usuario todavía tras el cambio. Puede necesitar otra vuelta de ajuste — regenerar con `sfx_seed_bounce()` en `tools/gen_assets.py` (frecuencia/envolvente) y `AudioManager.BOUNCE_PITCH_STEP/MAX_STEPS` (techo de la escalada) si hace falta.
+- **Sonido de rebote contra pared** — recién separado del rebote contra bloque (más silencioso, sin escalar de tono, ver sección dedicada más abajo) por feedback directo del usuario, pero todavía no confirmado jugando tras el cambio. `WALL_BOUNCE_PITCH_SCALE`/`WALL_BOUNCE_VOLUME_DB` en `AudioManager.gd` son valores de partida — ajustar si sigue sintiéndose molesto o si quedó demasiado apagado.
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
 - **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 

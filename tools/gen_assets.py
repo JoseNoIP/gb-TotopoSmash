@@ -519,26 +519,44 @@ def save_wav(path, samples):
 # ---------------------------------------------------------------------------
 
 def sfx_seed_bounce():
-    """Rebote normal — tono corto y suave (pop/gota de agua). Pedido explícito del
-    usuario tras jugar: "cuando hay muchas semillas [rebotando], tiende a ser un poco
-    molesto... se siente ruidoso" — la versión anterior (1046Hz, ataque casi instantáneo
-    de 1ms) sonaba como un "click" agudo que se acumulaba mal al superponerse muchas veces
-    seguidas (niveles con decenas/cientos de semillas). Fix: más grave (740Hz en vez de
-    1046Hz — un poco más de una quinta abajo, menos chillón), ataque más suave (12ms en
-    vez de 1ms, sin transiente de "click"), release un poco más largo (cae más redondo en
-    vez de cortarse en seco) y amplitud más baja. AudioManager sigue subiendo pitch_scale
-    en cada rebote sucesivo (ver BOUNCE_PITCH_STEP/MAX_STEPS, también reducidos)."""
-    s = _sine(740, 0.11, 0.3)
-    return _env(s, 0.012, 0.07)
+    """Rebote normal — tono corto y brillante (xilófono/gota de agua). AudioManager
+    sube pitch_scale en cada rebote sucesivo para el efecto de "escala ascendente".
+
+    Revertido a la versión original (1046Hz) tras feedback directo del usuario: un
+    intento anterior de hacerlo "menos ruidoso" (740Hz, ataque más suave, ver historial
+    de git) resultó en un sonido que le gustaba MENOS que el original — "me agradaba más
+    cómo sonaba la primer versión". La molestia real reportada ("el rebote aún es
+    molesto... también al rebotar en las paredes") no era el tono en sí, sino la cantidad
+    de rebotes contra PAREDES específicamente (mucho más frecuentes que contra bloques) —
+    solucionado en AudioManager.gd (rebote contra pared más silencioso y sin escalar de
+    tono), no cambiando este sonido de nuevo."""
+    s = _sine(1046, 0.09, 0.4)
+    return _env(s, 0.001, 0.09)
 
 
 def sfx_totopo_crunch():
-    """Impacto Totopo — crujido nítido: ruido + snap descendente corto."""
-    base = _noise(0.12, 0.35)
-    snap = _sweep(2200, 400, 0.05, 0.3)
-    padded_snap = snap + [0.0] * max(0, len(base) - len(snap))
-    s = _mix(base, padded_snap)
-    return _env(s, 0.001, 0.05)
+    """Impacto Totopo (usado también por Triángulo) — golpe de marimba seco y suave.
+    Pedido explícito del usuario tras jugar: "el de los bloques [sigue siendo molesto]...
+    puedes poner una especie de golpe de marimba pero seco (sin eco) y que no esté
+    fuerte" — reemplaza el crujido anterior (ruido + snap agudo descendente), que sonaba
+    duro/molesto al repetirse mucho con muchas semillas rebotando. Una marimba real suena
+    "de madera" (no metálica como un xilófono) sobre todo por un armónico característico
+    ~3.93x la frecuencia fundamental de la barra — se imita mezclando ese armónico (más
+    bajo en volumen) con la fundamental. "Seco" = SIN cola de resonancia larga: el
+    release consume casi toda la duración, cae rápido, no queda "sonando" (no hay ningún
+    efecto de eco/reverb en este pipeline de todas formas, pero antes tampoco lo había —
+    lo que sonaba "con eco" era la percepción del crujido de ruido superpuesto muchas
+    veces, no un eco real)."""
+    fundamental_freq = 294.0  # D4 — registro medio-grave típico de una barra de marimba
+    fundamental = _sine(fundamental_freq, 0.13, 0.22)
+    overtone = _sine(fundamental_freq * 3.93, 0.13, 0.08)  # modo característico de marimba
+    s = _mix(fundamental, overtone)
+    enveloped = _env(s, 0.005, 0.1)
+    ## _mix() SIEMPRE normaliza al 90% del pico sin importar las amplitudes de entrada
+    ## (ver su implementación) — las amplitudes bajas de arriba solo controlan el BALANCE
+    ## fundamental/armónico, no el volumen final. Hay que bajarlo después, a mano, para
+    ## que de verdad "no esté fuerte" como pidió el usuario.
+    return [x * 0.45 for x in enveloped]
 
 
 def sfx_queso_thud():
