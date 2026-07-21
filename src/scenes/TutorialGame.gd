@@ -11,7 +11,15 @@ extends Node2D
 ## conectó después, en tiempo de ejecución). Por eso el paso ADVANCE no espera una señal
 ## nueva — para cuando WATCH_RETURN reacciona, el avance de tablero ya ocurrió.
 
-enum Step { WELCOME, AIM_SHOOT, WATCH_RETURN, ADVANCE, COMPLETE }
+## SPEED_INFO/POWERUPS_INFO/META_INFO (pedido explícito del usuario: "complementar el
+## tutorial para que se expliquen todas las nuevas funcionalidades") — informativos, no
+## interactivos (a diferencia de AIM_SHOOT/WATCH_RETURN/ADVANCE, que sí esperan una señal
+## real del juego): el tablero del tutorial es Modo Infinito oleada 1 (solo totopos, ver
+## GDD), así que power-ups/láser pueden no aparecer ahí todavía — explicarlos como texto
+## en vez de exigir que el jugador encuentre uno de verdad.
+enum Step {
+	WELCOME, AIM_SHOOT, WATCH_RETURN, ADVANCE, SPEED_INFO, POWERUPS_INFO, META_INFO, COMPLETE
+}
 
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TurnManagerGd := preload("res://src/features/board/turn_manager.gd")
@@ -126,6 +134,21 @@ func _advance_to(step: Step) -> void:
 			_hint_label.text = tr(&"TUTORIAL_ADVANCE_HINT")
 			_action_button.text = tr(&"BTN_UNDERSTOOD")
 			_action_button.show()
+		Step.SPEED_INFO:
+			_title_label.text = tr(&"TUTORIAL_SPEED_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_SPEED_HINT")
+			_action_button.text = tr(&"BTN_UNDERSTOOD")
+			_action_button.show()
+		Step.POWERUPS_INFO:
+			_title_label.text = tr(&"TUTORIAL_POWERUPS_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_POWERUPS_HINT")
+			_action_button.text = tr(&"BTN_UNDERSTOOD")
+			_action_button.show()
+		Step.META_INFO:
+			_title_label.text = tr(&"TUTORIAL_META_TITLE")
+			_hint_label.text = tr(&"TUTORIAL_META_HINT")
+			_action_button.text = tr(&"BTN_UNDERSTOOD")
+			_action_button.show()
 		Step.COMPLETE:
 			_title_label.text = tr(&"TUTORIAL_COMPLETE_TITLE")
 			_hint_label.text = tr(&"TUTORIAL_COMPLETE_HINT")
@@ -138,6 +161,12 @@ func _on_action_pressed() -> void:
 		Step.WELCOME:
 			_advance_to(Step.AIM_SHOOT)
 		Step.ADVANCE:
+			_advance_to(Step.SPEED_INFO)
+		Step.SPEED_INFO:
+			_advance_to(Step.POWERUPS_INFO)
+		Step.POWERUPS_INFO:
+			_advance_to(Step.META_INFO)
+		Step.META_INFO:
 			_advance_to(Step.COMPLETE)
 		Step.COMPLETE:
 			SaveManager.set_tutorial_shown(true)

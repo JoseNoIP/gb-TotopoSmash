@@ -53,23 +53,28 @@ func test_is_in_bounds_rejects_out_of_range_values() -> void:
 	assert_false(GridMathGd.is_in_bounds(0, Constants.GRID_ROWS), "row == GRID_ROWS ya es inválida")
 
 
-func test_cross_neighbors_center_cell_has_four_neighbors() -> void:
-	var neighbors: Array = GridMathGd.cross_neighbors(3, 4)
-	assert_eq(neighbors.size(), 4)
+## Regla GDD actualizada (pedido explícito del usuario): la salsa ya no daña solo en
+## cruz, ahora destruye TODOS los bloques pegados alrededor — los 8 vecinos, incluidas
+## las 4 diagonales.
+func test_surrounding_neighbors_center_cell_has_eight_neighbors() -> void:
+	var neighbors: Array = GridMathGd.surrounding_neighbors(3, 4)
+	assert_eq(neighbors.size(), 8)
 	assert_has(neighbors, Vector2i(3, 3))
 	assert_has(neighbors, Vector2i(3, 5))
 	assert_has(neighbors, Vector2i(2, 4))
 	assert_has(neighbors, Vector2i(4, 4))
+	assert_has(neighbors, Vector2i(2, 3))
+	assert_has(neighbors, Vector2i(4, 3))
+	assert_has(neighbors, Vector2i(2, 5))
+	assert_has(neighbors, Vector2i(4, 5))
 
 
-func test_cross_neighbors_corner_cell_has_two_neighbors() -> void:
-	var neighbors: Array = GridMathGd.cross_neighbors(0, 0)
-	assert_eq(neighbors.size(), 2, "una esquina solo tiene 2 vecinos válidos en cruz")
-	assert_has(neighbors, Vector2i(1, 0))
-	assert_has(neighbors, Vector2i(0, 1))
-
-
-func test_cross_neighbors_never_returns_out_of_bounds_cells() -> void:
-	var neighbors: Array = GridMathGd.cross_neighbors(0, 0)
-	for neighbor: Vector2i in neighbors:
-		assert_true(GridMathGd.is_in_bounds(neighbor.x, neighbor.y))
+## SIN filtrar por límites a propósito (ver comentario en grid_math.gd) — una esquina
+## (0,0) real del tablero normal sigue devolviendo sus 8 offsets, aunque algunos caigan
+## fuera de Constants.GRID_COLS/GRID_ROWS; quien la llama (BoardManager) ya filtra por si
+## existe un bloque real ahí, así que valores "fuera de rango" son inofensivos.
+func test_surrounding_neighbors_corner_cell_still_returns_eight_offsets() -> void:
+	var neighbors: Array = GridMathGd.surrounding_neighbors(0, 0)
+	assert_eq(neighbors.size(), 8)
+	assert_has(neighbors, Vector2i(-1, -1))
+	assert_has(neighbors, Vector2i(1, 1))

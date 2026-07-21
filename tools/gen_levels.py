@@ -186,7 +186,22 @@ def generate_procedural_level(level_number: int) -> dict:
 # --- Niveles-figura: ASCII (7 columnas) -> celdas --------------------------------------
 
 
-def cells_from_ascii(art: str, kind: str = "totopo", hp: int = 1, fill: bool = True) -> list:
+## `level_number`/`rng` (no un `hp` fijo): bug real reportado por el usuario ("en el pack
+## de navidad todos los bloques tienen 1") — con el mismo motivo por el que
+## random_totopo_hp() existe para los niveles procedurales (nunca el mismo valor repetido
+## en todos los bloques), esta función también debe sortear el HP de cada celda dentro del
+## rango del nivel pedido, no recibir un número fijo. Afectaba por igual a los niveles
+## 95-100 (figuras Cruz/Corazón/Botella/Estrella/Diamante/Carita Feliz del roster numérico
+## — encontrado al investigar el reporte del pack navideño, mismo código compartido) y al
+## pack navideño. `rng=None` construye una determinista propia a partir de `level_number`
+## si quien llama no necesita más de un nivel con seeds distintos (ver
+## generate_shape_level() vs. gen_holiday_pack.py, que sí pasa su propio rng por seed).
+def cells_from_ascii(
+    art: str, kind: str = "totopo", level_number: int = 1, fill: bool = True,
+    rng: "random.Random | None" = None
+) -> list:
+    rng = rng or random.Random(level_number)
+    needs_hp = kind in ("totopo", "queso", "salsa", "triangle")
     rows = [row for row in art.strip("\n").split("\n")]
     grid = [[ch == "X" for ch in row] for row in rows]
     h = len(grid)
@@ -205,7 +220,10 @@ def cells_from_ascii(art: str, kind: str = "totopo", hp: int = 1, fill: bool = T
                         break
                 if not is_boundary:
                     continue
-            cells.append({"col": c, "row": r, "kind": kind, "hp": hp})
+            cell = {"col": c, "row": r, "kind": kind}
+            if needs_hp:
+                cell["hp"] = random_totopo_hp(level_number, rng)
+            cells.append(cell)
     return cells
 
 
@@ -279,13 +297,20 @@ X.....X
 """
 
 
+## Bug real corregido (encontrado al investigar un reporte del pack navideño, mismo
+## código compartido): antes usaba hp=1 fijo y starting_seeds=16 fijo para las 6 figuras,
+## sin relación con el número de nivel — violaba la regla ya documentada "HP por bloque en
+## Modo Nivel escala con el NÚMERO DE NIVEL" que sí aplicaba correctamente a los niveles
+## 1-94 (procedurales). Ahora usa random_totopo_hp()/starting_seeds_for_level() con SU
+## PROPIO level_number (95-100), igual que el resto del roster.
 def generate_shape_level(level_number: int, shape_id: str, art: str, fill: bool) -> dict:
-    cells = cells_from_ascii(art, kind="totopo", hp=1, fill=fill)
+    rng = random.Random(level_number)
+    cells = cells_from_ascii(art, kind="totopo", level_number=level_number, fill=fill, rng=rng)
     cells = sprinkle_icons(cells)
     return {
         "id": f"level_{level_number:03d}",
         "name": f"LEVEL_NAME_{level_number:03d}",  # key de i18n: "Cruz", "Corazón", etc.
-        "starting_seeds": 16,
+        "starting_seeds": starting_seeds_for_level(level_number),
         "cells": cells,
     }
 

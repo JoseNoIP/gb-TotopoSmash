@@ -4,15 +4,25 @@ extends Node
 ## HapticManager. Nunca crashea si falta un .wav todavía (ResourceLoader.exists()).
 ## .wav, no .ogg: gen_assets.py sintetiza WAV puro (stdlib `wave`, sin dependencias) y
 ## Godot lo reproduce igual de bien para SFX cortos — sin necesidad de un encoder externo.
+##
+## Dueño de sus propias preferencias (`_music_enabled`/`_sfx_enabled`, persistidas en
+## `user://audio_settings.json`) — pedido explícito del usuario: poder silenciar SOLO la
+## música, SOLO los efectos, o ambos, por separado (antes un único
+## `SaveManager.sound_enabled` apagaba las dos cosas juntas). No se agregó a SaveManager
+## porque ese autoload ya está en el límite de 20 métodos públicos de gdlint (regla
+## CLAUDE.md #51, mismo motivo que MetaManager/LevelManager) — AudioManager ya es el dueño
+## natural de toda la reproducción de audio, así que las preferencias viven con él.
 
 const SFX_DIR: String = "res://assets/audio/sfx/"
 const MUSIC_DIR: String = "res://assets/audio/music/"
+const SETTINGS_PATH: String = "user://audio_settings.json"
 
 const SFX_FILES: Dictionary = {
 	&"bounce": "seed_bounce.wav",
 	&"totopo_crunch": "totopo_crunch.wav",
 	&"queso_thud": "queso_thud.wav",
 	&"salsa_splash": "salsa_splash.wav",
+	&"laser_zap": "laser_zap.wav",
 }
 
 ## GDD: material del bloque golpeado -> SFX de impacto. Sin entrada = usa el tono de
@@ -25,15 +35,20 @@ const BLOCK_TYPE_TO_SFX: Dictionary = {
 
 ## GDD: "rebotes normales en escala ascendente... para que las ráfagas largas suenen como
 ## una melodía rítmica" — un solo sample con pitch_scale creciente por rebote, en vez de
-## varios archivos de tonos distintos.
-const BOUNCE_PITCH_STEP: float = 0.06
-const BOUNCE_PITCH_MAX_STEPS: int = 7
+## varios archivos de tonos distintos. Techo bajado (pedido explícito del usuario: el
+## sonido de rebote se sentía "ruidoso" con muchas semillas) — antes llegaba hasta 1.42x
+## (7 pasos de 0.06), demasiado agudo/chillón al acumularse en una ráfaga larga; ahora tope
+## de 1.20x (5 pasos de 0.04), sigue sonando a "escala ascendente" sin volverse molesto.
+const BOUNCE_PITCH_STEP: float = 0.04
+const BOUNCE_PITCH_MAX_STEPS: int = 5
 
 var _music_player: AudioStreamPlayer = AudioStreamPlayer.new()
 var _bounce_streak: int = 0
+var _settings: Dictionary = {}
 
 
 func _ready() -> void:
+	_load_settings()
 	_music_player.name = &"MusicPlayer"
 	_music_player.bus = &"Master"
 	## Discreta a propósito (-8dB) — es fondo, no debe competir con los SFX del GDD, que se
@@ -42,16 +57,39 @@ func _ready() -> void:
 	add_child(_music_player)
 	EventBus.seed_bounced.connect(_on_seed_bounced)
 	EventBus.salsa_exploded.connect(_on_salsa_exploded)
+	EventBus.laser_triggered.connect(_on_laser_triggered)
 	EventBus.burst_fired.connect(_on_burst_fired)
 	## Autoload — vive toda la sesión, así que arrancarla acá (en vez de en MainMenu/Game)
 	## la deja sonando de fondo en cualquier pantalla desde el arranque, en loop
 	## (`edit/loop_mode=1` en theme.wav.import), sin necesidad de re-lanzarla en cada
-	## cambio de escena. `play_music()` ya respeta `SaveManager.get_sound_enabled()`.
+	## cambio de escena. `play_music()` ya respeta get_music_enabled().
 	play_music()
 
 
+func get_music_enabled() -> bool:
+	return _settings.get("music_enabled", true) as bool
+
+
+func set_music_enabled(value: bool) -> void:
+	_settings["music_enabled"] = value
+	_save_settings()
+	if value:
+		play_music()
+	else:
+		stop_music()
+
+
+func get_sfx_enabled() -> bool:
+	return _settings.get("sfx_enabled", true) as bool
+
+
+func set_sfx_enabled(value: bool) -> void:
+	_settings["sfx_enabled"] = value
+	_save_settings()
+
+
 func play_sfx(sfx_name: StringName, pitch_scale: float = 1.0) -> void:
-	if not SaveManager.get_sound_enabled():
+	if not get_sfx_enabled():
 		return
 	var filename: String = SFX_FILES.get(sfx_name, "")
 	if filename.is_empty():
@@ -69,7 +107,7 @@ func play_sfx(sfx_name: StringName, pitch_scale: float = 1.0) -> void:
 
 
 func play_music(track_name: String = "theme") -> void:
-	if not SaveManager.get_sound_enabled():
+	if not get_music_enabled():
 		return
 	var path: String = MUSIC_DIR + track_name + ".wav"
 	if not ResourceLoader.exists(path):
@@ -98,3 +136,27 @@ func _on_seed_bounced(block_type: String) -> void:
 
 func _on_salsa_exploded(_grid_pos: Vector2i) -> void:
 	play_sfx(&"salsa_splash")
+
+
+## Pedido explícito del usuario: "faltó agregarle... sonido de láser al power-up". Se
+## reproduce en CADA toque (persistente, ver laser_icon.gd) — un solo AudioStreamPlayer
+## nuevo por toque, igual que cualquier otro SFX (play_sfx() ya maneja eso).
+func _on_laser_triggered(_grid_pos: Vector2i, _orientation: String) -> void:
+	play_sfx(&"laser_zap")
+
+
+func _load_settings() -> void:
+	if not FileAccess.file_exists(SETTINGS_PATH):
+		return
+	var file: FileAccess = FileAccess.open(SETTINGS_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if parsed is Dictionary:
+		_settings = parsed
+
+
+func _save_settings() -> void:
+	var file: FileAccess = FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(_settings))

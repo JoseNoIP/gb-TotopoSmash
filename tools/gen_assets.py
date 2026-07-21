@@ -430,21 +430,22 @@ def make_seed_extra_icon(size=48):
     return _flat(g)
 
 
-def make_laser_icon(size=48, horizontal=True):
+def make_laser_icon(size=48, orientation="horizontal"):
     """Láser (Constants.COLOR_LASER) — ícono de poder, dispara en línea recta a toda la
-    fila/columna donde está. DOS variantes (horizontal/vertical), nunca una sola imagen
-    genérica para ambas: laser_icon.gd la usa para que el jugador vea la orientación real
+    fila/columna/AMBAS donde está. TRES variantes ("horizontal"/"vertical"/"both"), nunca
+    una sola imagen genérica: laser_icon.gd la usa para que el jugador vea el alcance real
     ANTES de tocarlo (no es información oculta — ver el comentario de _draw() en ese
-    archivo, que este sprite reemplaza sin perder esa distinción)."""
+    archivo, que este sprite reemplaza sin perder esa distinción). Persistente (pedido
+    explícito del usuario): a diferencia de lemon/seed_extra, este ícono no se consume."""
     CORE = (230, 38, 217, 255)  # Constants.COLOR_LASER = Color(0.9, 0.15, 0.85)
     GLOW = (255, 255, 255, 210)
     g = _grid(size, size, T)
     cx = cy = size // 2
     beam_half_len = int(size * 0.44)
     beam_half_w = max(1, int(size * 0.07))
-    if horizontal:
+    if orientation != "vertical":
         _rect(g, cx - beam_half_len, cy - beam_half_w, cx + beam_half_len, cy + beam_half_w, CORE)
-    else:
+    if orientation != "horizontal":
         _rect(g, cx - beam_half_w, cy - beam_half_len, cx + beam_half_w, cy + beam_half_len, CORE)
     r = int(size * 0.2)
     _circle(g, cx, cy, r, CORE)
@@ -518,10 +519,17 @@ def save_wav(path, samples):
 # ---------------------------------------------------------------------------
 
 def sfx_seed_bounce():
-    """Rebote normal — tono corto y brillante (xilófono/gota de agua). AudioManager
-    sube pitch_scale en cada rebote sucesivo para el efecto de "escala ascendente"."""
-    s = _sine(1046, 0.09, 0.4)
-    return _env(s, 0.001, 0.09)
+    """Rebote normal — tono corto y suave (pop/gota de agua). Pedido explícito del
+    usuario tras jugar: "cuando hay muchas semillas [rebotando], tiende a ser un poco
+    molesto... se siente ruidoso" — la versión anterior (1046Hz, ataque casi instantáneo
+    de 1ms) sonaba como un "click" agudo que se acumulaba mal al superponerse muchas veces
+    seguidas (niveles con decenas/cientos de semillas). Fix: más grave (740Hz en vez de
+    1046Hz — un poco más de una quinta abajo, menos chillón), ataque más suave (12ms en
+    vez de 1ms, sin transiente de "click"), release un poco más largo (cae más redondo en
+    vez de cortarse en seco) y amplitud más baja. AudioManager sigue subiendo pitch_scale
+    en cada rebote sucesivo (ver BOUNCE_PITCH_STEP/MAX_STEPS, también reducidos)."""
+    s = _sine(740, 0.11, 0.3)
+    return _env(s, 0.012, 0.07)
 
 
 def sfx_totopo_crunch():
@@ -543,6 +551,15 @@ def sfx_salsa_splash():
     """Explosión de Frasco de Salsa — ola/splash, ruido + barrido descendente."""
     s = _mix(_noise(0.3, 0.35), _sweep(700, 120, 0.3, 0.3))
     return _env(s, 0.005, 0.2)
+
+
+def sfx_laser_zap():
+    """Power-up láser (pedido explícito del usuario: "faltó... sonido de láser") — zap
+    electrónico corto y agudo, barrido descendente rápido con un toque de ruido fino para
+    textura. Se reproduce en CADA toque (el láser es persistente), así que debe ser breve
+    y no cansar al repetirse muchas veces en una misma ráfaga."""
+    s = _mix(_sweep(1800, 300, 0.35), _noise(0.1, 0.08))
+    return _env(s, 0.001, 0.09)
 
 
 # ---------------------------------------------------------------------------
@@ -636,8 +653,9 @@ def main():
     icons = {
         "assets/sprites/powerup_icons/lemon.png": (48, 48, make_lemon_icon(48)),
         "assets/sprites/powerup_icons/seed_extra.png": (48, 48, make_seed_extra_icon(48)),
-        "assets/sprites/powerup_icons/laser_horizontal.png": (48, 48, make_laser_icon(48, True)),
-        "assets/sprites/powerup_icons/laser_vertical.png": (48, 48, make_laser_icon(48, False)),
+        "assets/sprites/powerup_icons/laser_horizontal.png": (48, 48, make_laser_icon(48, "horizontal")),
+        "assets/sprites/powerup_icons/laser_vertical.png": (48, 48, make_laser_icon(48, "vertical")),
+        "assets/sprites/powerup_icons/laser_both.png": (48, 48, make_laser_icon(48, "both")),
     }
     for path, (w, h, pixels) in icons.items():
         save_png(path, w, h, pixels)
@@ -648,6 +666,7 @@ def main():
         "assets/audio/sfx/totopo_crunch.wav": sfx_totopo_crunch(),
         "assets/audio/sfx/queso_thud.wav": sfx_queso_thud(),
         "assets/audio/sfx/salsa_splash.wav": sfx_salsa_splash(),
+        "assets/audio/sfx/laser_zap.wav": sfx_laser_zap(),
     }
     for path, samples in sfx.items():
         save_wav(path, samples)

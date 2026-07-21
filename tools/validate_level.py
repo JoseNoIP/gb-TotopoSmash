@@ -152,8 +152,8 @@ def _validate_cell(
 
     if kind == "laser" and "orientation" in cell:
         orientation = cell.get("orientation")
-        if orientation not in ("horizontal", "vertical"):
-            errors.append(f"{label}: 'orientation' de laser debe ser 'horizontal' o 'vertical'")
+        if orientation not in ("horizontal", "vertical", "both"):
+            errors.append(f"{label}: 'orientation' de laser debe ser 'horizontal', 'vertical' o 'both'")
 
     if kind == "seed_extra" and "amount" in cell:
         amount = cell.get("amount")

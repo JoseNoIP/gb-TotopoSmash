@@ -1,18 +1,25 @@
 extends Area2D
-## Láser (power-up nuevo, pedido explícito del usuario): ícono que al ser tocado por una
-## semilla dispara un golpe en línea recta (horizontal o vertical, fija por instancia,
-## decidida por quien arma el nivel) a TODOS los bloques de esa fila/columna —
-## Constants.LASER_DAMAGE de daño, mismo mecanismo de daño explícito que el Frasco de Salsa
-## (take_explosion_damage), solo que en línea recta en vez de en cruz. Ícono de un solo uso.
+## Láser (power-up, pedido explícito del usuario): al ser tocado por una semilla, dispara
+## un golpe a TODOS los bloques de su fila, columna, o AMBAS (según `orientation`) —
+## Constants.LASER_DAMAGE de daño explícito, mismo mecanismo que el Frasco de Salsa pero en
+## línea(s) recta(s) en vez de en cruz.
+##
+## PERSISTENTE (pedido explícito del usuario: "los elementos láser no deben desaparecer
+## al primer toque de una semilla... debe permanecer y ejecutarse cada vez que una semilla
+## lo toque") — a diferencia de LemonIcon/SeedExtraIcon (un solo uso, `queue_free()` al
+## tocarse), este ícono NUNCA se libera solo; sigue en el tablero disparando cada vez que
+## una semilla vuelve a entrar en su área.
 
-## Dos texturas (no una) — la orientación real (horizontal/vertical) es información que el
-## jugador debe poder ver ANTES de tocar el ícono (ver _draw() más abajo, que esto
-## reemplaza sin perder esa distinción); una sola imagen genérica la perdería.
 const TEXTURE_PATH_HORIZONTAL: String = "res://assets/sprites/powerup_icons/laser_horizontal.png"
 const TEXTURE_PATH_VERTICAL: String = "res://assets/sprites/powerup_icons/laser_vertical.png"
+const TEXTURE_PATH_BOTH: String = "res://assets/sprites/powerup_icons/laser_both.png"
+
+const ORIENTATION_HORIZONTAL: String = "horizontal"
+const ORIENTATION_VERTICAL: String = "vertical"
+const ORIENTATION_BOTH: String = "both"
 
 var grid_pos: Vector2i = Vector2i.ZERO
-var is_horizontal: bool = true
+var orientation: String = ORIENTATION_HORIZONTAL
 var _radius: float = 16.0
 var _has_sprite: bool = false
 
@@ -34,7 +41,11 @@ func setup(p_cell_size: float) -> void:
 
 
 func _build_sprite() -> void:
-	var texture_path: String = TEXTURE_PATH_HORIZONTAL if is_horizontal else TEXTURE_PATH_VERTICAL
+	var texture_path: String = TEXTURE_PATH_HORIZONTAL
+	if orientation == ORIENTATION_VERTICAL:
+		texture_path = TEXTURE_PATH_VERTICAL
+	elif orientation == ORIENTATION_BOTH:
+		texture_path = TEXTURE_PATH_BOTH
 	if not ResourceLoader.exists(texture_path):
 		return
 	var sprite: Sprite2D = Sprite2D.new()
@@ -50,8 +61,8 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 
-## Sin sprite: un rombo alargado en la orientación real del láser, para que el jugador
-## pueda distinguir "va a disparar horizontal" de "va a disparar vertical" ANTES de
+## Sin sprite: un rombo alargado en la orientación real del láser (o una cruz completa si
+## `orientation == "both"`), para que el jugador pueda distinguir el alcance real ANTES de
 ## tocarlo (no es información oculta).
 func _draw() -> void:
 	if _has_sprite:
@@ -59,16 +70,15 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, _radius * 0.6, Constants.COLOR_LASER)
 	var beam_half_length: float = _radius * 1.4
 	var beam_half_width: float = _radius * 0.18
-	var extent: Vector2 = (
-		Vector2(beam_half_length, beam_half_width)
-		if is_horizontal
-		else Vector2(beam_half_width, beam_half_length)
-	)
-	draw_rect(Rect2(-extent, extent * 2.0), Constants.COLOR_LASER)
+	if orientation != ORIENTATION_VERTICAL:
+		var h_extent := Vector2(beam_half_length, beam_half_width)
+		draw_rect(Rect2(-h_extent, h_extent * 2.0), Constants.COLOR_LASER)
+	if orientation != ORIENTATION_HORIZONTAL:
+		var v_extent := Vector2(beam_half_width, beam_half_length)
+		draw_rect(Rect2(-v_extent, v_extent * 2.0), Constants.COLOR_LASER)
 
 
 func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group(&"seeds"):
 		return
-	EventBus.laser_triggered.emit(grid_pos, is_horizontal)
-	queue_free()
+	EventBus.laser_triggered.emit(grid_pos, orientation)

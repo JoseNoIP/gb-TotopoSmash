@@ -69,9 +69,12 @@ signal lemon_triggered(origin: Vector2)
 signal seed_extra_touched(origin: Vector2, amount: int)
 signal seed_extra_collected(new_total: int)
 ## Power-up láser (ver laser_icon.gd) — BoardManager aplica Constants.LASER_DAMAGE a toda
-## la fila (is_horizontal=true) o columna (false) de grid_pos, mismo patrón que
-## salsa_exploded pero en línea recta en vez de en cruz.
-signal laser_triggered(grid_pos: Vector2i, is_horizontal: bool)
+## la fila, columna, o AMBAS de grid_pos según `orientation` ("horizontal"/"vertical"/
+## "both"), mismo patrón que salsa_exploded pero en línea(s) recta(s) en vez de en cruz.
+## Se emite CADA VEZ que una semilla toca el ícono — a diferencia de lemon/seed_extra, el
+## láser es persistente (pedido explícito del usuario: "no debe desaparecer al primer
+## toque... debe ejecutarse cada vez que una semilla lo toque").
+signal laser_triggered(grid_pos: Vector2i, orientation: String)
 
 # --- Score ---
 signal score_changed(new_score: int)

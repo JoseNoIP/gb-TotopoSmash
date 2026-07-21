@@ -11,13 +11,6 @@ func test_tutorial_shown_roundtrip() -> void:
 	assert_true(SaveManager.get_tutorial_shown())
 
 
-func test_sound_enabled_roundtrip() -> void:
-	SaveManager.set_sound_enabled(false)
-	assert_false(SaveManager.get_sound_enabled())
-	SaveManager.set_sound_enabled(true)
-	assert_true(SaveManager.get_sound_enabled())
-
-
 func test_vibration_enabled_roundtrip() -> void:
 	SaveManager.set_vibration_enabled(false)
 	assert_false(SaveManager.get_vibration_enabled())

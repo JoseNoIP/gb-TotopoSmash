@@ -1,37 +1,37 @@
 {
   "id": "holiday_004",
   "name": "LEVEL_NAME_CANDY_CANE",
-  "starting_seeds": 16,
+  "starting_seeds": 45,
   "cells": [
     {
       "col": 2,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 50
     },
     {
       "col": 3,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 82
     },
     {
       "col": 4,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 71
     },
     {
       "col": 1,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 53
     },
     {
       "col": 5,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 36
     },
     {
       "col": 1,
@@ -42,19 +42,19 @@
       "col": 1,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 65
     },
     {
       "col": 1,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 33
     },
     {
       "col": 1,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 24
     }
   ]
 }

@@ -24,6 +24,7 @@ const WaveScalingGd := preload("res://src/features/board/wave_scaling.gd")
 const CellFactoryGd := preload("res://src/features/board/cell_factory.gd")
 const GridMathGd := preload("res://src/shared/grid_math.gd")
 const LevelLoaderGd := preload("res://src/features/levels/level_loader.gd")
+const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
 
 var _wave: int = 1
 var _blocks: Dictionary[Vector2i, StaticBody2D] = {}
@@ -38,6 +39,10 @@ var _static_turns_used: int = 0
 
 
 func _ready() -> void:
+	## Grupo (no class_name/get_node hardcodeado, regla CLAUDE.md #3) — VFXSpawner lo usa
+	## para llamar grid_to_pixel() y ubicar sus partículas correctamente en niveles
+	## `static` (bug real detectado con captura: el VFX aparecía fuera de la figura).
+	add_to_group(&"board_manager")
 	EventBus.game_started.connect(_on_game_started)
 	EventBus.all_seeds_returned.connect(_on_all_seeds_returned)
 	EventBus.block_destroyed.connect(_on_block_destroyed)
@@ -47,6 +52,20 @@ func _ready() -> void:
 
 func get_wave() -> int:
 	return _wave
+
+
+## Convierte una posición de grilla a píxeles — la grilla NORMAL de 7 columnas, o la
+## PROPIA de un nivel `static` (más ancha/angosta según el nivel) según corresponda. Único
+## punto de verdad para esta conversión: quien necesite ubicar algo en el tablero (ej.
+## VFXSpawner) debe llamar esto en vez de usar GridMathGd directo, que siempre asume la
+## grilla normal y da resultados incorrectos para un nivel `static`.
+func grid_to_pixel(grid_pos: Vector2i) -> Vector2:
+	if _is_static_level:
+		return _static_origin + _static_cell_size * (Vector2(grid_pos) + Vector2(0.5, 0.5))
+	return Vector2(
+		GridMathGd.col_to_x(grid_pos.x, Constants.DESIGN_WIDTH),
+		GridMathGd.row_to_y(grid_pos.y, Constants.DESIGN_WIDTH)
+	)
 
 
 func _on_game_started() -> void:
@@ -295,7 +314,7 @@ func _spawn_static_cell(cell: Dictionary) -> void:
 	if kind == WaveScalingGd.KIND_TRIANGLE:
 		node.set(&"corner", int(cell.get("corner", 0)))
 	if kind == WaveScalingGd.KIND_LASER:
-		node.set(&"is_horizontal", cell.get("orientation", "horizontal") != "vertical")
+		node.set(&"orientation", cell.get("orientation", LaserIconGd.ORIENTATION_HORIZONTAL))
 	if kind == WaveScalingGd.KIND_SEED_EXTRA and cell.has("amount"):
 		node.set(&"amount", int(cell.get("amount")))
 	if CellFactoryGd.is_icon_kind(kind):
@@ -339,24 +358,33 @@ func _on_block_destroyed(grid_pos: Vector2i, _block_type: String, _score_value: 
 	_blocks.erase(grid_pos)
 
 
-## GDD Frasco de Salsa: "explota y causa 10 puntos de daño a todos los bloques
-## adyacentes en cruz." BoardManager es quien conoce la matriz, así que aplica el daño.
+## GDD actualizado (pedido explícito del usuario): "cuando la salsa explote debe destruir
+## todos los bloques que estén alrededor (los que estén pegados)" — los 8 vecinos, no solo
+## en cruz, y DESTRUCCIÓN instantánea (destroy_instantly()), no daño parcial. "A excepción
+## de si es un láser, un bloque de piedra u otro comodín (power up)": la piedra queda
+## exenta gratis vía el guard de is_indestructible ya existente en destroy_instantly(); los
+## power-ups (lemon/seed_extra/laser) viven en `_icons`, un Dictionary aparte que este
+## bucle ni siquiera recorre, así que ya están a salvo por construcción.
 func _on_salsa_exploded(grid_pos: Vector2i) -> void:
-	for neighbor: Vector2i in GridMathGd.cross_neighbors(grid_pos.x, grid_pos.y):
+	for neighbor: Vector2i in GridMathGd.surrounding_neighbors(grid_pos.x, grid_pos.y):
 		if _blocks.has(neighbor):
 			var node: StaticBody2D = _blocks[neighbor]
 			if is_instance_valid(node):
-				node.call(&"take_explosion_damage", Constants.BLOCK_SALSA_EXPLOSION_DAMAGE)
+				node.call(&"destroy_instantly")
 
 
-## Power-up láser (ver laser_icon.gd, pedido explícito del usuario): daño en línea recta
-## (fila completa si is_horizontal, columna completa si no) en vez de en cruz como la
+## Power-up láser (ver laser_icon.gd, pedido explícito del usuario): daño en línea recta —
+## fila completa, columna completa, o AMBAS ("both": cada bloque de esa fila O columna,
+## un alcance mucho mayor que la cruz local de la salsa) — en vez de en cruz como la
 ## salsa. Recorre _blocks.keys() con un filtro simple — el tablero es un Dictionary
 ## disperso (no un array denso), así que esto funciona igual de bien con la grilla enorme
-## de un nivel `static` que con la grilla normal de 7 columnas.
-func _on_laser_triggered(grid_pos: Vector2i, is_horizontal: bool) -> void:
+## de un nivel `static` que con la grilla normal de 7 columnas. Se ejecuta cada vez que el
+## ícono se toca (persistente, ver laser_icon.gd) — nunca un evento de una sola vez.
+func _on_laser_triggered(grid_pos: Vector2i, orientation: String) -> void:
+	var hits_row: bool = orientation != LaserIconGd.ORIENTATION_VERTICAL
+	var hits_col: bool = orientation != LaserIconGd.ORIENTATION_HORIZONTAL
 	for key: Vector2i in _blocks.keys():
-		var same_line: bool = key.y == grid_pos.y if is_horizontal else key.x == grid_pos.x
+		var same_line: bool = (hits_row and key.y == grid_pos.y) or (hits_col and key.x == grid_pos.x)
 		if not same_line:
 			continue
 		var node: StaticBody2D = _blocks[key]

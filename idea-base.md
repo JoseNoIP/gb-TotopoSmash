@@ -696,12 +696,185 @@ que ya no queda nada que destruir.
   (incluido el turno completo `all_seeds_returned` → `turn_advanced` → vuelta a `AIMING`)
   se resuelve de forma síncrona en el mismo clic, sin ningún paso intermedio visible.
 
+## Láser persistente + 3 orientaciones, tutorial ampliado, audio dividido, nivel 30, salsa destructiva ✅
+
+Cinco pedidos explícitos del usuario en un mismo mensaje, atendidos en orden.
+
+- **Láser persistente** ("los elementos láser no deben desaparecer al primer toque... debe
+  permanecer y ejecutarse cada vez que una semilla lo toque") — `laser_icon.gd` ya no
+  llama `queue_free()` al tocarse; sigue en el tablero y `EventBus.laser_triggered` se
+  emite de nuevo cada vez que una semilla vuelve a entrar en su área. A diferencia de
+  lemon/seed_extra (un solo uso, sí se liberan), el láser es la ÚNICA excepción.
+- **Tercera orientación "both"** ("debe afectar... en horizontal, en vertical o ambos,
+  dependiente el tipo de láser") — `is_horizontal: bool` (2 estados) se reemplazó por
+  `orientation: String` (`"horizontal"`/`"vertical"`/`"both"`) en todo el flujo: icono,
+  `EventBus.laser_triggered`, validación (`level_loader.gd`/`validate_level.py`),
+  `BoardManager._on_laser_triggered()` (con `"both"`, un bloque recibe daño si comparte
+  FILA **o** COLUMNA con el origen — un alcance mucho mayor que la cruz local de la
+  salsa). Nuevo sprite `laser_both.png` (cruz completa, generado con
+  `gen_assets.py::make_laser_icon()` extendido a 3 variantes). `gen_worldcup_pack.py`
+  sortea entre las 3 orientaciones (antes solo 2).
+- **Tutorial ampliado** ("complementar el tutorial para que se expliquen todas las nuevas
+  funcionalidades") — 3 pasos informativos nuevos (`Step.SPEED_INFO`/`POWERUPS_INFO`/
+  `META_INFO`, no interactivos — el tablero del tutorial es Modo Infinito oleada 1, solo
+  totopos, así que power-ups/láser pueden no aparecer ahí de verdad) insertados entre
+  `ADVANCE` y `COMPLETE`: acelerar/recoger semillas, power-ups del tablero (limón/semilla
+  extra/láser), y qué más explorar (Tienda, Packs Especiales, Modo Infinito).
+- **Música y efectos silenciables por separado** ("silenciar solo la música... solo los
+  efectos... o ambos") — el interruptor único `SaveManager.sound_enabled` (apagaba las dos
+  cosas juntas) se reemplazó por `AudioManager.get/set_music_enabled()` y
+  `get/set_sfx_enabled()`, cada uno independiente, persistidos en
+  `user://audio_settings.json` propio de `AudioManager` (NO en `SaveManager`, que ya está
+  en el límite de 20 métodos públicos de `gdlint` — mismo motivo que
+  `MetaManager`/`LevelManager` antes). `SettingsScreen` ahora tiene 2 checkboxes
+  ("Música"/"Efectos de sonido") en vez de 1.
+- **Complejidad de los packs bajada a nivel 30** ("baja la complejidad... equivalentes a
+  un nivel 30") — segunda vuelta de ajuste (primero se pidió nivel 50). `HP_MIN`/`HP_MAX`
+  en `gen_worldcup_pack.py` = 25/123 (antes 35/174, valores de nivel 50). HP promedio real
+  medido tras regenerar: ~56-65 por nivel (antes ~80-87 con nivel 50), `par_turns` bajó en
+  la misma proporción.
+- **Salsa destruye todo alrededor, no daña en cruz** ("cuando la salsa explote debe
+  destruir todos los bloques que estén alrededor (los que estén pegados). A excepción de
+  si es un láser, un bloque de piedra u otro comodín") — cambio de mecánica GDD real, no
+  solo un ajuste de balance:
+  - `GridMathGd.cross_neighbors()` (4 direcciones, con bounds-check contra
+    `Constants.GRID_COLS/GRID_ROWS` — INCORRECTO para niveles `static` con su propia
+    grilla más ancha, aunque nunca llegó a manifestarse como bug real porque ningún nivel
+    `static` usaba salsa todavía) se reemplazó por `GridMathGd.surrounding_neighbors()`
+    (8 direcciones, cruz + diagonales, SIN bounds-check — el `Dictionary.has()` disperso
+    de `BoardManager` ya es el único chequeo de límites que hace falta, mismo criterio que
+    el resto del archivo).
+  - Nuevo `block_base.gd::destroy_instantly()` — destrucción SIN pasar por HP/daño
+    parcial (a diferencia de `take_explosion_damage()`, que sigue existiendo para el
+    láser). Mismo guard de `is_indestructible` que ya usaba `_apply_damage()` — la piedra
+    queda exenta automáticamente, sin lógica nueva ("a excepción de... un bloque de
+    piedra" ya resuelto gratis).
+  - Los power-ups (`lemon`/`seed_extra`/`laser`) NUNCA estuvieron en riesgo — viven en
+    `_icons`, un `Dictionary` separado de `_blocks` que `_on_salsa_exploded()` ni siquiera
+    recorre — "a excepción de... un láser u otro comodín" ya estaba resuelto por la
+    arquitectura existente, sin cambios.
+  - `Constants.BLOCK_SALSA_EXPLOSION_DAMAGE` (ya no se usa) eliminado — no se dejó como
+    constante muerta.
+  - Si un segundo Frasco de Salsa cae dentro del radio de 8 vecinos, también se destruye
+    (mismo `destroy_instantly()` → `_die()` virtual → `salsa_jar_block._die()` reemite
+    `salsa_exploded` para su propia posición) — reacción en cadena real, no prevenida a
+    propósito (el usuario no pidió evitarla y es un comportamiento emergente razonable
+    para un juego de este género).
+- Verificado con captura real: checkboxes de Música/Efectos independientes en
+  Configuración, los 2 pasos nuevos del tutorial mostrando el texto correcto, y el
+  ícono de láser "both" (cruz magenta) en un nivel real del pack Mundial. `gdlint` limpio,
+  217/217 tests (incluye regresión directa para cada pieza: persistencia del láser,
+  destrucción de los 8 vecinos, exención de piedra, independencia música/SFX).
+
+## Feedback del láser (VFX/SFX) + daño gradual ✅
+
+Pedido explícito del usuario tras la ronda anterior: "faltó agregarle algún efecto visual
+y sonido de láser al power-up. Y debe descontar un punto a los bloques horizontales y
+verticales por cada semilla que lo toque, no destruirlos de golpe."
+
+- **`Constants.LASER_DAMAGE` bajó de 25 a 1** — mismo daño que un impacto normal
+  (`BLOCK_NORMAL_DAMAGE_PER_HIT`), no un valor grande de una sola vez. Como el láser ya es
+  persistente (ronda anterior), el efecto acumulado a lo largo de una ráfaga con muchas
+  semillas sigue siendo fuerte — solo gradual, un punto a la vez.
+- **VFX nuevo** — `vfx_spawner.gd::_on_laser_triggered()`, ráfaga de partículas magenta
+  (`Constants.COLOR_LASER`) en el punto de origen, mismo patrón que la salpicadura de la
+  salsa (`Constants.VFX_LASER_AMOUNT=18`/`VFX_LASER_LIFETIME=0.35`, más rápida/corta que la
+  de salsa para no acumularse visualmente si se dispara muchas veces seguidas en la misma
+  ráfaga).
+- **SFX nuevo** — `sfx_laser_zap()` en `gen_assets.py` (barrido agudo descendente +
+  textura de ruido fino, sintetizado con la misma stdlib que el resto de los SFX),
+  registrado en `AudioManager.SFX_FILES` y conectado a `EventBus.laser_triggered`. Se
+  reproduce en CADA toque (persistente), deliberadamente corto (0.35s) para no cansar si
+  se dispara muchas veces en una misma ráfaga.
+- **Descubierto de paso (no arreglado esta ronda, ver Pendientes): la posición del VFX es
+  incorrecta en niveles `static`** — el burst de partículas del láser apareció fuera de la
+  figura al verificar con captura real, porque `VFXSpawner._grid_to_pixel()` siempre usa la
+  grilla NORMAL de 7 columnas, nunca la grilla propia de un nivel `static`. Bug
+  preexistente (afecta igual a los crumbs de bloque destruido y la salpicadura de salsa en
+  cualquier nivel `static`), simplemente nunca se había notado hasta verlo con un burst
+  grande y de un color muy distinto (magenta) al resto del tablero (naranja). Fuera de
+  alcance de este pedido puntual — requiere que `VFXSpawner` pueda consultar el layout
+  real de `BoardManager` (ninguna referencia cruzada existe todavía entre ambos nodos).
+- Verificado con captura real: el burst magenta se ve y aparece en el momento correcto
+  (aunque en la posición equivocada para niveles `static`, ver arriba). `gdlint` limpio,
+  218/218 tests (incluye regresión directa: el SFX se reproduce en cada `laser_triggered`).
+
+## Fix de posición de VFX en niveles `static` + sonido de rebote más agradable ✅
+
+Dos pedidos explícitos del usuario tras la ronda anterior: "sí, arréglalo ahora" (la
+posición del VFX, ver Pendientes de la sección de arriba) y "ve si puedes cambiar el
+efecto de sonido que hacen las semillas al golpear los bloques... se siente ruidoso".
+
+- **`BoardManager.grid_to_pixel(grid_pos) -> Vector2`** (nuevo método público) — elige la
+  fórmula correcta según `_is_static_level`: la grilla normal (`GridMathGd.col_to_x/
+  row_to_y`) o el layout propio del nivel `static` (`_static_origin`/`_static_cell_size`,
+  la misma fórmula que ya usaba `_spawn_static_cell()` internamente). Único punto de
+  verdad para esta conversión — antes cada consumidor (solo `VFXSpawner`) tenía que
+  adivinarla por su cuenta.
+- **`BoardManager` se agrega al grupo `"board_manager"`** en su `_ready()` — `VFXSpawner`
+  lo busca vía `get_tree().get_first_node_in_group(&"board_manager")` en vez de un
+  `get_node()` hardcodeado (regla CLAUDE.md #3) o un `class_name` (conflicto con el
+  autoload homónimo, regla #10). `vfx_spawner.gd::_grid_to_pixel()` ahora delega ahí en
+  vez de calcular su propia conversión — la fórmula manual que tenía (siempre la grilla
+  normal de 7 columnas) desapareció por completo, ya no hay dos caminos que puedan
+  desincronizarse.
+- Verificado con captura real: el burst del láser ahora aparece DENTRO de la figura, en la
+  celda correcta — antes aparecía fuera del tablero completo. Nuevo test de integración
+  (`test_vfx_spawner.gd`) instancia `BoardManager` + `VFXSpawner` juntos de verdad y
+  confirma que la partícula spawneada cae exactamente en la posición que
+  `grid_to_pixel()` calcula — no solo prueba la fórmula aislada, sino la conexión real
+  entre ambos nodos vía grupo.
+- **Sonido de rebote de semillas más suave** ("se siente ruidoso" con muchas semillas) —
+  `sfx_seed_bounce()` en `gen_assets.py`: frecuencia base bajada de 1046Hz a 740Hz (menos
+  chillón), ataque suavizado de 1ms a 12ms (elimina el "click" percusivo que se acumulaba
+  mal al superponerse muchas instancias en ráfagas largas), release un poco más largo
+  (cae más redondo), amplitud bajada de 0.4 a 0.3. Además, `AudioManager.BOUNCE_PITCH_STEP/
+  MAX_STEPS` (la escalada de tono por rebote sucesivo, GDD "para que las ráfagas largas
+  suenen como una melodía rítmica") bajó su TECHO de 1.42x a 1.20x (menos pasos, paso más
+  chico) — el mecanismo de escalada se conserva, pero ya no llega a un registro tan agudo
+  en ráfagas de muchos rebotes seguidos.
+- No verificado escuchando de verdad todavía (solo con captura de forma de onda/duración/
+  amplitud) — puede necesitar otra vuelta de ajuste, ver Pendientes.
+
+## Fix: HP fijo en 1 en el pack navideño (y en los niveles-figura 95-100) ✅
+
+Pedido explícito del usuario tras jugar: "en el pack de navidad todos los bloques tienen
+1. Ajústalo a un nivel 20."
+
+- **Causa raíz encontrada:** `cells_from_ascii()` (función compartida en `gen_levels.py`,
+  usada tanto por el pack navideño como por los 6 niveles-figura del roster numérico —
+  95-100: Cruz/Corazón/Botella/Estrella/Diamante/Carita Feliz) recibía un `hp` FIJO como
+  parámetro y lo aplicaba tal cual a todas las celdas — nunca sorteaba nada, a diferencia
+  de `random_totopo_hp()` que sí usan los niveles procedurales (1-94). El pack navideño
+  llamaba esta función con `hp=1` literal; los niveles-figura con el mismo `hp=1` — un bug
+  real que además violaba una regla ya documentada ("HP por bloque en Modo Nivel escala
+  con el NÚMERO DE NIVEL... nivel 100 de 60 a 300") para 95-100, encontrado al investigar
+  el reporte del pack navideño porque comparten el mismo código.
+- **Fix:** `cells_from_ascii()` ahora recibe `level_number` + `rng` en vez de un `hp`
+  fijo, y sortea `random_totopo_hp(level_number, rng)` por cada celda (nunca el mismo
+  valor repetido, mismo criterio que el resto del juego). Dos consumidores, cada uno con
+  su propio nivel de referencia:
+  - **Niveles-figura 95-100** (`generate_shape_level()`) — usan SU PROPIO número de nivel
+    (95, 96... 100) para el rango de HP y `starting_seeds_for_level()` para las semillas
+    iniciales (antes también fijo en 16) — ahora consistentes con el resto de la campaña.
+  - **Pack navideño** (`gen_holiday_pack.py`) — nuevo `LEVEL_EQUIVALENT = 20` (pedido
+    explícito del usuario), HP 20-98 sorteado por celda, `starting_seeds_for_level(20)=45`
+    semillas iniciales (antes 16, insuficiente para el HP nuevo — el pack SÍ tiene
+    condición de derrota, a diferencia del Mundial, así que las semillas debían
+    escalar junto con el HP, no solo el HP).
+- Verificado con captura real: el Árbol de Navidad (`holiday_001`) mostrando HP variado
+  (93, 65, 26, 60, 29, 91...) y 45 semillas iniciales, en vez de "1" fijo en todos los
+  bloques. `gdlint` limpio, 221/221 tests (sin cambios de código GDScript en este fix,
+  solo datos regenerados — el test `test_level_manifest_integrity.gd` ya valida el
+  catálogo completo). Los 115 niveles vueltos a validar con `validate_level.py`.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
-- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 35-174 (rango del nivel 50, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (2 rondas de ajuste ya). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 174 HP?).
+- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 25-123 (rango del nivel 30, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (3 rondas de ajuste ya: nivel 100 → 50 → 30). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=1` (bajado de 25, pedido explícito del usuario: "un punto por cada semilla que lo toque, no destruirlos de golpe") también es un valor sin verificar jugando — ¿se siente débil considerando que el láser es persistente y puede tocarse muchas veces en una misma ráfaga?
+- **Sonido de rebote de semillas** — recién ajustado (más grave, ataque más suave, tope de escalada de tono más bajo) por feedback directo del usuario ("se siente ruidoso" con muchas semillas), pero nunca escuchado por el usuario todavía tras el cambio. Puede necesitar otra vuelta de ajuste — regenerar con `sfx_seed_bounce()` en `tools/gen_assets.py` (frecuencia/envolvente) y `AudioManager.BOUNCE_PITCH_STEP/MAX_STEPS` (techo de la escalada) si hace falta.
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
 - **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 
@@ -716,7 +889,7 @@ que ya no queda nada que destruir.
 ### Bloques
 - Totopo: `HP = oleada` (ej. oleada 10 → HP 10)
 - Queso: `HP = ceil(oleada * 1.5)` (ej. oleada 10 → HP 15), daño x2 por impacto, -15% velocidad de semilla al rebotar
-- Frasco de Salsa: 10 de daño en cruz al explotar
+- Frasco de Salsa: al explotar, DESTRUYE (no daña) los 8 bloques pegados alrededor — cruz + diagonales — excepto piedra y power-ups (ver sección "Salsa destruye alrededor" más abajo, GDD actualizado tras feedback del usuario)
 - Piedra de Molcajete: indestructible (oleada 16+)
 
 ### Progresión de oleadas

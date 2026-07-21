@@ -216,8 +216,10 @@ static func _validate_cell(
 
 	if kind == WaveScalingGd.KIND_LASER and cell.has("orientation"):
 		var orientation: Variant = cell.get("orientation")
-		if orientation != "horizontal" and orientation != "vertical":
-			errors.append("%s: 'orientation' de laser debe ser 'horizontal' o 'vertical'" % label)
+		if orientation != "horizontal" and orientation != "vertical" and orientation != "both":
+			errors.append(
+				"%s: 'orientation' de laser debe ser 'horizontal', 'vertical' o 'both'" % label
+			)
 
 	if kind == WaveScalingGd.KIND_SEED_EXTRA and cell.has("amount"):
 		var amount: Variant = cell.get("amount")

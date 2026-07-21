@@ -1,37 +1,37 @@
 {
   "id": "holiday_005",
   "name": "LEVEL_NAME_BELL",
-  "starting_seeds": 16,
+  "starting_seeds": 45,
   "cells": [
     {
       "col": 2,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 80
     },
     {
       "col": 3,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 84
     },
     {
       "col": 4,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 43
     },
     {
       "col": 1,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 44
     },
     {
       "col": 5,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 95
     },
     {
       "col": 1,
@@ -42,31 +42,31 @@
       "col": 5,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 28
     },
     {
       "col": 0,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 58
     },
     {
       "col": 1,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 49
     },
     {
       "col": 2,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 57
     },
     {
       "col": 4,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 96
     },
     {
       "col": 5,
@@ -77,31 +77,31 @@
       "col": 6,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 86
     },
     {
       "col": 3,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 43
     },
     {
       "col": 2,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 26
     },
     {
       "col": 3,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 81
     },
     {
       "col": 4,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 74
     }
   ]
 }

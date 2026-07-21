@@ -93,6 +93,15 @@ func test_validate_level_accepts_laser_with_valid_orientation() -> void:
 	assert_eq(errors, [])
 
 
+## "both" (pedido explícito del usuario: el láser debe poder afectar fila Y columna a la
+## vez, según el tipo) es un tercer valor válido, no solo horizontal/vertical.
+func test_validate_level_accepts_laser_with_both_orientation() -> void:
+	var data: Dictionary = _valid_static_level()
+	data["cells"] = [{"col": 0, "row": 0, "kind": "laser", "orientation": "both"}]
+	var errors: Array = LevelLoaderGd.validate_level(data, "level_test")
+	assert_eq(errors, [])
+
+
 func test_validate_level_rejects_laser_with_invalid_orientation() -> void:
 	var data: Dictionary = _valid_static_level()
 	data["cells"] = [{"col": 0, "row": 0, "kind": "laser", "orientation": "diagonal"}]
