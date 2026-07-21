@@ -22,3 +22,6 @@ keystore.properties
 
 # macOS
 .DS_Store
+
+# Env files
+.env
