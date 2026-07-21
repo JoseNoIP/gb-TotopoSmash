@@ -1065,6 +1065,28 @@ StaticBody2D]'` en `board_manager.gd::_on_laser_triggered()`.
 - Propagado al template como regla general de CLAUDE.md (recorrer un dict que un daño en
   área puede mutar en cadena vía señales).
 
+## Fix: el láser horizontal siempre disparaba en la fila 0 ✅
+
+Reportado por el usuario jugando: "El láser horizontal siempre afecta solo a la primera
+línea (de arriba) independientemente en qué posición esté".
+
+- **Causa**: `BoardManager._shift_down()` actualiza `grid_pos` en cada bloque al bajarlo
+  una fila (`node.set(&"grid_pos", new_key)`) — pero el bucle equivalente para `_icons`
+  (donde vive el láser) NO lo hacía, solo movía la posición VISUAL vía `_tween_to_row()`.
+  `laser_icon.gd::_on_body_entered()` usa su propiedad `grid_pos` (fijada una sola vez al
+  spawnear, en `_spawn_icon()`) para decidir qué fila/columna disparar — sin esa
+  actualización, quedaba congelada en la fila de spawn (0, ya que todo contenido nuevo
+  aparece ahí) para siempre, aunque el ícono se viera bajar en pantalla con normalidad.
+  Bug latente desde que se agregó el láser a filas normales esta misma sesión (antes solo
+  existía en niveles `static`, que nunca se desplazan — por eso nunca se manifestó hasta
+  ahora).
+- **Fix**: agregado `node.set(&"grid_pos", new_key)` en el bucle de íconos de
+  `_shift_down()`, mismo patrón que el bucle de bloques. No-op silencioso en
+  LemonIcon/SeedExtraIcon (no declaran esa propiedad, regla CLAUDE.md #15).
+- Test de regresión (`test_shift_down_updates_a_laser_icons_grid_pos`) + verificado con
+  captura real: láser spawneado en `(3,0)`, tablero bajado 4 veces, `grid_pos` termina en
+  `(3,4)` y el rayo visual aparece en esa fila (mitad de pantalla), no en la 0.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
