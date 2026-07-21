@@ -12,8 +12,16 @@ agregarlos al final de manifest.json, pero NO toca level_001..100.
 """
 import json
 import os
+import random
 
-from gen_levels import cells_from_ascii, sprinkle_icons
+from gen_levels import cells_from_ascii, sprinkle_icons, starting_seeds_for_level
+
+# Pedido explícito del usuario tras jugar: "en el pack de navidad todos los bloques
+# tienen 1. Ajústalo a un nivel 20" — antes cells_from_ascii() recibía un hp=1 fijo, sin
+# ninguna variedad real (mismo bug encontrado en los niveles 95-100 del roster numérico,
+# ver gen_levels.py::generate_shape_level()). Ahora cada celda sortea su propio HP dentro
+# del rango de este nivel de referencia, igual que el resto del juego.
+LEVEL_EQUIVALENT = 20
 
 TREE_ART = """
 ...X...
@@ -69,13 +77,14 @@ PACK = [
 ]
 
 
-def generate_holiday_level(level_id: str, shape_id: str, art: str, fill: bool) -> dict:
-    cells = cells_from_ascii(art, kind="totopo", hp=1, fill=fill)
+def generate_holiday_level(level_id: str, shape_id: str, art: str, fill: bool, seed: int) -> dict:
+    rng = random.Random(seed)
+    cells = cells_from_ascii(art, kind="totopo", level_number=LEVEL_EQUIVALENT, fill=fill, rng=rng)
     cells = sprinkle_icons(cells)
     return {
         "id": level_id,
         "name": f"LEVEL_NAME_{shape_id.upper()}",
-        "starting_seeds": 16,
+        "starting_seeds": starting_seeds_for_level(LEVEL_EQUIVALENT),
         "cells": cells,
     }
 
@@ -86,14 +95,19 @@ def main() -> None:
 
     new_ids = []
     print("=== Pack navideño (holiday_001-005) ===")
-    for level_id, shape_id, art, fill in PACK:
-        level = generate_holiday_level(level_id, shape_id, art, fill)
+    for i, (level_id, shape_id, art, fill) in enumerate(PACK):
+        level = generate_holiday_level(level_id, shape_id, art, fill, seed=8000 + i)
         path = os.path.join(out_dir, f"{level_id}.json")
         with open(path, "w", encoding="utf-8") as f:
             json.dump(level, f, ensure_ascii=False, indent=2)
         new_ids.append(level_id)
         mode = "relleno" if fill else "silueta"
-        print(f"  + {path} ({shape_id}, {mode}, {len(level['cells'])} celdas)")
+        hps = [c["hp"] for c in level["cells"] if c["kind"] == "totopo"]
+        avg_hp = sum(hps) / len(hps) if hps else 0
+        print(
+            f"  + {path} ({shape_id}, {mode}, {len(level['cells'])} celdas, "
+            f"HP prom={avg_hp:.0f}, semillas={level['starting_seeds']})"
+        )
 
     manifest_path = os.path.join(out_dir, "manifest.json")
     with open(manifest_path, "r", encoding="utf-8") as f:

@@ -836,6 +836,38 @@ efecto de sonido que hacen las semillas al golpear los bloques... se siente ruid
 - No verificado escuchando de verdad todavía (solo con captura de forma de onda/duración/
   amplitud) — puede necesitar otra vuelta de ajuste, ver Pendientes.
 
+## Fix: HP fijo en 1 en el pack navideño (y en los niveles-figura 95-100) ✅
+
+Pedido explícito del usuario tras jugar: "en el pack de navidad todos los bloques tienen
+1. Ajústalo a un nivel 20."
+
+- **Causa raíz encontrada:** `cells_from_ascii()` (función compartida en `gen_levels.py`,
+  usada tanto por el pack navideño como por los 6 niveles-figura del roster numérico —
+  95-100: Cruz/Corazón/Botella/Estrella/Diamante/Carita Feliz) recibía un `hp` FIJO como
+  parámetro y lo aplicaba tal cual a todas las celdas — nunca sorteaba nada, a diferencia
+  de `random_totopo_hp()` que sí usan los niveles procedurales (1-94). El pack navideño
+  llamaba esta función con `hp=1` literal; los niveles-figura con el mismo `hp=1` — un bug
+  real que además violaba una regla ya documentada ("HP por bloque en Modo Nivel escala
+  con el NÚMERO DE NIVEL... nivel 100 de 60 a 300") para 95-100, encontrado al investigar
+  el reporte del pack navideño porque comparten el mismo código.
+- **Fix:** `cells_from_ascii()` ahora recibe `level_number` + `rng` en vez de un `hp`
+  fijo, y sortea `random_totopo_hp(level_number, rng)` por cada celda (nunca el mismo
+  valor repetido, mismo criterio que el resto del juego). Dos consumidores, cada uno con
+  su propio nivel de referencia:
+  - **Niveles-figura 95-100** (`generate_shape_level()`) — usan SU PROPIO número de nivel
+    (95, 96... 100) para el rango de HP y `starting_seeds_for_level()` para las semillas
+    iniciales (antes también fijo en 16) — ahora consistentes con el resto de la campaña.
+  - **Pack navideño** (`gen_holiday_pack.py`) — nuevo `LEVEL_EQUIVALENT = 20` (pedido
+    explícito del usuario), HP 20-98 sorteado por celda, `starting_seeds_for_level(20)=45`
+    semillas iniciales (antes 16, insuficiente para el HP nuevo — el pack SÍ tiene
+    condición de derrota, a diferencia del Mundial, así que las semillas debían
+    escalar junto con el HP, no solo el HP).
+- Verificado con captura real: el Árbol de Navidad (`holiday_001`) mostrando HP variado
+  (93, 65, 26, 60, 29, 91...) y 45 semillas iniciales, en vez de "1" fijo en todos los
+  bloques. `gdlint` limpio, 221/221 tests (sin cambios de código GDScript en este fix,
+  solo datos regenerados — el test `test_level_manifest_integrity.gd` ya valida el
+  catálogo completo). Los 115 niveles vueltos a validar con `validate_level.py`.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.

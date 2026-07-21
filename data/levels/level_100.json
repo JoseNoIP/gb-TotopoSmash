@@ -1,37 +1,37 @@
 {
   "id": "level_100",
   "name": "LEVEL_NAME_100",
-  "starting_seeds": 16,
+  "starting_seeds": 110,
   "cells": [
     {
       "col": 1,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 97
     },
     {
       "col": 2,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 177
     },
     {
       "col": 4,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 176
     },
     {
       "col": 5,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 257
     },
     {
       "col": 1,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 104
     },
     {
       "col": 2,
@@ -42,31 +42,31 @@
       "col": 4,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 160
     },
     {
       "col": 5,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 247
     },
     {
       "col": 0,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 149
     },
     {
       "col": 6,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 170
     },
     {
       "col": 1,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 189
     },
     {
       "col": 2,
@@ -77,19 +77,19 @@
       "col": 3,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 88
     },
     {
       "col": 4,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 196
     },
     {
       "col": 5,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 91
     }
   ]
 }

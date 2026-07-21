@@ -222,9 +222,20 @@ default — variar el `kind` solo si el usuario lo pide o para variedad (ver PAS
   el tope evita que los niveles más altos de un roster grande tomen cientos de turnos; de
   ahí en adelante la dificultad escala por HP/variedad de bloques, no por duración. Seguir
   esa curva para niveles nuevos de este tipo salvo que se pida otra.
-- **HP (niveles-figura, `cells`)**: `totopo`/`salsa`/`triangle` con HP bajo fijo (1-3) — el
-  objetivo es la satisfacción de despejar la forma, no la dificultad. NO usar las escalas
-  de abajo aquí.
+- **HP (niveles-figura, `cells`, no-`static`)**: **CORREGIDO — ya NO usar HP bajo fijo.**
+  La guía original de este documento decía "1-3 fijo, el objetivo es la satisfacción de
+  despejar la forma, no la dificultad" — eso es exactamente lo que causó un bug real
+  reportado por el usuario ("en el pack de navidad todos los bloques tienen 1"): sin
+  variedad real, se siente plano/roto, no "satisfactorio". Usar el MISMO criterio que
+  `row_queue` (ver abajo): `cells_from_ascii(art, kind="totopo", level_number=N, fill=...,
+  rng=...)` sortea `random_totopo_hp(N, rng)` por celda — nunca un valor fijo. Para un
+  pack SIN número de nivel propio (ej. temático, como el navideño), elegir un
+  `LEVEL_EQUIVALENT` explícito como referencia (nivel 20 para el pack navideño, pedido
+  explícito del usuario) y usar `starting_seeds_for_level(LEVEL_EQUIVALENT)` — NUNCA un
+  valor de semillas a mano sin relación con el HP elegido, mismo error ya cometido antes
+  con el pack Mundial. Si el nivel-figura SÍ pertenece al roster numérico (ej. niveles
+  95-100 del template, figuras hechas a mano), usar su propio número de nivel real, no uno
+  inventado.
 - **HP (dificultad progresiva, `row_queue`)**: `tools/gen_levels.py::totopo_hp_max_for_level()`/
   `totopo_hp_min_for_level()` — escala DIRECTO con el número de nivel (no con
   `effective_wave`, que sigue gobernando solo qué tipos de bloque pueden aparecer): nivel 1

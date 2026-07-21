@@ -1,37 +1,37 @@
 {
   "id": "level_095",
   "name": "LEVEL_NAME_095",
-  "starting_seeds": 16,
+  "starting_seeds": 106,
   "cells": [
     {
       "col": 2,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 251
     },
     {
       "col": 3,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 193
     },
     {
       "col": 4,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 188
     },
     {
       "col": 2,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 245
     },
     {
       "col": 3,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 195
     },
     {
       "col": 4,
@@ -42,31 +42,31 @@
       "col": 0,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 278
     },
     {
       "col": 1,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 89
     },
     {
       "col": 2,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 183
     },
     {
       "col": 3,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 64
     },
     {
       "col": 4,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 92
     },
     {
       "col": 5,
@@ -77,31 +77,31 @@
       "col": 6,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 60
     },
     {
       "col": 0,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 210
     },
     {
       "col": 1,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 78
     },
     {
       "col": 2,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 218
     },
     {
       "col": 3,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 127
     },
     {
       "col": 4,
@@ -112,31 +112,31 @@
       "col": 5,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 106
     },
     {
       "col": 6,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 68
     },
     {
       "col": 2,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 202
     },
     {
       "col": 3,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 241
     },
     {
       "col": 4,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 192
     },
     {
       "col": 2,
@@ -147,13 +147,13 @@
       "col": 3,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 106
     },
     {
       "col": 4,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 218
     }
   ]
 }

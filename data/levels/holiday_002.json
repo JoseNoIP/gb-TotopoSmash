@@ -1,37 +1,37 @@
 {
   "id": "holiday_002",
   "name": "LEVEL_NAME_GIFT",
-  "starting_seeds": 16,
+  "starting_seeds": 45,
   "cells": [
     {
       "col": 2,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 94
     },
     {
       "col": 4,
       "row": 0,
       "kind": "totopo",
-      "hp": 1
+      "hp": 97
     },
     {
       "col": 1,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 58
     },
     {
       "col": 3,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 45
     },
     {
       "col": 5,
       "row": 1,
       "kind": "totopo",
-      "hp": 1
+      "hp": 93
     },
     {
       "col": 0,
@@ -42,31 +42,31 @@
       "col": 3,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 77
     },
     {
       "col": 6,
       "row": 2,
       "kind": "totopo",
-      "hp": 1
+      "hp": 47
     },
     {
       "col": 0,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 57
     },
     {
       "col": 2,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 20
     },
     {
       "col": 4,
       "row": 3,
       "kind": "totopo",
-      "hp": 1
+      "hp": 27
     },
     {
       "col": 6,
@@ -77,31 +77,31 @@
       "col": 0,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 25
     },
     {
       "col": 3,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 32
     },
     {
       "col": 6,
       "row": 4,
       "kind": "totopo",
-      "hp": 1
+      "hp": 75
     },
     {
       "col": 0,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 56
     },
     {
       "col": 1,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 39
     },
     {
       "col": 2,
@@ -112,25 +112,25 @@
       "col": 3,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 88
     },
     {
       "col": 4,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 98
     },
     {
       "col": 5,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 39
     },
     {
       "col": 6,
       "row": 5,
       "kind": "totopo",
-      "hp": 1
+      "hp": 76
     }
   ]
 }
