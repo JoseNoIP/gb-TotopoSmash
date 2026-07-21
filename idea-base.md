@@ -893,6 +893,33 @@ usuario prefería el sonido original, y el problema real no era el tono en sí.
   incrementa la escalada; uno contra bloque sí) — no se pudo confirmar escuchando de
   verdad (sin acceso a audio real desde acá), pedirle al usuario que confirme jugando.
 
+## Impacto de bloque: golpe de marimba en vez de crujido ✅
+
+Confirmación del usuario tras probar el fix anterior: "el de la pared no es tan molesto,
+pero el de los bloques, sí" — el rebote contra pared quedó bien, pero el sonido al
+golpear un bloque real (`sfx_totopo_crunch()`, usado por totopo Y triángulo — el bloque
+más común del juego, con mucho el que más se escucha) seguía siendo el problema real.
+Pedido explícito: "puedes poner una especie de golpe de marimba pero seco (sin eco) y
+que no esté fuerte."
+
+- **`sfx_totopo_crunch()` rediseñado por completo** — de "ruido + snap agudo
+  descendente" (crujido duro/áspero) a un golpe de marimba: una fundamental (294Hz, D4,
+  registro medio-grave de una barra real) mezclada con su armónico característico
+  (~3.93x la fundamental, el modo de vibración que le da a una marimba su timbre "de
+  madera" en vez de metálico/xilófono), envolvente corta (13ms release, prácticamente
+  toda la duración de 0.13s) para que sea "seco" — sin cola larga sonando.
+- **Bug real encontrado de paso: `_mix()` SIEMPRE normaliza al 90% del pico**, sin
+  importar las amplitudes de entrada — el primer intento (amplitudes 0.22/0.08 antes de
+  mezclar) salió sonando al 90% del volumen máximo de todas formas ("que no esté fuerte"
+  incumplido). Las amplitudes elegidas antes de `_mix()` solo controlan el BALANCE entre
+  las capas mezcladas, nunca el volumen final del resultado — cualquier sonido nuevo que
+  use `_mix()` y necesite quedar bajo de volumen debe escalar el resultado DESPUÉS de
+  `_env()`, no confiar en las amplitudes de entrada. Fix: `x * 0.45` aplicado al final —
+  pico real bajó de ~90% a ~40% del máximo.
+- No verificado escuchando de verdad todavía (solo con forma de onda/pico/RMS) — pedirle
+  al usuario que confirme jugando si el marimba se siente bien o necesita otro ajuste
+  (frecuencia, duración, volumen).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
