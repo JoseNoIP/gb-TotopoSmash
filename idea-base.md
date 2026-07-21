@@ -799,13 +799,50 @@ verticales por cada semilla que lo toque, no destruirlos de golpe."
   (aunque en la posición equivocada para niveles `static`, ver arriba). `gdlint` limpio,
   218/218 tests (incluye regresión directa: el SFX se reproduce en cada `laser_triggered`).
 
+## Fix de posición de VFX en niveles `static` + sonido de rebote más agradable ✅
+
+Dos pedidos explícitos del usuario tras la ronda anterior: "sí, arréglalo ahora" (la
+posición del VFX, ver Pendientes de la sección de arriba) y "ve si puedes cambiar el
+efecto de sonido que hacen las semillas al golpear los bloques... se siente ruidoso".
+
+- **`BoardManager.grid_to_pixel(grid_pos) -> Vector2`** (nuevo método público) — elige la
+  fórmula correcta según `_is_static_level`: la grilla normal (`GridMathGd.col_to_x/
+  row_to_y`) o el layout propio del nivel `static` (`_static_origin`/`_static_cell_size`,
+  la misma fórmula que ya usaba `_spawn_static_cell()` internamente). Único punto de
+  verdad para esta conversión — antes cada consumidor (solo `VFXSpawner`) tenía que
+  adivinarla por su cuenta.
+- **`BoardManager` se agrega al grupo `"board_manager"`** en su `_ready()` — `VFXSpawner`
+  lo busca vía `get_tree().get_first_node_in_group(&"board_manager")` en vez de un
+  `get_node()` hardcodeado (regla CLAUDE.md #3) o un `class_name` (conflicto con el
+  autoload homónimo, regla #10). `vfx_spawner.gd::_grid_to_pixel()` ahora delega ahí en
+  vez de calcular su propia conversión — la fórmula manual que tenía (siempre la grilla
+  normal de 7 columnas) desapareció por completo, ya no hay dos caminos que puedan
+  desincronizarse.
+- Verificado con captura real: el burst del láser ahora aparece DENTRO de la figura, en la
+  celda correcta — antes aparecía fuera del tablero completo. Nuevo test de integración
+  (`test_vfx_spawner.gd`) instancia `BoardManager` + `VFXSpawner` juntos de verdad y
+  confirma que la partícula spawneada cae exactamente en la posición que
+  `grid_to_pixel()` calcula — no solo prueba la fórmula aislada, sino la conexión real
+  entre ambos nodos vía grupo.
+- **Sonido de rebote de semillas más suave** ("se siente ruidoso" con muchas semillas) —
+  `sfx_seed_bounce()` en `gen_assets.py`: frecuencia base bajada de 1046Hz a 740Hz (menos
+  chillón), ataque suavizado de 1ms a 12ms (elimina el "click" percusivo que se acumulaba
+  mal al superponerse muchas instancias en ráfagas largas), release un poco más largo
+  (cae más redondo), amplitud bajada de 0.4 a 0.3. Además, `AudioManager.BOUNCE_PITCH_STEP/
+  MAX_STEPS` (la escalada de tono por rebote sucesivo, GDD "para que las ráfagas largas
+  suenen como una melodía rítmica") bajó su TECHO de 1.42x a 1.20x (menos pasos, paso más
+  chico) — el mecanismo de escalada se conserva, pero ya no llega a un registro tan agudo
+  en ráfagas de muchos rebotes seguidos.
+- No verificado escuchando de verdad todavía (solo con captura de forma de onda/duración/
+  amplitud) — puede necesitar otra vuelta de ajuste, ver Pendientes.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
 - **Balance de los niveles `static` (pack Mundial v3)** — HP variado 25-123 (rango del nivel 30, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (3 rondas de ajuste ya: nivel 100 → 50 → 30). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=1` (bajado de 25, pedido explícito del usuario: "un punto por cada semilla que lo toque, no destruirlos de golpe") también es un valor sin verificar jugando — ¿se siente débil considerando que el láser es persistente y puede tocarse muchas veces en una misma ráfaga?
-- **Posición de los VFX de partículas en niveles `static` es aproximada/incorrecta** — descubierto al agregar el VFX del láser (`vfx_spawner.gd::_on_laser_triggered()`) y verificarlo con captura real: `_grid_to_pixel()` siempre usa `GridMathGd.col_to_x/row_to_y` con `Constants.GRID_COLS` (la grilla NORMAL de 7 columnas), nunca la grilla propia (`grid_cols`/`grid_rows`/`_static_cell_size`/`_static_origin`) de un nivel `static` — el burst de partículas aparece fuera de la figura en vez de sobre el bloque/ícono real. Afecta a los 3 VFX existentes por igual (crumbs de `block_destroyed`, salpicadura de `salsa_exploded`, y ahora el zap del láser) — no es un bug nuevo introducido esta ronda, ya existía para block_destroyed/salsa_exploded en cualquier nivel `static`, simplemente nunca se había notado/reportado hasta verlo con el burst grande y magenta del láser. Fix pendiente (fuera de alcance de este pedido, requiere que `VFXSpawner` pueda consultarle a `BoardManager` si el nivel actual es `static` y con qué `_static_cell_size`/`_static_origin` — ninguna referencia cruzada entre ambos nodos existe todavía): agregar un método público `BoardManager.grid_to_pixel(grid_pos) -> Vector2` que internamente elija la fórmula correcta según `_is_static_level`, y que `VFXSpawner` lo use en vez de llamar `GridMathGd` directo.
+- **Sonido de rebote de semillas** — recién ajustado (más grave, ataque más suave, tope de escalada de tono más bajo) por feedback directo del usuario ("se siente ruidoso" con muchas semillas), pero nunca escuchado por el usuario todavía tras el cambio. Puede necesitar otra vuelta de ajuste — regenerar con `sfx_seed_bounce()` en `tools/gen_assets.py` (frecuencia/envolvente) y `AudioManager.BOUNCE_PITCH_STEP/MAX_STEPS` (techo de la escalada) si hace falta.
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
 - **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 

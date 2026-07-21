@@ -35,9 +35,12 @@ const BLOCK_TYPE_TO_SFX: Dictionary = {
 
 ## GDD: "rebotes normales en escala ascendente... para que las ráfagas largas suenen como
 ## una melodía rítmica" — un solo sample con pitch_scale creciente por rebote, en vez de
-## varios archivos de tonos distintos.
-const BOUNCE_PITCH_STEP: float = 0.06
-const BOUNCE_PITCH_MAX_STEPS: int = 7
+## varios archivos de tonos distintos. Techo bajado (pedido explícito del usuario: el
+## sonido de rebote se sentía "ruidoso" con muchas semillas) — antes llegaba hasta 1.42x
+## (7 pasos de 0.06), demasiado agudo/chillón al acumularse en una ráfaga larga; ahora tope
+## de 1.20x (5 pasos de 0.04), sigue sonando a "escala ascendente" sin volverse molesto.
+const BOUNCE_PITCH_STEP: float = 0.04
+const BOUNCE_PITCH_MAX_STEPS: int = 5
 
 var _music_player: AudioStreamPlayer = AudioStreamPlayer.new()
 var _bounce_streak: int = 0

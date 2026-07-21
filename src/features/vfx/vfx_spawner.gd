@@ -1,10 +1,13 @@
 extends Node2D
 ## Escucha eventos globales de destrucción (GDD sección 5, "Satisfacción del Crujido") y
 ## dispara ráfagas de crumb_particle.gd: migajas amarillo/naranja al destruir un bloque,
-## salpicadura roja al explotar un Frasco de Salsa. Puramente reactivo — no conoce la
-## matriz del tablero, solo convierte grid_pos -> píxeles con grid_math.gd.
+## salpicadura roja al explotar un Frasco de Salsa, chispas magenta al tocar un láser.
+## Puramente reactivo — no conoce la matriz del tablero, delega la conversión
+## grid_pos -> píxeles a BoardManager.grid_to_pixel() (bug real corregido: este script
+## antes hacía su propia conversión asumiendo siempre la grilla normal de 7 columnas, que
+## da resultados incorrectos en un nivel `static` con su propia grilla — detectado con
+## captura real al agregar el VFX del láser, pero afectaba a TODOS los VFX por igual).
 
-const GridMathGd := preload("res://src/shared/grid_math.gd")
 const CrumbParticleGd := preload("res://src/features/vfx/crumb_particle.gd")
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -40,11 +43,14 @@ func _on_laser_triggered(grid_pos: Vector2i, _orientation: String) -> void:
 	_spawn_burst(_grid_to_pixel(grid_pos), Constants.COLOR_LASER, amount, lifetime, 220.0)
 
 
+## Grupo, no get_node()/class_name hardcodeado (regla CLAUDE.md #3) — BoardManager se
+## agrega solo a este grupo en su _ready(). null defensivo (nunca debería pasar en una
+## escena de juego real, pero evita un crash si algún día se instancia este nodo solo).
 func _grid_to_pixel(grid_pos: Vector2i) -> Vector2:
-	return Vector2(
-		GridMathGd.col_to_x(grid_pos.x, Constants.DESIGN_WIDTH),
-		GridMathGd.row_to_y(grid_pos.y, Constants.DESIGN_WIDTH)
-	)
+	var board: Node = get_tree().get_first_node_in_group(&"board_manager")
+	if board == null:
+		return Vector2.ZERO
+	return board.call(&"grid_to_pixel", grid_pos) as Vector2
 
 
 func _spawn_burst(pos: Vector2, color: Color, amount: int, lifetime: float, speed: float) -> void:

@@ -39,6 +39,10 @@ var _static_turns_used: int = 0
 
 
 func _ready() -> void:
+	## Grupo (no class_name/get_node hardcodeado, regla CLAUDE.md #3) — VFXSpawner lo usa
+	## para llamar grid_to_pixel() y ubicar sus partículas correctamente en niveles
+	## `static` (bug real detectado con captura: el VFX aparecía fuera de la figura).
+	add_to_group(&"board_manager")
 	EventBus.game_started.connect(_on_game_started)
 	EventBus.all_seeds_returned.connect(_on_all_seeds_returned)
 	EventBus.block_destroyed.connect(_on_block_destroyed)
@@ -48,6 +52,20 @@ func _ready() -> void:
 
 func get_wave() -> int:
 	return _wave
+
+
+## Convierte una posición de grilla a píxeles — la grilla NORMAL de 7 columnas, o la
+## PROPIA de un nivel `static` (más ancha/angosta según el nivel) según corresponda. Único
+## punto de verdad para esta conversión: quien necesite ubicar algo en el tablero (ej.
+## VFXSpawner) debe llamar esto en vez de usar GridMathGd directo, que siempre asume la
+## grilla normal y da resultados incorrectos para un nivel `static`.
+func grid_to_pixel(grid_pos: Vector2i) -> Vector2:
+	if _is_static_level:
+		return _static_origin + _static_cell_size * (Vector2(grid_pos) + Vector2(0.5, 0.5))
+	return Vector2(
+		GridMathGd.col_to_x(grid_pos.x, Constants.DESIGN_WIDTH),
+		GridMathGd.row_to_y(grid_pos.y, Constants.DESIGN_WIDTH)
+	)
 
 
 func _on_game_started() -> void:

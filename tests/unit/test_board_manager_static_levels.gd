@@ -7,11 +7,45 @@ extends GutTest
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TotopoBlockGd := preload("res://src/features/blocks/totopo_block.gd")
 const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
+const GridMathGd := preload("res://src/shared/grid_math.gd")
 
 const CELL_SIZE: float = 55.7
 
 
 func before_each() -> void:
+	GameManager.start_game()
+
+
+## --- grid_to_pixel() (bug real corregido: VFXSpawner ubicaba mal sus partículas en
+## niveles `static` porque asumía siempre la grilla normal de 7 columnas) ---
+
+
+func test_grid_to_pixel_uses_normal_grid_math_outside_static_levels() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game()  # Modo Infinito, no static
+	var pos: Vector2 = board.call(&"grid_to_pixel", Vector2i(3, 2))
+	var expected := Vector2(
+		GridMathGd.col_to_x(3, Constants.DESIGN_WIDTH), GridMathGd.row_to_y(2, Constants.DESIGN_WIDTH)
+	)
+	assert_eq(pos, expected)
+
+
+func test_grid_to_pixel_uses_the_static_layout_when_static() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game("worldcup_001")
+	var static_cell_size: float = board.get(&"_static_cell_size")
+	var static_origin: Vector2 = board.get(&"_static_origin")
+	var pos: Vector2 = board.call(&"grid_to_pixel", Vector2i(2, 3))
+	var expected: Vector2 = static_origin + static_cell_size * (Vector2(2, 3) + Vector2(0.5, 0.5))
+	assert_eq(pos, expected)
+	## La misma celda calculada con la fórmula NORMAL sería otra muy distinta — confirma
+	## que de verdad usó el layout static, no el genérico.
+	var wrong: Vector2 = Vector2(
+		GridMathGd.col_to_x(2, Constants.DESIGN_WIDTH), GridMathGd.row_to_y(3, Constants.DESIGN_WIDTH)
+	)
+	assert_ne(pos, wrong, "en static NO debe usar la conversión de la grilla normal")
 	GameManager.start_game()
 
 
