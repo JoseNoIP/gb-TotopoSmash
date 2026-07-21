@@ -80,7 +80,12 @@ TITLE_CHARACTERS,PERSONAJES,CHARACTERS,PERSONAGENS,PERSONNAGES
 UPGRADE_SEEDS_NAME,Semillas Extra,Extra Seeds,Sementes Extras,Graines Extra
 UPGRADE_DAMAGE_NAME,Daño Base,Base Damage,Dano Base,Dégâts de Base
 UPGRADE_SPEED_NAME,Velocidad,Speed,Velocidade,Vitesse
-LABEL_UPGRADE_LEVEL,Nivel %d/%d,Level %d/%d,Nível %d/%d,Niveau %d/%d
+UPGRADE_SEEDS_EFFECT_FORMAT,+%d semillas,+%d seeds,+%d sementes,+%d graines
+UPGRADE_DAMAGE_EFFECT_FORMAT,+%d%% daño,+%d%% damage,+%d%% dano,+%d%% dégâts
+UPGRADE_SPEED_EFFECT_FORMAT,+%d%% velocidad,+%d%% speed,+%d%% velocidade,+%d%% vitesse
+LABEL_UPGRADE_EFFECT_CURRENT_TO_NEXT,Actual: %s   Siguiente: %s,Current: %s   Next: %s,Atual: %s   Próximo: %s,Actuel : %s   Suivant : %s
+LABEL_UPGRADE_EFFECT_CURRENT_MAX,Actual: %s (MÁX),Current: %s (MAX),Atual: %s (MÁX),Actuel : %s (MAX)
+LABEL_UPGRADE_EFFECT_NOT_BOUGHT,Sin comprar — siguiente: %s,Not purchased — next: %s,Não comprado — próximo: %s,Non acheté — suivant : %s
 LABEL_MAX_LEVEL,MÁX,MAX,MÁX,MAX
 BTN_BUY_COST,Comprar (%d),Buy (%d),Comprar (%d),Acheter (%d)
 LABEL_CHARACTER_SELECTED,%s ✓,%s ✓,%s ✓,%s ✓

@@ -920,13 +920,138 @@ que no esté fuerte."
   al usuario que confirme jugando si el marimba se siente bien o necesita otro ajuste
   (frecuencia, duración, volumen).
 
+## Línea de peligro más abajo + HP variado en Modo Infinito + láseres cayendo con los bloques ✅
+
+Tres pedidos de una misma ronda de feedback tras playtesting real:
+
+1. **"La línea roja... está muy arriba. ¿Es posible bajarla 1-2 bloques? ¿O puede romper
+   con la resolución de algunos dispositivos?"** — Investigado: el juego usa lienzo
+   virtual FIJO (`window/stretch/mode="canvas_items"`, `aspect="keep"`, 390×844 en
+   `project.godot`) — todo el layout (danger_line.gd, grid_math.gd, world_bounds.gd) se
+   calcula en ese espacio lógico, nunca en píxeles físicos de pantalla; Godot escala el
+   resultado igual en cualquier dispositivo. Conclusión: mover la línea NO puede romper
+   por resolución. Se subió `Constants.GRID_ROWS` de 9 a 10 (`MOLCAJETE_ROW` se deriva de
+   ahí, `GRID_ROWS - 1`) — la línea/última fila del tablero baja exactamente 1 celda
+   (~55.7px). Verificado con la geometría real: el molcajete queda ~93px (1.6 celdas) por
+   debajo del nuevo `board_bottom_y` — margen cómodo. Se descartó subir 2 filas
+   (`GRID_ROWS=11`): el margen bajaría a ~36px, muy cerca del propio cuerpo del molcajete
+   (`MOLCAJETE_SPRITE_RADIUS=26`). Las paredes (`world_bounds.gd`) y el punto de aterrizaje
+   de las semillas (`molcajete_y`, fijo por `MOLCAJETE_BOTTOM_MARGIN` desde el borde de
+   pantalla) no dependían de `GRID_ROWS`, así que no hubo que tocarlos.
+2. **"En el modo infinito, cada hilera siempre trae el mismo HP... debería variar como el
+   juego por niveles"** — confirmado: `wave_scaling.gd::totopo_hp_for_wave()`/
+   `queso_hp_for_wave()` son funciones deterministas de `wave` sin ningún RNG — TODOS los
+   bloques de una oleada tenían el HP exacto de esa oleada. Se agregó
+   `WaveScalingGd.random_hp_for_wave(base_hp, wave, rng)`: sortea el HP real de CADA
+   bloque dentro de un rango centrado en el valor de siempre (preserva el promedio ya
+   validado por la simulación Monte Carlo documentada en el archivo), con el rango
+   ensanchándose oleada a oleada (`Constants.WAVE_HP_VARIANCE_RATIO_PER_WAVE=0.02` por
+   oleada, tope `WAVE_HP_VARIANCE_RATIO_MAX=0.6`) — oleadas 1-5 casi no varían (a
+   propósito, es la introducción del GDD), oleadas tardías sí muestran bloques bastante
+   más resistentes que el promedio. `board_manager.gd::_spawn_cell()` ahora llama esto en
+   vez del valor fijo.
+3. **"También debería haber láseres... que vayan bajando junto con los bloques... no se
+   consideran para perder... cuando crucen la línea roja deben desaparecer"** — antes el
+   láser SOLO existía en niveles `static` autorados a mano (nunca se desplazan). Cambios:
+   - `Constants.ROW_LASER_CHANCE=0.04` + caso nuevo en
+     `wave_scaling.gd::pick_cell_kind()` (Modo Infinito) y en
+     `tools/gen_levels.py::pick_kind()`/`LASER_CHANCE` (Modo Nivel, roster numérico
+     procedural 1-94, regenerado con `python3 tools/gen_levels.py`) — orientación
+     aleatoria (horizontal/vertical/both) en ambos casos.
+   - **La condición de derrota YA estaba bien** sin tocar nada: `_check_game_over()` solo
+     recorre `_blocks`, nunca `_icons` (donde vive el láser) — un láser en la fila del
+     molcajete nunca terminó la partida, ni antes ni ahora.
+   - **Sí hacía falta un fix real en `_shift_down()`**: los íconos (lemon/seed_extra/
+     laser) se desplazaban para siempre sin límite — ningún ícono se eliminaba nunca al
+     llegar al fondo, solo se recogían si una semilla los tocaba. Ahora, si el nuevo `row`
+     de un ícono cruza `Constants.MOLCAJETE_ROW`, se libera (`queue_free()`) y no se
+     reinserta en `_icons` — mismo criterio "cruzar la línea" que usa `_check_game_over()`
+     para bloques. Corrige el mismo latente para lemon/seed_extra de paso, no solo láser.
+   - Tests nuevos: `test_wave_scaling.gd` (variedad de HP, sin variedad en oleada 1, nunca
+     <= 0), `test_board_manager.gd` (ícono se libera al cruzar la línea / sobrevive si
+     todavía no la cruza).
+
+## Rayo visual del láser (antes solo un destello) ✅
+
+Feedback inmediato tras ver el láser en juego: "solo se ve un pequeño destello. Lo
+esperado es que se vea una línea horizontal, vertical o ambas que está golpeando todos
+los ladrillos" — `vfx_spawner.gd` ya lo documentaba como limitación conocida ("no dibuja
+la línea completa... sería un cambio de VFX mucho más grande").
+
+- **`src/features/vfx/laser_beam.gd`** (nuevo) — `Node2D` que dibuja una línea recta
+  (núcleo blanco + halo del color del láser) entre dos puntos y se auto-destruye tras un
+  fade corto (`Constants.VFX_LASER_BEAM_LIFETIME=0.22s`). Puramente visual — el daño real
+  sigue viniendo de `BoardManager._on_laser_triggered()`.
+- **`BoardManager.get_grid_dimensions() -> Vector2i`** (nuevo, público) — ancho/alto en
+  celdas de la grilla ACTIVA (normal o la propia de un nivel `static`), para que
+  `VFXSpawner` sepa hasta dónde debe extenderse el rayo sin duplicar lógica de layout.
+- **`VFXSpawner._spawn_beams()`** — usa el mismo criterio `hits_row`/`hits_col` que ya
+  calcula el daño real en `board_manager.gd`, así que el rayo SIEMPRE coincide con lo que
+  de verdad se dañó (horizontal, vertical, o ambos como una cruz).
+- Verificado con captura real (`Vector2i(3,4)`, orientación "both"): se ve una cruz
+  magenta completa cruzando todo el tablero, no un punto.
+
+## Tienda de mejoras: de solo texto a tarjetas con efecto numérico ✅
+
+Feedback: "solo hay textos y no es claro las mejoras que existen" —
+`UpgradeShopScreen.gd` mostraba nombre + "Nivel N/5" + botón, sin decir qué hacía cada
+mejora en números concretos.
+
+- Cada mejora ahora es una tarjeta opaca (`ModalStyleGd.opaque_panel()`, regla #52) con:
+  nombre + puntos de nivel (`●●○○○`, más rápido de leer que "2/5") + una línea de
+  descripción con el efecto numérico real (`UpgradeShopGd.bonus_seeds()`/
+  `damage_multiplier()`/`seed_speed_multiplier()`, ya existían, solo no se mostraban):
+  - Sin comprar: "Sin comprar — siguiente: +2 semillas"
+  - Nivel intermedio: "Actual: +4 semillas   Siguiente: +6 semillas"
+  - Nivel máximo: "Actual: +40% daño (MÁX)"
+- Keys nuevas en `translations.txt` (es/en/pt_BR/fr):
+  `UPGRADE_SEEDS/DAMAGE/SPEED_EFFECT_FORMAT`,
+  `LABEL_UPGRADE_EFFECT_CURRENT_TO_NEXT/CURRENT_MAX/NOT_BOUGHT` — reemplazan la vieja
+  `LABEL_UPGRADE_LEVEL` (removida, ya sin uso).
+- Verificado con 2 capturas reales (todo sin comprar; y con semillas nivel 2/5 + daño en
+  MÁX) vía un probe temporal — **con cuidado de respaldar/restaurar `user://meta.json`
+  real a mano antes/después** (el probe no pasa por `tools/run_tests.sh`, que solo protege
+  corridas de GUT — ver regla CLAUDE.md #56).
+
+## Sonido de bloque v2 + rebote de pared realmente más silencioso ✅
+
+Dos pedidos en la misma ronda: "el sonido al golpear los bloques aún no me convence,
+investiga en otros juegos similares" + "noté que el sonido al golpear las paredes es más
+fuerte que el que se escucha al golpear los bloques".
+
+- **Investigación (WebSearch)**: la técnica estándar para que un sonido de impacto/
+  percusión se sienta "sólido" es un TRANSIENTE al inicio — un burst de ruido de pocos ms
+  ANTES del cuerpo tonal, que el oído interpreta como el "click" de contacto real (mazo
+  contra madera); un tono puro, por más que tenga fundamental+armónico, se percibe blando/
+  sintético sin eso.
+- **`sfx_totopo_crunch()` v2** — se agregó `click`: `_noise(0.012, 0.35)` con envolvente
+  propia de solo 12ms, mezclado con la fundamental/armónico ya existentes (sin tocarlos).
+  Resto del diseño intacto (sigue seco, sin cola). Regenerado SOLO este archivo (nunca
+  `gen_assets.py` completo, regla #36) vía
+  `python3 -c "...from gen_assets import sfx_totopo_crunch, save_wav; ..."`.
+- **Bug real medido**: `seed_bounce.wav` (pared) y el nuevo `totopo_crunch.wav` (bloque)
+  tienen picos de amplitud CASI IDÉNTICOS (39.4% vs 45.0% del máximo) — pero
+  `seed_bounce.wav` es un seno PURO ~1kHz (zona de máxima sensibilidad del oído según las
+  curvas isofónicas), mientras que el bloque es más grave (294Hz) y compuesto. A igual
+  nivel nominal en dB, el tono de pared se percibía más fuerte igual — `-9dB`/`pitch 0.85`
+  no alcanzaba a compensar esa diferencia de PERCEPCIÓN (no es solo un tema de amplitud
+  pico). Fix: `WALL_BOUNCE_PITCH_SCALE` 0.85→0.6 (aleja el tono agudo de la zona sensible
+  del oído) + `WALL_BOUNCE_VOLUME_DB` -9→-15 (más atenuación).
+- Pendiente de confirmar jugando (no se puede verificar "cómo suena" sin escuchar de
+  verdad) — si el bloque sigue sin convencer, próximo paso sugerido: bajar aún más el
+  release/duración, o probar un fundamental distinto (marimba real ronda los 250-500Hz
+  según el tamaño de la barra, hay margen para experimentar dentro de ese rango).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
 - **Balance de los niveles `static` (pack Mundial v3)** — HP variado 25-123 (rango del nivel 30, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (3 rondas de ajuste ya: nivel 100 → 50 → 30). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=1` (bajado de 25, pedido explícito del usuario: "un punto por cada semilla que lo toque, no destruirlos de golpe") también es un valor sin verificar jugando — ¿se siente débil considerando que el láser es persistente y puede tocarse muchas veces en una misma ráfaga?
-- **Sonido de rebote contra pared** — recién separado del rebote contra bloque (más silencioso, sin escalar de tono, ver sección dedicada más abajo) por feedback directo del usuario, pero todavía no confirmado jugando tras el cambio. `WALL_BOUNCE_PITCH_SCALE`/`WALL_BOUNCE_VOLUME_DB` en `AudioManager.gd` son valores de partida — ajustar si sigue sintiéndose molesto o si quedó demasiado apagado.
+- **Sonido de rebote contra pared** — 2da ronda de ajuste (pitch 0.6, -15dB, ver sección "Sonido de bloque v2..." arriba), todavía no confirmado jugando. `WALL_BOUNCE_PITCH_SCALE`/`WALL_BOUNCE_VOLUME_DB` en `AudioManager.gd`.
+- **Sonido de bloque (marimba v2)** — se le agregó un transiente de "click" (ver sección dedicada), pero el usuario ya dijo dos veces que la versión anterior "no convence" — puede necesitar una 3ra iteración si el click tampoco resuelve la queja. No hay forma de verificar "cómo suena" sin que el usuario juegue y escuche.
+- **Balance de HP variado en Modo Infinito** — `Constants.WAVE_HP_VARIANCE_RATIO_PER_WAVE/MAX` (0.02/oleada, tope 0.6) son valores de partida sin playtesting — ajustar si la variedad se siente muy sutil o demasiado extrema en oleadas altas.
+- **Frecuencia de aparición del láser en fila normal** — `Constants.ROW_LASER_CHANCE=0.04` (Modo Infinito) y `LASER_CHANCE` en `tools/gen_levels.py` (Modo Nivel) son valores de partida — ajustar si aparece muy poco/demasiado seguido jugando.
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
 - **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 
@@ -939,8 +1064,8 @@ que no esté fuerte."
 - Cono de apuntado: 15° de margen respecto a la horizontal en cada lado
 
 ### Bloques
-- Totopo: `HP = oleada` (ej. oleada 10 → HP 10)
-- Queso: `HP = ceil(oleada * 1.5)` (ej. oleada 10 → HP 15), daño x2 por impacto, -15% velocidad de semilla al rebotar
+- Totopo: HP CENTRAL `= oleada` (ej. oleada 10 → 10), pero cada bloque sortea su HP real dentro de un rango que se ensancha con la oleada (`WaveScalingGd.random_hp_for_wave()`, ver sección "Línea de peligro más abajo..." — ya no todos los bloques de una fila comparten el mismo HP)
+- Queso: HP CENTRAL `= ceil(oleada * 1.5)` (ej. oleada 10 → 15), mismo sorteo por bloque que totopo, daño x2 por impacto, -15% velocidad de semilla al rebotar
 - Frasco de Salsa: al explotar, DESTRUYE (no daña) los 8 bloques pegados alrededor — cruz + diagonales — excepto piedra y power-ups (ver sección "Salsa destruye alrededor" más abajo, GDD actualizado tras feedback del usuario)
 - Piedra de Molcajete: indestructible (oleada 16+)
 
@@ -951,4 +1076,4 @@ que no esté fuerte."
 - 31+: menos huecos libres (estrangulamiento del espacio)
 
 ### Grid
-- 7 columnas × 9 filas · fila 8 (última) = fila de Game Over
+- 7 columnas × 10 filas (era 9, bajado 1 fila por feedback de playtesting — ver sección dedicada) · fila 9 (última) = fila de Game Over

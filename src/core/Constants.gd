@@ -11,7 +11,16 @@ const LAYER_PICKUPS: int = 16  ## íconos: limón, semilla extra
 
 # --- Grid del tablero (GDD sección 2, "Game Over") ---
 const GRID_COLS: int = 7
-const GRID_ROWS: int = 9
+## GRID_ROWS=10 (era 9) — pedido explícito del usuario tras feedback de playtesting real
+## ("la línea roja está muy arriba"): +1 fila de margen antes del molcajete. Seguro en
+## cualquier resolución de dispositivo porque el diseño usa lienzo virtual fijo
+## (390x844, stretch/mode=canvas_items + aspect=keep en project.godot) — todo este cálculo
+## vive en ese espacio lógico, nunca en píxeles físicos de pantalla. Verificado con la
+## geometría real: molcajete_y queda ~93px (1.6 celdas) por debajo del nuevo
+## board_bottom_y, margen cómodo (2 filas de margen, GRID_ROWS=11, lo dejaría en solo
+## ~36px — demasiado cerca del propio cuerpo del molcajete, MOLCAJETE_SPRITE_RADIUS=26 —
+## por eso se descartó esa opción más agresiva).
+const GRID_ROWS: int = 10
 const MOLCAJETE_ROW: int = GRID_ROWS - 1  ## fila del molcajete; bloque aquí = game over
 
 # --- Geometría / layout (390x844 portrait, debe calzar con project.godot [display]) ---
@@ -50,6 +59,19 @@ const BLOCK_QUESO_DAMAGE_PER_HIT: int = 2  ## "absorbe el doble de daño por imp
 const BLOCK_SALSA_WARNING_HP: int = 1  ## HP en el que empieza a parpadear antes de estallar
 const WAVE_TOTOPO_HP_MULTIPLIER: float = 1.0  ## N = O
 const WAVE_QUESO_HP_MULTIPLIER: float = 1.5  ## N = ceil(O * 1.5)
+## Pedido explícito del usuario: "cada hilera siempre trae el mismo HP... debería variar
+## como el juego por niveles, y conforme se va avanzando ir encontrando algunos con más
+## hp" — antes CADA bloque de una oleada tenía el HP EXACTO de esa oleada (wave=5 -> TODOS
+## HP=5, wave_scaling.gd::totopo_hp_for_wave()/queso_hp_for_wave() sin ningún RNG). Ahora
+## cada bloque sortea su propio HP dentro de un rango centrado en ese mismo valor (preserva
+## el promedio ya validado por la simulación Monte Carlo documentada en wave_scaling.gd),
+## con el rango ensanchándose oleada a oleada — oleadas 1-5 casi no varían (a propósito,
+## es la introducción del GDD), oleadas tardías sí muestran bloques bastante más
+## resistentes que el promedio. Mismo patrón conceptual que
+## tools/gen_levels.py::random_totopo_hp() para Modo Nivel, adaptado a "wave" en vez de
+## "nivel" (ver wave_scaling.gd::random_hp_for_wave()).
+const WAVE_HP_VARIANCE_RATIO_PER_WAVE: float = 0.02
+const WAVE_HP_VARIANCE_RATIO_MAX: float = 0.6
 ## Pedido explícito del usuario: "debe descontar un punto a los bloques horizontales y
 ## verticales por cada semilla que lo toque, no destruirlos de golpe" — mismo daño que un
 ## impacto normal (BLOCK_NORMAL_DAMAGE_PER_HIT), no un valor grande de una sola vez. Como
@@ -73,6 +95,14 @@ const ROW_EMPTY_CHANCE_LATE: float = 0.08  ## oleadas 31+ ("estrangulamiento del
 const ROW_SEED_EXTRA_CHANCE_EARLY: float = 0.22  ## "abundantes íconos de semilla extra"
 const ROW_SEED_EXTRA_CHANCE_LATE: float = 0.05
 const ROW_LEMON_CHANCE: float = 0.05
+## Pedido explícito del usuario: "también en el modo infinito y en el modo por niveles,
+## debería haber láseres, que vayan bajando junto con los bloques" — antes el láser SOLO
+## aparecía en niveles `static` autorados a mano (cells), nunca en el spawn aleatorio de
+## fila (Modo Infinito, wave_scaling.gd::pick_cell_kind()) ni en el row_queue procedural de
+## Modo Nivel (tools/gen_levels.py::pick_kind()). Sin desbloqueo por oleada (a diferencia de
+## queso/triángulo/piedra) — el láser es un power-up, no un obstáculo que deba introducirse
+## gradualmente, mismo criterio que ROW_LEMON_CHANCE.
+const ROW_LASER_CHANCE: float = 0.04
 const ROW_TRIANGLE_CHANCE: float = 0.18  ## dentro del rango de oleadas 6+
 const ROW_QUESO_CHANCE: float = 0.18  ## dentro del rango de oleadas 6+
 const ROW_STONE_CHANCE: float = 0.10  ## dentro del rango de oleadas 16+
@@ -127,6 +157,12 @@ const VFX_SAUCE_AMOUNT: int = 24
 const VFX_SAUCE_LIFETIME: float = 0.6
 const VFX_LASER_AMOUNT: int = 18
 const VFX_LASER_LIFETIME: float = 0.35
+## Pedido explícito del usuario: "solo se ve un pequeño destello... lo esperado es que se
+## vea una línea horizontal, vertical o ambas que está golpeando todos los ladrillos" — la
+## ráfaga de partículas (VFX_LASER_AMOUNT/LIFETIME arriba) se mantiene en el punto de
+## origen, y se le suma un rayo real (laser_beam.gd) que recorre toda la fila/columna.
+const VFX_LASER_BEAM_LIFETIME: float = 0.22
+const VFX_LASER_BEAM_WIDTH: float = 6.0
 
 # --- Mejoras permanentes (oro) — ver src/features/meta/upgrade_shop.gd ---
 const GOLD_PER_SCORE_POINT: float = 0.05  ## oro ganado = score * esto, al terminar la run

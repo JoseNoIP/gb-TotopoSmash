@@ -57,10 +57,17 @@ def seed_extra_chance(effective_wave: int) -> float:
 
 
 LEMON_CHANCE = 0.05
+# Pedido explícito del usuario: "también... en el modo por niveles, debería haber
+# láseres, que vayan bajando junto con los bloques" — antes el láser solo existía en
+# niveles `static`/`cells` autorados a mano, nunca en el row_queue procedural. Mismo valor
+# que Constants.ROW_LASER_CHANCE (src/features/board/wave_scaling.gd) para que Modo
+# Infinito y Modo Nivel se sientan igual de frecuentes en esto.
+LASER_CHANCE = 0.04
 STONE_CHANCE = 0.10
 QUESO_CHANCE = 0.18
 TRIANGLE_CHANCE = 0.18
 SALSA_CHANCE = 0.10
+LASER_ORIENTATIONS = ["horizontal", "vertical", "both"]
 
 
 def pick_kind(effective_wave: int, rng: random.Random) -> str:
@@ -70,6 +77,8 @@ def pick_kind(effective_wave: int, rng: random.Random) -> str:
         return "seed_extra"
     if rng.random() < LEMON_CHANCE:
         return "lemon"
+    if rng.random() < LASER_CHANCE:
+        return "laser"
     if effective_wave >= 16 and rng.random() < STONE_CHANCE:
         return "stone"
     if effective_wave >= 6 and rng.random() < SALSA_CHANCE:
@@ -172,6 +181,8 @@ def generate_procedural_level(level_number: int) -> dict:
             elif kind == "triangle":
                 cell["hp"] = random_totopo_hp(level_number, rng)
                 cell["corner"] = rng.randint(0, 3)
+            elif kind == "laser":
+                cell["orientation"] = rng.choice(LASER_ORIENTATIONS)
             row_cells.append(cell)
         row_queue.append(row_cells)
 

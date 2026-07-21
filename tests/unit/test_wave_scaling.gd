@@ -3,8 +3,10 @@ extends GutTest
 
 const WaveScalingGd := preload("res://src/features/board/wave_scaling.gd")
 
+## "laser" incluido — pedido explícito del usuario (ver Constants.ROW_LASER_CHANCE):
+## ahora pick_cell_kind() también puede devolverlo en Modo Infinito.
 const ALL_KINDS: Array = [
-	"empty", "totopo", "queso", "triangle", "stone", "salsa", "lemon", "seed_extra"
+	"empty", "totopo", "queso", "triangle", "stone", "salsa", "lemon", "seed_extra", "laser"
 ]
 
 
@@ -24,6 +26,41 @@ func test_queso_hp_is_wave_times_1_5_rounded_up() -> void:
 
 func test_queso_hp_never_drops_below_one() -> void:
 	assert_eq(WaveScalingGd.queso_hp_for_wave(0), 1)
+
+
+## Pedido explícito del usuario: "cada hilera siempre trae el mismo HP... debería variar".
+## Oleada 1 (introducción, GDD 1-5): la variación es tan chica que redondea al mismo valor
+## para TODOS los sorteos — comportamiento intencional, no un bug (ver comentario en
+## Constants.WAVE_HP_VARIANCE_RATIO_PER_WAVE).
+func test_random_hp_for_wave_has_no_variance_at_wave_one() -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = 42
+	var base_hp: int = WaveScalingGd.totopo_hp_for_wave(1)
+	for _i: int in 20:
+		assert_eq(WaveScalingGd.random_hp_for_wave(base_hp, 1, rng), base_hp)
+
+
+## Oleadas avanzadas sí deben mostrar variedad real — con suficientes tiradas, alguna debe
+## caer por encima del valor central de la oleada (bloque "más resistente que el promedio",
+## pedido explícito del usuario).
+func test_random_hp_for_wave_produces_values_above_the_average_at_late_waves() -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = 7
+	var base_hp: int = WaveScalingGd.totopo_hp_for_wave(40)
+	var saw_above_average: bool = false
+	for _i: int in 100:
+		if WaveScalingGd.random_hp_for_wave(base_hp, 40, rng) > base_hp:
+			saw_above_average = true
+			break
+	assert_true(saw_above_average, "oleada 40 debería producir al menos un bloque sobre el promedio")
+
+
+## random_hp_for_wave() nunca debe devolver un HP inválido (<= 0), sin importar la oleada.
+func test_random_hp_for_wave_never_drops_below_one() -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = 3
+	for _i: int in 50:
+		assert_gt(WaveScalingGd.random_hp_for_wave(1, 60, rng), 0)
 
 
 func test_triangles_and_queso_and_salsa_unlock_at_wave_six() -> void:
