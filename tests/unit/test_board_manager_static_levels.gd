@@ -6,6 +6,7 @@ extends GutTest
 
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TotopoBlockGd := preload("res://src/features/blocks/totopo_block.gd")
+const SalsaJarBlockGd := preload("res://src/features/blocks/salsa_jar_block.gd")
 const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
 const GridMathGd := preload("res://src/shared/grid_math.gd")
 
@@ -179,6 +180,36 @@ func test_laser_triggered_both_damages_row_and_column() -> void:
 	assert_eq(int(same_row.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
 	assert_eq(int(same_col.get(&"current_hp")), 100 - Constants.LASER_DAMAGE)
 	assert_eq(int(neither.get(&"current_hp")), 100, "ni la fila ni la columna coinciden")
+
+
+## Regresión de un crash real jugando ("Invalid access to property or key" en
+## _on_laser_triggered): un frasco de salsa en la línea del láser puede morir por el
+## propio daño del láser y explotar SÍNCRONAMENTE (_on_salsa_exploded destruye a sus
+## vecinos antes de que el for termine de recorrer _blocks.keys()) — si esa explosión
+## destruye a otro bloque que el láser todavía no visitó, la clave desaparece de _blocks
+## a mitad del bucle. Orden de inserción importa: la salsa debe procesarse ANTES que su
+## vecino para reproducir el bug.
+func test_laser_triggered_survives_a_salsa_dying_and_removing_a_later_block() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	var salsa: StaticBody2D = SalsaJarBlockGd.new()
+	add_child_autofree(salsa)
+	salsa.call(&"setup", Vector2i(2, 5), 1, CELL_SIZE)  # muere con un solo golpe del láser
+	var neighbor: StaticBody2D = TotopoBlockGd.new()
+	add_child_autofree(neighbor)
+	neighbor.call(&"setup", Vector2i(3, 5), 100, CELL_SIZE)  # pegado a la salsa, misma fila
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks[Vector2i(2, 5)] = salsa  # insertado PRIMERO: el bucle lo procesa antes
+	blocks[Vector2i(3, 5)] = neighbor
+	EventBus.laser_triggered.emit(Vector2i(0, 5), "horizontal")
+	## queue_free() es diferido (no invalida is_instance_valid() en el mismo frame síncrono
+	## del test, ver regla CLAUDE.md #43) — se verifica el efecto real en su lugar: HP en 0
+	## y ya borrado del Dictionary del tablero (_on_block_destroyed lo borra síncronamente).
+	assert_eq(int(salsa.get(&"current_hp")), 0, "la salsa debió morir por el daño del láser")
+	assert_eq(int(neighbor.get(&"current_hp")), 0, "el vecino debió morir por la explosión")
+	var blocks_after: Dictionary = board.get(&"_blocks")
+	assert_false(blocks_after.has(Vector2i(2, 5)), "la salsa debe haberse borrado de _blocks")
+	assert_false(blocks_after.has(Vector2i(3, 5)), "el vecino debe haberse borrado de _blocks")
 
 
 ## Regresión directa del bug real reportado jugando: el ícono NO debe desaparecer al

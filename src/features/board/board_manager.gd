@@ -411,9 +411,14 @@ func _on_salsa_exploded(grid_pos: Vector2i) -> void:
 func _on_laser_triggered(grid_pos: Vector2i, orientation: String) -> void:
 	var hits_row: bool = orientation != LaserIconGd.ORIENTATION_VERTICAL
 	var hits_col: bool = orientation != LaserIconGd.ORIENTATION_HORIZONTAL
+	## `_blocks.keys()` es una foto tomada ANTES del bucle — si un bloque en la línea es un
+	## frasco de salsa y muere por este mismo daño, su explosión (_on_salsa_exploded) borra
+	## síncronamente a sus vecinos de _blocks, que pueden ser una clave que este bucle
+	## todavía no visitó. `.has()` antes de acceder evita el crash ("Invalid access to
+	## property or key") — mismo patrón defensivo que _on_salsa_exploded ya usa arriba.
 	for key: Vector2i in _blocks.keys():
 		var same_line: bool = (hits_row and key.y == grid_pos.y) or (hits_col and key.x == grid_pos.x)
-		if not same_line:
+		if not same_line or not _blocks.has(key):
 			continue
 		var node: StaticBody2D = _blocks[key]
 		if is_instance_valid(node):

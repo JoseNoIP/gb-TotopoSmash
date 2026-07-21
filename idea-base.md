@@ -1042,6 +1042,29 @@ fuerte que el que se escucha al golpear los bloques".
   release/duración, o probar un fundamental distinto (marimba real ronda los 250-500Hz
   según el tamaño de la barra, hay margen para experimentar dentro de ese rango).
 
+## Fix: crash real al combinar láser + salsa en la misma línea ✅
+
+Reportado por el usuario ejecutando el juego real (no un test): `SCRIPT ERROR: Invalid
+access to property or key '(4, 0)' on a base object of type 'Dictionary[Vector2i,
+StaticBody2D]'` en `board_manager.gd::_on_laser_triggered()`.
+
+- **Causa**: `_on_laser_triggered()` recorre `_blocks.keys()` (una foto tomada al inicio)
+  aplicando `take_explosion_damage()` a cada bloque en la línea. Si uno de esos bloques es
+  un Frasco de Salsa que muere por ese mismo daño, su `_die()` emite `salsa_exploded`
+  SÍNCRONAMENTE, y `_on_salsa_exploded()` destruye a sus vecinos de inmediato — si un
+  vecino comparte línea con el láser y el bucle todavía no había llegado a esa clave, la
+  siguiente vuelta intenta `_blocks[esa_clave]` sobre una entrada ya borrada. El bug no
+  aparece probando láser o salsa por separado, solo al combinarse en la misma ráfaga.
+  `_on_salsa_exploded()` ya tenía el guard correcto (`if _blocks.has(neighbor): ...`);
+  `_on_laser_triggered()` (agregado en la misma sesión, mismo patrón) no lo copió.
+- **Fix**: `if not same_line or not _blocks.has(key): continue` antes de acceder
+  `_blocks[key]` — mismo guard que ya usa `_on_salsa_exploded()`.
+- Test de regresión nuevo: salsa (hp=1) insertada ANTES que su vecino en `_blocks` (el
+  orden de inserción importa para reproducir el orden real del bucle), verificando que
+  ambos terminan con `current_hp == 0` y borrados de `_blocks` sin crash.
+- Propagado al template como regla general de CLAUDE.md (recorrer un dict que un daño en
+  área puede mutar en cadena vía señales).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
