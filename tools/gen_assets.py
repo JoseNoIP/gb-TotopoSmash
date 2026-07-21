@@ -546,17 +546,27 @@ def sfx_totopo_crunch():
     release consume casi toda la duración, cae rápido, no queda "sonando" (no hay ningún
     efecto de eco/reverb en este pipeline de todas formas, pero antes tampoco lo había —
     lo que sonaba "con eco" era la percepción del crujido de ruido superpuesto muchas
-    veces, no un eco real)."""
+    veces, no un eco real).
+
+    v2 (pedido explícito del usuario: "aún no me convence, investiga en otros juegos
+    similares qué tipo de sonido se usa") — la técnica estándar de diseño de sonido para
+    impactos/percusión es un TRANSIENTE al inicio: un burst de ruido de solo unos ms,
+    ANTES del cuerpo tonal, es lo que el oído interpreta como el "click" de contacto de un
+    golpe real (mazo/objeto contra madera) — un tono puro, por más que tenga
+    fundamental+armónico, se percibe blando/sintético sin eso. Se agrega `click` (ruido de
+    12ms con envolvente propia aún más corta) mezclado con la fundamental/armónico
+    existentes; el resto del diseño no cambia (sigue seco, sin cola)."""
     fundamental_freq = 294.0  # D4 — registro medio-grave típico de una barra de marimba
     fundamental = _sine(fundamental_freq, 0.13, 0.22)
     overtone = _sine(fundamental_freq * 3.93, 0.13, 0.08)  # modo característico de marimba
-    s = _mix(fundamental, overtone)
-    enveloped = _env(s, 0.005, 0.1)
+    click = _env(_noise(0.012, 0.35), 0.0005, 0.01)  # "tic" de contacto del mazo, ~12ms
+    s = _mix(fundamental, overtone, click)
+    enveloped = _env(s, 0.002, 0.1)
     ## _mix() SIEMPRE normaliza al 90% del pico sin importar las amplitudes de entrada
     ## (ver su implementación) — las amplitudes bajas de arriba solo controlan el BALANCE
-    ## fundamental/armónico, no el volumen final. Hay que bajarlo después, a mano, para
-    ## que de verdad "no esté fuerte" como pidió el usuario.
-    return [x * 0.45 for x in enveloped]
+    ## fundamental/armónico/click, no el volumen final. Hay que bajarlo después, a mano,
+    ## para que de verdad "no esté fuerte" como pidió el usuario.
+    return [x * 0.5 for x in enveloped]
 
 
 def sfx_queso_thud():

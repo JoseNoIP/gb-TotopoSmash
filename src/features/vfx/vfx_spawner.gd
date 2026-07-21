@@ -9,6 +9,8 @@ extends Node2D
 ## captura real al agregar el VFX del láser, pero afectaba a TODOS los VFX por igual).
 
 const CrumbParticleGd := preload("res://src/features/vfx/crumb_particle.gd")
+const LaserBeamGd := preload("res://src/features/vfx/laser_beam.gd")
+const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
@@ -33,14 +35,37 @@ func _on_salsa_exploded(grid_pos: Vector2i) -> void:
 
 
 ## Pedido explícito del usuario: "faltó agregarle algún efecto visual... al power-up de
-## láser". Ráfaga de partículas magenta en el punto de origen (mismo patrón que la salsa)
-## — no dibuja la línea completa que recorre toda la fila/columna (sería un cambio de VFX
-## mucho más grande) pero sí confirma visualmente que el láser se activó, cada vez que se
-## toca (persistente, ver laser_icon.gd).
-func _on_laser_triggered(grid_pos: Vector2i, _orientation: String) -> void:
+## láser" y, después, "solo se ve un pequeño destello... lo esperado es que se vea una
+## línea horizontal, vertical o ambas que está golpeando todos los ladrillos" — ráfaga de
+## partículas magenta en el punto de origen (feedback de "toque") + un rayo real
+## (laser_beam.gd) que recorre toda la fila/columna que el láser afecta de verdad (mismo
+## alcance que BoardManager._on_laser_triggered(), que ya calcula hits_row/hits_col).
+func _on_laser_triggered(grid_pos: Vector2i, orientation: String) -> void:
 	var amount: int = Constants.VFX_LASER_AMOUNT
 	var lifetime: float = Constants.VFX_LASER_LIFETIME
 	_spawn_burst(_grid_to_pixel(grid_pos), Constants.COLOR_LASER, amount, lifetime, 220.0)
+	_spawn_beams(grid_pos, orientation)
+
+
+func _spawn_beams(grid_pos: Vector2i, orientation: String) -> void:
+	var board: Node = get_tree().get_first_node_in_group(&"board_manager")
+	if board == null:
+		return
+	var dims: Vector2i = board.call(&"get_grid_dimensions") as Vector2i
+	if orientation != LaserIconGd.ORIENTATION_VERTICAL:
+		var row_from: Vector2 = board.call(&"grid_to_pixel", Vector2i(0, grid_pos.y)) as Vector2
+		var row_to: Vector2 = board.call(&"grid_to_pixel", Vector2i(dims.x - 1, grid_pos.y)) as Vector2
+		_spawn_beam(row_from, row_to)
+	if orientation != LaserIconGd.ORIENTATION_HORIZONTAL:
+		var col_from: Vector2 = board.call(&"grid_to_pixel", Vector2i(grid_pos.x, 0)) as Vector2
+		var col_to: Vector2 = board.call(&"grid_to_pixel", Vector2i(grid_pos.x, dims.y - 1)) as Vector2
+		_spawn_beam(col_from, col_to)
+
+
+func _spawn_beam(from: Vector2, to: Vector2) -> void:
+	var beam: Node2D = LaserBeamGd.new()
+	add_child(beam)
+	beam.call(&"setup", from, to, Constants.COLOR_LASER, Constants.VFX_LASER_BEAM_LIFETIME)
 
 
 ## Grupo, no get_node()/class_name hardcodeado (regla CLAUDE.md #3) — BoardManager se

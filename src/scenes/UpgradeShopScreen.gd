@@ -6,6 +6,7 @@ extends Control
 
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
 const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
+const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 
 const UPGRADE_NAME_KEYS: Dictionary = {
 	"seeds": "UPGRADE_SEEDS_NAME",
@@ -13,8 +14,20 @@ const UPGRADE_NAME_KEYS: Dictionary = {
 	"speed": "UPGRADE_SPEED_NAME",
 }
 
+## Pedido explícito del usuario: "solo hay textos y no es claro las mejoras que existen"
+## — cada mejora ahora muestra el efecto NUMÉRICO concreto (no solo el nombre), formateado
+## con la key correspondiente a su unidad (semillas enteras vs. porcentaje).
+const UPGRADE_EFFECT_FORMAT_KEYS: Dictionary = {
+	"seeds": "UPGRADE_SEEDS_EFFECT_FORMAT",
+	"damage": "UPGRADE_DAMAGE_EFFECT_FORMAT",
+	"speed": "UPGRADE_SPEED_EFFECT_FORMAT",
+}
+
+const LEVEL_DOT_FILLED: String = "●"
+const LEVEL_DOT_EMPTY: String = "○"
+
 var _gold_label: Label = Label.new()
-var _upgrade_rows: Dictionary = {}  ## upgrade_id (String) -> {level_label, buy_btn}
+var _upgrade_rows: Dictionary = {}  ## upgrade_id (String) -> {dots_label, desc_label, buy_btn}
 var _character_buttons: Dictionary = {}  ## character_id (String) -> Button
 
 
@@ -90,30 +103,47 @@ func _build_ui() -> void:
 	add_child(back_btn)
 
 
+## Tarjeta opaca (ModalStyleGd, regla CLAUDE.md #52) en vez de una fila de texto suelta —
+## separa visualmente cada mejora y deja lugar para nombre + puntos de nivel + descripción
+## numérica del efecto + botón de compra, en vez de solo "nombre / Nivel N/5 / Comprar".
 func _build_upgrade_row(parent: VBoxContainer, upgrade_id: String) -> void:
-	var row: HBoxContainer = HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 8)
-	parent.add_child(row)
+	var panel: PanelContainer = PanelContainer.new()
+	var card_color: Color = Constants.COLOR_BG_BOARD.lightened(0.06)
+	panel.add_theme_stylebox_override(&"panel", ModalStyleGd.opaque_panel(card_color))
+	parent.add_child(panel)
+
+	var card: VBoxContainer = VBoxContainer.new()
+	card.add_theme_constant_override(&"separation", 6)
+	panel.add_child(card)
+
+	var header: HBoxContainer = HBoxContainer.new()
+	card.add_child(header)
 
 	var name_label: Label = Label.new()
 	name_label.text = UPGRADE_NAME_KEYS.get(upgrade_id, "") as String
-	name_label.custom_minimum_size = Vector2(110.0, 40.0)
 	name_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
-	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(name_label)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(name_label)
 
-	var level_label: Label = Label.new()
-	level_label.custom_minimum_size = Vector2(70.0, 40.0)
-	level_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
-	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(level_label)
+	var dots_label: Label = Label.new()
+	dots_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
+	dots_label.add_theme_color_override(&"font_color", Constants.COLOR_SEED_EXTRA)
+	header.add_child(dots_label)
+
+	var desc_label: Label = Label.new()
+	desc_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE - 4)
+	desc_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	card.add_child(desc_label)
 
 	var buy_btn: Button = Button.new()
-	buy_btn.custom_minimum_size = Vector2(120.0, 40.0)
+	buy_btn.custom_minimum_size = Vector2(0.0, 40.0)
 	buy_btn.pressed.connect(_on_buy_pressed.bind(upgrade_id))
-	row.add_child(buy_btn)
+	card.add_child(buy_btn)
 
-	_upgrade_rows[upgrade_id] = {"level_label": level_label, "buy_btn": buy_btn}
+	_upgrade_rows[upgrade_id] = {
+		"dots_label": dots_label, "desc_label": desc_label, "buy_btn": buy_btn
+	}
 
 
 func _build_character_button(parent: GridContainer, character_id: String) -> void:
@@ -134,10 +164,19 @@ func _refresh_all() -> void:
 
 func _refresh_upgrade_row(upgrade_id: String) -> void:
 	var row: Dictionary = _upgrade_rows[upgrade_id]
-	var level_label: Label = row["level_label"]
+	var dots_label: Label = row["dots_label"]
+	var desc_label: Label = row["desc_label"]
 	var buy_btn: Button = row["buy_btn"]
 	var level: int = MetaManager.get_upgrade_level(upgrade_id)
-	level_label.text = tr(&"LABEL_UPGRADE_LEVEL") % [level, Constants.UPGRADE_MAX_LEVEL]
+	dots_label.text = _level_dots(level)
+	if level == 0:
+		desc_label.text = tr(&"LABEL_UPGRADE_EFFECT_NOT_BOUGHT") % _effect_text(upgrade_id, 1)
+	elif UpgradeShopGd.is_max_level(level):
+		desc_label.text = tr(&"LABEL_UPGRADE_EFFECT_CURRENT_MAX") % _effect_text(upgrade_id, level)
+	else:
+		var current_text: String = _effect_text(upgrade_id, level)
+		var next_text: String = _effect_text(upgrade_id, level + 1)
+		desc_label.text = tr(&"LABEL_UPGRADE_EFFECT_CURRENT_TO_NEXT") % [current_text, next_text]
 	if UpgradeShopGd.is_max_level(level):
 		buy_btn.text = tr(&"LABEL_MAX_LEVEL")
 		buy_btn.disabled = true
@@ -145,6 +184,34 @@ func _refresh_upgrade_row(upgrade_id: String) -> void:
 	var cost: int = UpgradeShopGd.cost_for_next_level(level)
 	buy_btn.text = tr(&"BTN_BUY_COST") % cost
 	buy_btn.disabled = cost > MetaManager.get_gold()
+
+
+## Puntos de nivel rellenos/vacíos (pedido explícito del usuario: "no es claro las
+## mejoras que existen" — un indicador visual rápido además del texto).
+func _level_dots(level: int) -> String:
+	var dots: String = ""
+	for i: int in Constants.UPGRADE_MAX_LEVEL:
+		dots += LEVEL_DOT_FILLED if i < level else LEVEL_DOT_EMPTY
+	return dots
+
+
+## Valor numérico concreto del efecto de una mejora a un nivel dado — misma unidad que
+## src/features/meta/upgrade_shop.gd usa internamente (semillas enteras, o % redondeado).
+func _effect_value(upgrade_id: String, level: int) -> int:
+	match upgrade_id:
+		"seeds":
+			return UpgradeShopGd.bonus_seeds(level)
+		"damage":
+			return roundi((UpgradeShopGd.damage_multiplier(level) - 1.0) * 100.0)
+		"speed":
+			return roundi((UpgradeShopGd.seed_speed_multiplier(level) - 1.0) * 100.0)
+		_:
+			return 0
+
+
+func _effect_text(upgrade_id: String, level: int) -> String:
+	var format_key: StringName = UPGRADE_EFFECT_FORMAT_KEYS.get(upgrade_id, "") as StringName
+	return tr(format_key) % _effect_value(upgrade_id, level)
 
 
 func _refresh_character_button(character_id: String) -> void:

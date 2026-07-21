@@ -18,19 +18,45 @@ const KIND_STONE: String = "stone"
 const KIND_SALSA: String = "salsa"
 const KIND_LEMON: String = "lemon"
 const KIND_SEED_EXTRA: String = "seed_extra"
-## Sin probabilidad de spawn en Modo Infinito a propósito (no se toca pick_cell_kind() más
-## abajo) — solo aparece en niveles autorados (row_queue/cells), ver CellFactoryGd.
+## Con probabilidad de spawn en Modo Infinito (Constants.ROW_LASER_CHANCE, ver
+## pick_cell_kind() más abajo) — pedido explícito del usuario, antes solo aparecía en
+## niveles autorados (row_queue/cells), ver CellFactoryGd.
 const KIND_LASER: String = "laser"
 
 
-## GDD 4.1 — "Bloques Normales (Totopos): N = O"
+## GDD 4.1 — "Bloques Normales (Totopos): N = O". Este es el HP "central" de la oleada —
+## el HP REAL de cada bloque individual se sortea alrededor de este valor, ver
+## random_hp_for_wave() (pedido explícito del usuario: variedad de HP dentro de una misma
+## fila, no todos los bloques con el mismo golpe).
 static func totopo_hp_for_wave(wave: int) -> int:
 	return maxi(1, roundi(float(wave) * Constants.WAVE_TOTOPO_HP_MULTIPLIER))
 
 
-## GDD 4.1 — "Bloques Pesados (Queso): N = O x 1.5 (redondeado hacia arriba)"
+## GDD 4.1 — "Bloques Pesados (Queso): N = O x 1.5 (redondeado hacia arriba)". HP central,
+## ver misma nota que totopo_hp_for_wave().
 static func queso_hp_for_wave(wave: int) -> int:
 	return maxi(1, ceili(float(wave) * Constants.WAVE_QUESO_HP_MULTIPLIER))
+
+
+## Cuánto puede desviarse el HP de UN bloque respecto al valor central de la oleada — crece
+## con la oleada (tope Constants.WAVE_HP_VARIANCE_RATIO_MAX) para que oleadas tempranas casi
+## no varíen (GDD: 1-5 es la introducción) y oleadas tardías sí muestren bloques bastante
+## más resistentes que el promedio.
+static func hp_variance_ratio(wave: int) -> float:
+	return minf(
+		Constants.WAVE_HP_VARIANCE_RATIO_MAX, float(wave) * Constants.WAVE_HP_VARIANCE_RATIO_PER_WAVE
+	)
+
+
+## HP real de UN bloque — sorteado dentro de un rango centrado en `base_hp` (el valor de
+## totopo_hp_for_wave()/queso_hp_for_wave() para esta oleada), no un valor fijo repetido en
+## toda la fila. `rng` se inyecta para que el resultado sea reproducible en tests, mismo
+## patrón que pick_cell_kind().
+static func random_hp_for_wave(base_hp: int, wave: int, rng: RandomNumberGenerator) -> int:
+	var ratio: float = hp_variance_ratio(wave)
+	var lo: int = maxi(1, roundi(float(base_hp) * (1.0 - ratio)))
+	var hi: int = maxi(lo, roundi(float(base_hp) * (1.0 + ratio)))
+	return rng.randi_range(lo, hi)
 
 
 ## GDD 4.2 — oleadas 6-15 "Geometría": bloques triangulares
@@ -84,6 +110,8 @@ static func pick_cell_kind(wave: int, rng: RandomNumberGenerator) -> String:
 		return KIND_SEED_EXTRA
 	if rng.randf() < Constants.ROW_LEMON_CHANCE:
 		return KIND_LEMON
+	if rng.randf() < Constants.ROW_LASER_CHANCE:
+		return KIND_LASER
 	if stone_unlocked(wave) and rng.randf() < Constants.ROW_STONE_CHANCE:
 		return KIND_STONE
 	if salsa_unlocked(wave) and rng.randf() < 0.10:

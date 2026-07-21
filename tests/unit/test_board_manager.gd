@@ -155,6 +155,50 @@ func test_shift_down_drops_a_freed_icon_without_crashing() -> void:
 	)
 
 
+## Pedido explícito del usuario (láseres cayendo junto con los bloques, igual que
+## lemon/seed_extra): un ícono que cruza la línea de peligro al desplazarse debe
+## desaparecer sin más efecto, en vez de seguir acumulándose para siempre por debajo del
+## tablero.
+func test_shift_down_frees_an_icon_that_crosses_the_danger_row() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game()
+	var icon: Area2D = Area2D.new()
+	add_child_autofree(icon)
+	var icons: Dictionary = board.get(&"_icons")
+	icons.clear()
+	icons[Vector2i(3, Constants.MOLCAJETE_ROW - 1)] = icon
+	EventBus.all_seeds_returned.emit(0.0)
+	# No se asume que _icons quede vacío: el mismo avance también puede spawnear íconos
+	# nuevos en la fila 0 (lemon/seed_extra/laser vía pick_cell_kind) — solo importa que
+	# ESTE ícono en particular ya no esté en la posición que cruzó la línea.
+	var new_icons: Dictionary = board.get(&"_icons")
+	assert_false(
+		new_icons.has(Vector2i(3, Constants.MOLCAJETE_ROW)),
+		"el ícono debe haberse quitado de _icons al cruzar la línea"
+	)
+
+
+## Un ícono que se queda JUSTO antes de la línea de peligro (todavía no la cruza) debe
+## sobrevivir el desplazamiento normalmente — regresión explícita para no confundir "cruzar
+## la línea" con "cualquier avance".
+func test_shift_down_keeps_an_icon_that_has_not_reached_the_danger_row_yet() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game()
+	var icon: Area2D = Area2D.new()
+	add_child_autofree(icon)
+	var icons: Dictionary = board.get(&"_icons")
+	icons.clear()
+	icons[Vector2i(3, Constants.MOLCAJETE_ROW - 2)] = icon
+	EventBus.all_seeds_returned.emit(0.0)
+	var new_icons: Dictionary = board.get(&"_icons")
+	assert_true(
+		new_icons.has(Vector2i(3, Constants.MOLCAJETE_ROW - 1)),
+		"un ícono que todavía no cruza la línea debe seguir en _icons una fila más abajo"
+	)
+
+
 ## --- Modo Nivel (niveles finitos/deterministas, ver LevelManager/level_loader.gd) ---
 
 func test_spawn_level_cell_places_a_block_at_its_exact_position() -> void:

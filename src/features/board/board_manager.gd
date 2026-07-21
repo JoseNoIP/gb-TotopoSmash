@@ -36,6 +36,7 @@ var _is_static_level: bool = false
 var _static_cell_size: float = 0.0
 var _static_origin: Vector2 = Vector2.ZERO
 var _static_turns_used: int = 0
+var _static_grid_dimensions: Vector2i = Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -66,6 +67,16 @@ func grid_to_pixel(grid_pos: Vector2i) -> Vector2:
 		GridMathGd.col_to_x(grid_pos.x, Constants.DESIGN_WIDTH),
 		GridMathGd.row_to_y(grid_pos.y, Constants.DESIGN_WIDTH)
 	)
+
+
+## Ancho/alto (en celdas) de la grilla ACTIVA — la normal de 7 columnas, o la propia de un
+## nivel `static`. VFXSpawner lo usa para saber cuánto debe extenderse de punta a punta el
+## rayo visual del láser (pedido explícito del usuario: una línea que recorra TODA la fila/
+## columna, no solo un destello en el punto de origen).
+func get_grid_dimensions() -> Vector2i:
+	if _is_static_level:
+		return _static_grid_dimensions
+	return Vector2i(Constants.GRID_COLS, Constants.GRID_ROWS)
 
 
 func _on_game_started() -> void:
@@ -101,6 +112,7 @@ func _on_game_started() -> void:
 func _setup_static_layout(data: Dictionary) -> void:
 	var grid_cols: int = int(data.get("grid_cols", Constants.GRID_COLS))
 	var grid_rows: int = int(data.get("grid_rows", 1))
+	_static_grid_dimensions = Vector2i(grid_cols, grid_rows)
 	var safe_height: float = (
 		Constants.DESIGN_HEIGHT - Constants.BOARD_TOP_MARGIN - Constants.STATIC_LEVEL_BOTTOM_MARGIN
 	)
@@ -215,6 +227,13 @@ func _shift_down() -> void:
 		if not is_instance_valid(node):
 			continue
 		var new_key: Vector2i = Vector2i(key.x, key.y + 1)
+		## Pedido explícito del usuario (láseres cayendo junto con los bloques): un ícono
+		## que cruza la línea de peligro desaparece sin más efecto — nunca cuenta para
+		## perder (_check_game_over() más abajo solo recorre _blocks, nunca _icons) y así
+		## tampoco se queda acumulando para siempre por debajo del tablero.
+		if new_key.y >= Constants.MOLCAJETE_ROW:
+			node.queue_free()
+			continue
 		new_icons[new_key] = node
 		_tween_to_row(node, new_key.y)
 	_icons = new_icons
@@ -260,17 +279,24 @@ func _spawn_cell(kind: String, grid_pos: Vector2i) -> void:
 	)
 	if kind == WaveScalingGd.KIND_TRIANGLE:
 		node.set(&"corner", _rng.randi_range(0, 3))
+	if kind == WaveScalingGd.KIND_LASER:
+		var orientations: Array = [
+			LaserIconGd.ORIENTATION_HORIZONTAL,
+			LaserIconGd.ORIENTATION_VERTICAL,
+			LaserIconGd.ORIENTATION_BOTH,
+		]
+		node.set(&"orientation", orientations[_rng.randi_range(0, orientations.size() - 1)])
 	if CellFactoryGd.is_icon_kind(kind):
 		_spawn_icon(node as Area2D, grid_pos, pos, cell_size)
 		return
 	var hp: int = 1
 	match kind:
 		WaveScalingGd.KIND_QUESO:
-			hp = WaveScalingGd.queso_hp_for_wave(_wave)
+			hp = WaveScalingGd.random_hp_for_wave(WaveScalingGd.queso_hp_for_wave(_wave), _wave, _rng)
 		WaveScalingGd.KIND_STONE:
 			hp = 1
 		_:
-			hp = WaveScalingGd.totopo_hp_for_wave(_wave)
+			hp = WaveScalingGd.random_hp_for_wave(WaveScalingGd.totopo_hp_for_wave(_wave), _wave, _rng)
 	_spawn_block(node as StaticBody2D, grid_pos, pos, hp, cell_size)
 
 
@@ -289,6 +315,8 @@ func _spawn_level_cell(cell: Dictionary) -> void:
 	)
 	if kind == WaveScalingGd.KIND_TRIANGLE:
 		node.set(&"corner", int(cell.get("corner", 0)))
+	if kind == WaveScalingGd.KIND_LASER:
+		node.set(&"orientation", cell.get("orientation", LaserIconGd.ORIENTATION_HORIZONTAL))
 	if CellFactoryGd.is_icon_kind(kind):
 		_spawn_icon(node as Area2D, grid_pos, pos, cell_size)
 		return
@@ -383,9 +411,14 @@ func _on_salsa_exploded(grid_pos: Vector2i) -> void:
 func _on_laser_triggered(grid_pos: Vector2i, orientation: String) -> void:
 	var hits_row: bool = orientation != LaserIconGd.ORIENTATION_VERTICAL
 	var hits_col: bool = orientation != LaserIconGd.ORIENTATION_HORIZONTAL
+	## `_blocks.keys()` es una foto tomada ANTES del bucle — si un bloque en la línea es un
+	## frasco de salsa y muere por este mismo daño, su explosión (_on_salsa_exploded) borra
+	## síncronamente a sus vecinos de _blocks, que pueden ser una clave que este bucle
+	## todavía no visitó. `.has()` antes de acceder evita el crash ("Invalid access to
+	## property or key") — mismo patrón defensivo que _on_salsa_exploded ya usa arriba.
 	for key: Vector2i in _blocks.keys():
 		var same_line: bool = (hits_row and key.y == grid_pos.y) or (hits_col and key.x == grid_pos.x)
-		if not same_line:
+		if not same_line or not _blocks.has(key):
 			continue
 		var node: StaticBody2D = _blocks[key]
 		if is_instance_valid(node):

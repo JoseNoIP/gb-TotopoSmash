@@ -50,8 +50,17 @@ const BOUNCE_PITCH_MAX_STEPS: int = 7
 ## (SIN escalar, `_bounce_streak` no se toca acá) y más silencioso reduce esa acumulación
 ## sin quitarle feedback al rebote contra un bloque real, que sigue sonando igual que
 ## siempre.
-const WALL_BOUNCE_PITCH_SCALE: float = 0.85
-const WALL_BOUNCE_VOLUME_DB: float = -9.0
+##
+## v2 (pedido explícito del usuario: "el sonido al golpear las paredes es más fuerte que
+## el que se escucha al golpear los bloques") — medido: seed_bounce.wav (pared) y
+## totopo_crunch.wav (bloque) tienen picos de amplitud casi idénticos, pero seed_bounce es
+## un seno PURO a ~1kHz (zona de máxima sensibilidad del oído, curvas isofónicas) mientras
+## que totopo_crunch es más grave (294Hz) y compuesto — a IGUAL nivel nominal en dB, el
+## tono de pared se percibe más fuerte igual. -9dB/0.85 no alcanzaba a compensar esa
+## diferencia de percepción. Se baja el pitch (aleja el tono agudo de la zona sensible del
+## oído, además de una atenuación en dB mayor) y se sube la atenuación.
+const WALL_BOUNCE_PITCH_SCALE: float = 0.6
+const WALL_BOUNCE_VOLUME_DB: float = -15.0
 
 var _music_player: AudioStreamPlayer = AudioStreamPlayer.new()
 var _bounce_streak: int = 0
