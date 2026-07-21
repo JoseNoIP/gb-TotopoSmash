@@ -22,6 +22,7 @@ const SFX_FILES: Dictionary = {
 	&"totopo_crunch": "totopo_crunch.wav",
 	&"queso_thud": "queso_thud.wav",
 	&"salsa_splash": "salsa_splash.wav",
+	&"laser_zap": "laser_zap.wav",
 }
 
 ## GDD: material del bloque golpeado -> SFX de impacto. Sin entrada = usa el tono de
@@ -53,6 +54,7 @@ func _ready() -> void:
 	add_child(_music_player)
 	EventBus.seed_bounced.connect(_on_seed_bounced)
 	EventBus.salsa_exploded.connect(_on_salsa_exploded)
+	EventBus.laser_triggered.connect(_on_laser_triggered)
 	EventBus.burst_fired.connect(_on_burst_fired)
 	## Autoload — vive toda la sesión, así que arrancarla acá (en vez de en MainMenu/Game)
 	## la deja sonando de fondo en cualquier pantalla desde el arranque, en loop
@@ -131,6 +133,13 @@ func _on_seed_bounced(block_type: String) -> void:
 
 func _on_salsa_exploded(_grid_pos: Vector2i) -> void:
 	play_sfx(&"salsa_splash")
+
+
+## Pedido explícito del usuario: "faltó agregarle... sonido de láser al power-up". Se
+## reproduce en CADA toque (persistente, ver laser_icon.gd) — un solo AudioStreamPlayer
+## nuevo por toque, igual que cualquier otro SFX (play_sfx() ya maneja eso).
+func _on_laser_triggered(_grid_pos: Vector2i, _orientation: String) -> void:
+	play_sfx(&"laser_zap")
 
 
 func _load_settings() -> void:

@@ -50,7 +50,13 @@ const BLOCK_QUESO_DAMAGE_PER_HIT: int = 2  ## "absorbe el doble de daño por imp
 const BLOCK_SALSA_WARNING_HP: int = 1  ## HP en el que empieza a parpadear antes de estallar
 const WAVE_TOTOPO_HP_MULTIPLIER: float = 1.0  ## N = O
 const WAVE_QUESO_HP_MULTIPLIER: float = 1.5  ## N = ceil(O * 1.5)
-const LASER_DAMAGE: int = 25  ## power-up láser: daño a TODA la fila/columna al tocarlo
+## Pedido explícito del usuario: "debe descontar un punto a los bloques horizontales y
+## verticales por cada semilla que lo toque, no destruirlos de golpe" — mismo daño que un
+## impacto normal (BLOCK_NORMAL_DAMAGE_PER_HIT), no un valor grande de una sola vez. Como
+## el láser es PERSISTENTE (se dispara de nuevo con cada semilla que lo toca, ver
+## laser_icon.gd), el efecto acumulado real a lo largo de una ráfaga de muchas semillas
+## sigue siendo fuerte — solo que gradual, un punto a la vez, en vez de un golpe único.
+const LASER_DAMAGE: int = 1  ## power-up láser: daño a TODA la fila/columna POR CADA TOQUE
 
 # --- Introducción de complejidad por oleada (GDD sección 4.2) ---
 const WAVE_INTRO_END: int = 5  ## 1-5: solo totopos, vida 1-5
@@ -119,6 +125,8 @@ const VFX_CRUMB_AMOUNT: int = 14
 const VFX_CRUMB_LIFETIME: float = 0.5
 const VFX_SAUCE_AMOUNT: int = 24
 const VFX_SAUCE_LIFETIME: float = 0.6
+const VFX_LASER_AMOUNT: int = 18
+const VFX_LASER_LIFETIME: float = 0.35
 
 # --- Mejoras permanentes (oro) — ver src/features/meta/upgrade_shop.gd ---
 const GOLD_PER_SCORE_POINT: float = 0.05  ## oro ganado = score * esto, al terminar la run

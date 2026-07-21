@@ -13,6 +13,7 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 func _ready() -> void:
 	EventBus.block_destroyed.connect(_on_block_destroyed)
 	EventBus.salsa_exploded.connect(_on_salsa_exploded)
+	EventBus.laser_triggered.connect(_on_laser_triggered)
 
 
 func _on_block_destroyed(grid_pos: Vector2i, block_type: String, _score_value: int) -> void:
@@ -26,6 +27,17 @@ func _on_salsa_exploded(grid_pos: Vector2i) -> void:
 	var amount: int = Constants.VFX_SAUCE_AMOUNT
 	var lifetime: float = Constants.VFX_SAUCE_LIFETIME
 	_spawn_burst(_grid_to_pixel(grid_pos), Constants.COLOR_SALSA, amount, lifetime, 160.0)
+
+
+## Pedido explícito del usuario: "faltó agregarle algún efecto visual... al power-up de
+## láser". Ráfaga de partículas magenta en el punto de origen (mismo patrón que la salsa)
+## — no dibuja la línea completa que recorre toda la fila/columna (sería un cambio de VFX
+## mucho más grande) pero sí confirma visualmente que el láser se activó, cada vez que se
+## toca (persistente, ver laser_icon.gd).
+func _on_laser_triggered(grid_pos: Vector2i, _orientation: String) -> void:
+	var amount: int = Constants.VFX_LASER_AMOUNT
+	var lifetime: float = Constants.VFX_LASER_LIFETIME
+	_spawn_burst(_grid_to_pixel(grid_pos), Constants.COLOR_LASER, amount, lifetime, 220.0)
 
 
 func _grid_to_pixel(grid_pos: Vector2i) -> Vector2:

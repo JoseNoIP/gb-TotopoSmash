@@ -49,3 +49,12 @@ func test_play_sfx_does_nothing_when_sfx_disabled() -> void:
 	var msg: String = "sin SFX no debe crear ningún AudioStreamPlayer nuevo"
 	assert_eq(AudioManager.get_child_count(), children_before, msg)
 	AudioManager.set_sfx_enabled(original)
+
+
+## Regresión directa del pedido del usuario: "faltó agregarle... sonido de láser al
+## power-up" — EventBus.laser_triggered debe reproducir un SFX real (laser_zap.wav).
+func test_laser_triggered_plays_the_laser_zap_sfx() -> void:
+	var children_before: int = AudioManager.get_child_count()
+	EventBus.laser_triggered.emit(Vector2i.ZERO, "horizontal")
+	var msg: String = "laser_triggered debe crear un AudioStreamPlayer para laser_zap.wav"
+	assert_gt(AudioManager.get_child_count(), children_before, msg)

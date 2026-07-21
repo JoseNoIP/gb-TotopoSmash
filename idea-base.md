@@ -766,12 +766,46 @@ Cinco pedidos explícitos del usuario en un mismo mensaje, atendidos en orden.
   217/217 tests (incluye regresión directa para cada pieza: persistencia del láser,
   destrucción de los 8 vecinos, exención de piedra, independencia música/SFX).
 
+## Feedback del láser (VFX/SFX) + daño gradual ✅
+
+Pedido explícito del usuario tras la ronda anterior: "faltó agregarle algún efecto visual
+y sonido de láser al power-up. Y debe descontar un punto a los bloques horizontales y
+verticales por cada semilla que lo toque, no destruirlos de golpe."
+
+- **`Constants.LASER_DAMAGE` bajó de 25 a 1** — mismo daño que un impacto normal
+  (`BLOCK_NORMAL_DAMAGE_PER_HIT`), no un valor grande de una sola vez. Como el láser ya es
+  persistente (ronda anterior), el efecto acumulado a lo largo de una ráfaga con muchas
+  semillas sigue siendo fuerte — solo gradual, un punto a la vez.
+- **VFX nuevo** — `vfx_spawner.gd::_on_laser_triggered()`, ráfaga de partículas magenta
+  (`Constants.COLOR_LASER`) en el punto de origen, mismo patrón que la salpicadura de la
+  salsa (`Constants.VFX_LASER_AMOUNT=18`/`VFX_LASER_LIFETIME=0.35`, más rápida/corta que la
+  de salsa para no acumularse visualmente si se dispara muchas veces seguidas en la misma
+  ráfaga).
+- **SFX nuevo** — `sfx_laser_zap()` en `gen_assets.py` (barrido agudo descendente +
+  textura de ruido fino, sintetizado con la misma stdlib que el resto de los SFX),
+  registrado en `AudioManager.SFX_FILES` y conectado a `EventBus.laser_triggered`. Se
+  reproduce en CADA toque (persistente), deliberadamente corto (0.35s) para no cansar si
+  se dispara muchas veces en una misma ráfaga.
+- **Descubierto de paso (no arreglado esta ronda, ver Pendientes): la posición del VFX es
+  incorrecta en niveles `static`** — el burst de partículas del láser apareció fuera de la
+  figura al verificar con captura real, porque `VFXSpawner._grid_to_pixel()` siempre usa la
+  grilla NORMAL de 7 columnas, nunca la grilla propia de un nivel `static`. Bug
+  preexistente (afecta igual a los crumbs de bloque destruido y la salpicadura de salsa en
+  cualquier nivel `static`), simplemente nunca se había notado hasta verlo con un burst
+  grande y de un color muy distinto (magenta) al resto del tablero (naranja). Fuera de
+  alcance de este pedido puntual — requiere que `VFXSpawner` pueda consultar el layout
+  real de `BoardManager` (ninguna referencia cruzada existe todavía entre ambos nodos).
+- Verificado con captura real: el burst magenta se ve y aparece en el momento correcto
+  (aunque en la posición equivocada para niveles `static`, ver arriba). `gdlint` limpio,
+  218/218 tests (incluye regresión directa: el SFX se reproduce en cada `laser_triggered`).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
 - **Balance de la música de fondo** — recién agregada (`assets/audio/music/theme.wav`, sintetizada, loop de ~7.3s a -8dB), nunca escuchada por el usuario todavía. Puede sentirse repetitiva más allá de unos minutos de juego, o el volumen relativo a los SFX puede necesitar ajuste — regenerar con `music_theme()` en `tools/gen_assets.py` (tempo/notas/`volume_db` en `AudioManager._ready()`) si hace falta.
 - **Balance de los 100 niveles numéricos** — el HP por bloque escala fuerte (totopo 10-50 en nivel 1, hasta 60-300 en nivel 100, VARIADO por bloque) y las semillas iniciales se ajustaron para compensar (30→110), pero es un ajuste de buena fe sin playtesting real: la física de rebote (una semilla puede golpear el mismo bloque muchas veces antes de aterrizar) hace que "¿alcanzan las semillas para limpiar el nivel a tiempo?" no se pueda confirmar simulando en el papel. Si algún tramo del roster resulta imposible o trivial, ajustar las constantes en `tools/gen_levels.py` y regenerar.
-- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 35-174 (rango del nivel 50, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (2 rondas de ajuste ya). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=25` también es un valor de partida sin verificar (¿se siente débil o roto contra bloques de hasta 174 HP?).
+- **Balance de los niveles `static` (pack Mundial v3)** — HP variado 25-123 (rango del nivel 30, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (3 rondas de ajuste ya: nivel 100 → 50 → 30). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=1` (bajado de 25, pedido explícito del usuario: "un punto por cada semilla que lo toque, no destruirlos de golpe") también es un valor sin verificar jugando — ¿se siente débil considerando que el láser es persistente y puede tocarse muchas veces en una misma ráfaga?
+- **Posición de los VFX de partículas en niveles `static` es aproximada/incorrecta** — descubierto al agregar el VFX del láser (`vfx_spawner.gd::_on_laser_triggered()`) y verificarlo con captura real: `_grid_to_pixel()` siempre usa `GridMathGd.col_to_x/row_to_y` con `Constants.GRID_COLS` (la grilla NORMAL de 7 columnas), nunca la grilla propia (`grid_cols`/`grid_rows`/`_static_cell_size`/`_static_origin`) de un nivel `static` — el burst de partículas aparece fuera de la figura en vez de sobre el bloque/ícono real. Afecta a los 3 VFX existentes por igual (crumbs de `block_destroyed`, salpicadura de `salsa_exploded`, y ahora el zap del láser) — no es un bug nuevo introducido esta ronda, ya existía para block_destroyed/salsa_exploded en cualquier nivel `static`, simplemente nunca se había notado/reportado hasta verlo con el burst grande y magenta del láser. Fix pendiente (fuera de alcance de este pedido, requiere que `VFXSpawner` pueda consultarle a `BoardManager` si el nivel actual es `static` y con qué `_static_cell_size`/`_static_origin` — ninguna referencia cruzada entre ambos nodos existe todavía): agregar un método público `BoardManager.grid_to_pixel(grid_pos) -> Vector2` que internamente elija la fórmula correcta según `_is_static_level`, y que `VFXSpawner` lo use en vez de llamar `GridMathGd` directo.
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.
 - **Más variedad de niveles** — el roster numérico ya llega a 100 (objetivo del GDD) y hay 2 packs temáticos (navideño tipo "bloques descendentes", Mundial v3 tipo "imagen fija", 10 niveles). Seguir usando `/level-designer` para más packs (ej. otras festividades) si se quiere — declarar siempre qué tipo(s) de nivel usa el pack nuevo (ver sección de niveles `static` arriba).
 

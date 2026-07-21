@@ -546,6 +546,15 @@ def sfx_salsa_splash():
     return _env(s, 0.005, 0.2)
 
 
+def sfx_laser_zap():
+    """Power-up láser (pedido explícito del usuario: "faltó... sonido de láser") — zap
+    electrónico corto y agudo, barrido descendente rápido con un toque de ruido fino para
+    textura. Se reproduce en CADA toque (el láser es persistente), así que debe ser breve
+    y no cansar al repetirse muchas veces en una misma ráfaga."""
+    s = _mix(_sweep(1800, 300, 0.35), _noise(0.1, 0.08))
+    return _env(s, 0.001, 0.09)
+
+
 # ---------------------------------------------------------------------------
 # Música de fondo (mismo criterio que los SFX: sintetizada con stdlib, sin dependencias
 # ni assets de terceros — AudioManager.play_music() ya existía pero nunca se llamaba ni
@@ -650,6 +659,7 @@ def main():
         "assets/audio/sfx/totopo_crunch.wav": sfx_totopo_crunch(),
         "assets/audio/sfx/queso_thud.wav": sfx_queso_thud(),
         "assets/audio/sfx/salsa_splash.wav": sfx_salsa_splash(),
+        "assets/audio/sfx/laser_zap.wav": sfx_laser_zap(),
     }
     for path, samples in sfx.items():
         save_wav(path, samples)
