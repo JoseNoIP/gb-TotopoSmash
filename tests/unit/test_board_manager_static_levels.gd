@@ -7,6 +7,7 @@ extends GutTest
 const BoardManagerGd := preload("res://src/features/board/board_manager.gd")
 const TotopoBlockGd := preload("res://src/features/blocks/totopo_block.gd")
 const SalsaJarBlockGd := preload("res://src/features/blocks/salsa_jar_block.gd")
+const StoneBlockGd := preload("res://src/features/blocks/stone_block.gd")
 const LaserIconGd := preload("res://src/features/powerups/laser_icon.gd")
 const GridMathGd := preload("res://src/shared/grid_math.gd")
 
@@ -231,6 +232,34 @@ func test_laser_triggered_survives_a_salsa_dying_and_removing_a_later_block() ->
 	var blocks_after: Dictionary = board.get(&"_blocks")
 	assert_false(blocks_after.has(Vector2i(2, 5)), "la salsa debe haberse borrado de _blocks")
 	assert_false(blocks_after.has(Vector2i(3, 5)), "el vecino debe haberse borrado de _blocks")
+
+
+## Regresión directa del bug real reportado jugando: una Piedra (indestructible por daño,
+## salsa Y láser) que llega a la fila del molcajete NO debe terminar la partida — el
+## jugador nunca tiene forma de quitarla del tablero, así que antes de este fix cualquier
+## partida de Modo Infinito estaba condenada a perderse en cuanto la primera piedra llegara
+## al fondo. Debe desaparecer sola, igual que ya hacen los power-ups/íconos.
+func test_indestructible_block_reaching_molcajete_row_disappears_without_game_over() -> void:
+	var board: Node2D = BoardManagerGd.new()
+	add_child_autofree(board)
+	GameManager.start_game()
+	var stone: StaticBody2D = StoneBlockGd.new()
+	add_child_autofree(stone)
+	var forced_key: Vector2i = Vector2i(0, Constants.MOLCAJETE_ROW - 1)
+	stone.call(&"setup", forced_key, 1, CELL_SIZE)
+	var blocks: Dictionary = board.get(&"_blocks")
+	blocks.clear()
+	blocks[forced_key] = stone
+	watch_signals(EventBus)
+	EventBus.all_seeds_returned.emit(0.0)
+	assert_signal_not_emitted(
+		EventBus, "board_reached_bottom", "una piedra nunca debe terminar la partida"
+	)
+	var new_blocks: Dictionary = board.get(&"_blocks")
+	assert_false(
+		new_blocks.has(Vector2i(0, Constants.MOLCAJETE_ROW)),
+		"la piedra debe haber desaparecido en vez de quedar en la fila del molcajete"
+	)
 
 
 ## Regresión directa del bug real reportado jugando: el ícono NO debe desaparecer al

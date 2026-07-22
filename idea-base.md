@@ -1087,6 +1087,37 @@ línea (de arriba) independientemente en qué posición esté".
   captura real: láser spawneado en `(3,0)`, tablero bajado 4 veces, `grid_pos` termina en
   `(3,4)` y el rayo visual aparece en esa fila (mitad de pantalla), no en la 0.
 
+## Fix: una Piedra llegando al molcajete terminaba la partida (diseño roto de fondo) ✅
+
+Reportado por el usuario jugando (oleada 25, captura real): "una roca pasó la línea roja
+y perdí. Eso no debería pasar, porque las rocas no pueden ser destruidas. Debería
+desaparecer al cruzar la línea roja o algo así."
+
+- **Causa**: la Piedra de Molcajete es indestructible por CUALQUIER medio — daño normal,
+  explosión de salsa Y láser respetan todos el guard `is_indestructible` en
+  `block_base.gd`. Pero `_check_game_over()` no distingue tipo de bloque: cualquier
+  entrada en `_blocks` que llegue a `Constants.MOLCAJETE_ROW` termina la partida. Como el
+  tablero SIEMPRE baja una fila cada turno (se limpie o no la fila), y el jugador NUNCA
+  tiene forma de quitar una piedra del tablero, cualquier partida de Modo Infinito estaba
+  condenada a terminar en cuanto la primera piedra (oleada 16+) alcanzara el fondo — sin
+  importar la habilidad del jugador. No era un caso raro/edge: era un resultado
+  garantizado tarde o temprano en toda partida suficientemente larga. Mismo problema
+  aplica a cualquier nivel numérico con piedra (nivel 31+, ver `pick_kind()` en
+  `tools/gen_levels.py`) si el `row_queue` todavía no se agotó cuando la piedra llega.
+- **Fix**: en `BoardManager._shift_down()`, un bloque con `is_indestructible == true` que
+  cruzaría `Constants.MOLCAJETE_ROW` se libera (`queue_free()`) y NO se reinserta en
+  `_blocks` — mismo patrón exacto que ya se usa para los power-ups/íconos (ver fix del
+  láser cayendo con los bloques, sección anterior). `_check_game_over()` ni siquiera llega
+  a verlo, porque nunca vuelve a estar en `_blocks`. Generalizado por `is_indestructible`
+  (no hardcodeado a "stone") — cualquier bloque indestructible futuro hereda el
+  comportamiento gratis.
+- Sin efecto en `_all_destructible_cleared()` (Modo Nivel): esa función ya ignoraba
+  piedras al decidir si el nivel está despejado, con o sin la piedra presente en `_blocks`.
+- Test de regresión (`test_indestructible_block_reaching_molcajete_row_disappears_
+  without_game_over`) + verificado con captura real: piedra forzada a una fila antes del
+  molcajete, tras `_shift_down()` desaparece del tablero y `board_reached_bottom` nunca se
+  emite.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.

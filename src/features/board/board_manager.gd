@@ -216,6 +216,19 @@ func _shift_down() -> void:
 		if not is_instance_valid(node):
 			continue
 		var new_key: Vector2i = Vector2i(key.x, key.y + 1)
+		## Bug real reportado jugando: una Piedra (indestructible — daño normal, salsa Y
+		## láser respetan `is_indestructible` en block_base.gd, así que el jugador NUNCA
+		## tiene forma de quitarla del tablero) que llega a la fila del molcajete terminaba
+		## la partida igual que cualquier bloque destructible. Como el tablero SIEMPRE baja
+		## una fila cada turno sin importar qué se limpie, cualquier partida de Modo
+		## Infinito estaba condenada a terminar en cuanto la primera piedra (oleada 16+)
+		## alcanzara el fondo, sin importar la habilidad del jugador. Fix: un bloque
+		## indestructible desaparece sin más efecto al cruzar la línea — igual que ya hacen
+		## los power-ups/íconos (ver el bucle de _icons más abajo) — nunca cuenta para
+		## perder (_check_game_over() ni siquiera llega a verlo, porque no se reinserta).
+		if bool(node.get(&"is_indestructible")) and new_key.y >= Constants.MOLCAJETE_ROW:
+			node.queue_free()
+			continue
 		new_blocks[new_key] = node
 		node.set(&"grid_pos", new_key)
 		_tween_to_row(node, new_key.y)
