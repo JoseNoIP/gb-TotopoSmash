@@ -585,9 +585,28 @@ def sfx_laser_zap():
     """Power-up láser (pedido explícito del usuario: "faltó... sonido de láser") — zap
     electrónico corto y agudo, barrido descendente rápido con un toque de ruido fino para
     textura. Se reproduce en CADA toque (el láser es persistente), así que debe ser breve
-    y no cansar al repetirse muchas veces en una misma ráfaga."""
-    s = _mix(_sweep(1800, 300, 0.35), _noise(0.1, 0.08))
-    return _env(s, 0.001, 0.09)
+    y no cansar al repetirse muchas veces en una misma ráfaga.
+
+    v2 (pedido explícito del usuario: "el sonido del láser se escucha muy fuerte, aunque
+    baje el volumen general, el láser sobresale bastante en volumen") — medido: la v1
+    tenía RMS ~49% (pico 90%, el que `_mix()` deja siempre por defecto — ver nota de
+    rescale más abajo) Y 350ms de duración, muy por encima de CUALQUIER otro SFX del juego
+    (totopo_crunch ~9% RMS, seed_bounce ~16%, hasta queso_thud/salsa_splash ~30-35%). Como
+    el láser es PERSISTENTE y puede retocarse muchas veces en una sola ráfaga (varias
+    semillas pasando por la misma celda), cada toque solapa su propio AudioStreamPlayer —
+    un sonido ya de por sí más fuerte que el resto se vuelve una pared de sonido al
+    acumularse (mismo problema de fondo que el rebote contra pared, ver
+    WALL_BOUNCE_PITCH_SCALE/VOLUME_DB en AudioManager.gd). Fix: barrido más corto
+    (0.35s→0.14s, menos tiempo para solaparse con el siguiente toque) y arrancando más
+    grave (1800Hz→1200Hz, menos penetrante) + rescale final explícito para bajar el RMS a
+    ~16%, en línea con seed_bounce (un sonido "normal", no uno que deba destacar sobre
+    todos los demás pese a ser un power-up)."""
+    s = _mix(_sweep(1200, 350, 0.14), _noise(0.05, 0.06))
+    enveloped = _env(s, 0.001, 0.11)
+    ## _mix() SIEMPRE normaliza al 90% del pico sin importar las amplitudes de entrada —
+    ## hay que bajarlo después, a mano (mismo bug/patrón ya documentado en
+    ## sfx_totopo_crunch()).
+    return [x * 0.4 for x in enveloped]
 
 
 # ---------------------------------------------------------------------------
