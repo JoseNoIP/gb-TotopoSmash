@@ -26,7 +26,7 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	var panel_w: float = 300.0
-	var panel_h: float = 280.0
+	var panel_h: float = 300.0
 	var origin_x: float = (Constants.DESIGN_WIDTH - panel_w) * 0.5
 	var origin_y: float = (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	_panel.position = Vector2(origin_x, origin_y)
@@ -41,15 +41,23 @@ func _build_ui() -> void:
 	_panel.add_child(vbox)
 
 	## KEY cruda (no tr()) — auto-translate nativo (ver MainMenu.gd).
+	## Pedido explícito del usuario ("revisa qué pantallas necesitan pulirse"): antes este
+	## título se veía visualmente idéntico al de GameOverScreen (mismo blanco, mismo
+	## tamaño) pese a ser el desenlace OPUESTO (victoria vs. derrota) — verde/dorado
+	## (COLOR_SEED_TRAIL, mismo acento de "completado" que ya usan las pantallas de
+	## selección de nivel) + más grande, para que se sienta como un logro real.
 	var title: Label = Label.new()
 	title.text = "LEVEL_COMPLETE_TITLE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override(&"font_size", 20)
+	title.add_theme_font_size_override(&"font_size", 24)
+	title.add_theme_color_override(&"font_color", Constants.COLOR_SEED_TRAIL)
 	vbox.add_child(title)
 
 	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_score_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
 	vbox.add_child(_score_label)
+
+	vbox.add_child(HSeparator.new())
 
 	var retry_btn: Button = Button.new()
 	retry_btn.text = "BTN_RETRY"

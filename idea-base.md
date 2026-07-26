@@ -1118,6 +1118,110 @@ desaparecer al cruzar la línea roja o algo así."
   molcajete, tras `_shift_down()` desaparece del tablero y `board_reached_bottom` nunca se
   emite.
 
+## Fix: balance de audio — el sonido del láser sobresalía sobre el resto ✅
+
+Reportado por el usuario: "El sonido del láser se escucha muy fuerte, aunque baje el
+volumen general, el láser sobresale bastante en volumen. ¿Puedes asegurarte del balance
+del audio?"
+
+- **Medido** (pico y RMS reales de cada `.wav`, RMS es mejor proxy de volumen percibido
+  que el pico): `laser_zap.wav` tenía RMS ~49% y 350ms de duración — MUY por encima de
+  cualquier otro SFX del juego (`totopo_crunch` ~9%, `seed_bounce` ~16%, incluso
+  `queso_thud`/`salsa_splash`, los más "grandes" del juego, ~30-35%). Causa doble: (1) el
+  `.wav` en sí nunca se reescaló tras `_mix()` (que siempre normaliza al 90% del pico, ver
+  bug ya documentado en `sfx_totopo_crunch()`) — a diferencia de los otros SFX ya
+  ajustados, este quedó en su volumen "de fábrica"; (2) el láser es PERSISTENTE y puede
+  retocarse muchas veces en una sola ráfaga (varias semillas pasando por la misma celda) —
+  cada toque solapa su propio `AudioStreamPlayer`, así que un sonido ya más fuerte que el
+  resto se amontona en una pared de sonido (mismo problema de fondo que el rebote contra
+  pared, ya resuelto antes con `WALL_BOUNCE_PITCH_SCALE`/`VOLUME_DB`).
+- **Fix en `tools/gen_assets.py::sfx_laser_zap()`**: barrido más corto (0.35s→0.14s, menos
+  ventana para solaparse con el siguiente toque) y arrancando más grave (1800Hz→1200Hz,
+  menos penetrante) + rescale final explícito (`x * 0.4`). Resultado: RMS 49%→15.6%,
+  duración 350ms→140ms — ahora en línea con `seed_bounce` (~16%), un SFX "normal" que no
+  se supone deba destacar sobre todos los demás pese a ser el de un power-up. Regenerado
+  SOLO este archivo (nunca `gen_assets.py` completo, regla #36).
+- Se dejó deliberadamente sin tocar `queso_thud`/`salsa_splash` (RMS ~30-35%, más altos
+  que el resto) — son eventos más raros/especiales (golpe de bloque pesado, explosión),
+  así que un volumen más prominente ahí es una elección de diseño razonable, no un bug; el
+  problema real era específicamente el láser, que combina "más fuerte que todo" CON "puede
+  sonar muchas veces seguidas", violando las dos puntas del criterio de balance
+  frecuencia-vs-prominencia al mismo tiempo.
+- No se tocó ningún `.gd` — cambio 100% en el asset generado + su script generador.
+  `gdlint`/233 tests sin cambios (ninguno depende del contenido exacto del `.wav`).
+
+## Pulido de 5 pantallas (auditoría + fix) ✅
+
+Pedido del usuario: "revisa qué pantallas necesitan pulirse" → auditoría con capturas
+reales de las 11 pantallas principales, seguida de "aplica las 5 mejoras que
+identificaste". Mismo lenguaje de color en toda la app: **verde (`COLOR_SEED_TRAIL`) =
+completado/éxito**, **dorado (`COLOR_TOTOPO`) = próximo desafío/acento estándar**, **rojo
+(`COLOR_SALSA`) = derrota**.
+
+1. **`LevelSelectScreen`** — antes los 100 botones numéricos eran idénticos sin importar
+   el estado. Ahora 3 estilos reales vía `StyleBoxFlat` (`normal`/`pressed`, nunca `hover`
+   — el juego es 100% táctil, hover no se ve en dispositivo real): completado (verde +
+   "✓"), actual/próximo (dorado), bloqueado (default atenuado + `disabled`).
+2. **`PackSelectScreen`** — cada pack ahora tiene su propio acento de color
+   (`Constants.LEVEL_PACKS.color`, nuevo campo: rojo navideño, verde Mundial) vía borde
+   izquierdo + tinte de fondo, y muestra progreso REAL (`LevelManager.
+   get_pack_highest_unlocked()`) en vez de solo el conteo total de niveles. El `Button`
+   queda con `.text` vacío; el contenido de dos líneas (nombre coloreado + progreso) son
+   `Label` hijos con `mouse_filter = MOUSE_FILTER_IGNORE` (para no robarle el toque al
+   botón padre) — necesario porque un `Button.text` no puede tener dos colores distintos
+   en la misma cadena.
+3. **`PackLevelsScreen`** — mismo lenguaje de color (verde+"✓"/dorado/muted) pero vía
+   `font_color` en vez de `StyleBoxFlat`, respetando la decisión ya documentada en este
+   archivo de no pisar el look/hover del tema (alineación a la izquierda con texto más
+   largo, distinto de la grilla cuadrada de `LevelSelectScreen`).
+4. **`GameOverScreen`/`LevelCompleteScreen`** — antes visualmente idénticos en tono pese a
+   ser el desenlace opuesto (mismo blanco, mismo tamaño de título). Ahora: título rojo +
+   grande en GameOver, verde + grande en LevelComplete, y un `HSeparator` entre las
+   estadísticas y los botones en ambos (antes todo el texto se sentía "una sola lista" sin
+   jerarquía). Alturas de panel ajustadas (+20px) para el separador nuevo.
+5. **`PauseScreen`** — menor prioridad (pantalla utilitaria transitoria), ajuste ligero:
+   título con el mismo acento dorado que ya usan todos los demás títulos de la app (antes
+   era el único sin color propio) + `HSeparator`.
+- Tests actualizados: `test_pack_select_screen.gd` (la tarjeta ya no se busca por texto de
+  botón combinado, sino por el `Label` del nombre + verificar que su padre es un `Button`,
+  y por el `Label` de progreso).
+- Verificado con capturas reales forzando estados de progreso (`highest_level_unlocked=4`,
+  progreso de pack Mundial=3) — respaldando/restaurando `save.json` a mano alrededor del
+  probe (no pasa por `tools/run_tests.sh`, regla CLAUDE.md #56 adenda) y borrando el
+  `pack_progress.json` de prueba al terminar (no existía antes). `gdlint`/233 tests sin
+  regresiones.
+
+## Tienda v2: fondo real + íconos por mejora + swatches de personaje ✅
+
+Feedback tras el rediseño anterior: "aún no me convence... poner un poco de más diseño".
+El v1 (tarjetas con descripción numérica) resolvió la claridad, pero seguía siendo texto
+sobre un `ColorRect` plano — sin ninguna riqueza visual real.
+
+- **Fondo**: antes `ColorRect` plano; ahora reutiliza el mismo fondo de IA que
+  `MainMenu`/`LanguageSelectScreen` (imagen + scrim oscuro para legibilidad). Al ser la
+  TERCERA pantalla con este patrón exacto, se extrajo a
+  `src/shared/menu_background.gd::build(parent)` — `MainMenu.gd`/`LanguageSelectScreen.gd`
+  se refactorizaron para usar el helper compartido en vez de tener el bloque duplicado
+  (mismo criterio que `modal_style.gd`/`grid_math.gd`).
+- **Ícono por mejora**: "Semillas Extra" reutiliza el sprite de semilla YA existente
+  (encaja perfecto, cero trabajo nuevo); "Daño Base" y "Velocidad" son 2 íconos nuevos
+  generados con el mismo pipeline procedural puro-Python que ya usan los power-ups
+  (`gen_assets.py::make_damage_upgrade_icon()` — estrella de impacto roja de 8 puntas;
+  `make_speed_upgrade_icon()` — rayo eléctrico celeste). Verificados con zoom
+  nearest-neighbor ANTES de integrar (mismo hábito que los sprites de bloques). **Bug real
+  encontrado al integrar**: los PNG nuevos no se veían en el juego (`ResourceLoader.exists()`
+  fallaba en silencio) hasta correr `godot --headless --editor --quit` — Godot necesita
+  ese paso para generar el `.import` de un asset nuevo antes de poder cargarlo en runtime;
+  generar el PNG con Python no alcanza.
+- **Swatch de color por personaje**: antes solo el nombre en texto decía qué personaje
+  era, pese a que el color es el punto entero del cosmético. **Bug real de layout
+  encontrado con captura**: el primer intento puso el swatch como HIJO superpuesto del
+  botón (posición absoluta) — con nombres largos ("Rosa Mexicano") el texto centrado del
+  botón quedaba tapado por el swatch ("sa Mexicano"). Fix: el swatch es un HERMANO del
+  botón dentro de un `HBoxContainer` (columna propia), nunca un hijo superpuesto — cero
+  solapamiento posible sin importar el largo del nombre.
+- `gdlint`/233 tests sin regresiones (ningún test cubre esta pantalla directamente).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.
@@ -1126,6 +1230,7 @@ desaparecer al cruzar la línea roja o algo así."
 - **Balance de los niveles `static` (pack Mundial v3)** — HP variado 25-123 (rango del nivel 30, sesgado 80/20 hacia la mitad baja), 50 semillas iniciales + hasta ~280 más por power-ups, `par_turns` estimado con una heurística simple (`total_hp / (starting_seeds * 6)`) — ninguno de estos números está verificado jugando de verdad, solo ajustado por feedback directo del usuario tras jugar (3 rondas de ajuste ya: nivel 100 → 50 → 30). Como estos niveles no tienen condición de derrota, "muy difícil" en el peor caso solo significa "toma muchos turnos", no "imposible". Ajustar `HP_MIN/HP_MAX/STARTING_SEEDS/SEED_EXTRA_ICON_AMOUNT/hits_per_seed_estimate` en `tools/gen_worldcup_pack.py` y regenerar si hace falta. `Constants.LASER_DAMAGE=1` (bajado de 25, pedido explícito del usuario: "un punto por cada semilla que lo toque, no destruirlos de golpe") también es un valor sin verificar jugando — ¿se siente débil considerando que el láser es persistente y puede tocarse muchas veces en una misma ráfaga?
 - **Sonido de rebote contra pared** — 2da ronda de ajuste (pitch 0.6, -15dB, ver sección "Sonido de bloque v2..." arriba), todavía no confirmado jugando. `WALL_BOUNCE_PITCH_SCALE`/`WALL_BOUNCE_VOLUME_DB` en `AudioManager.gd`.
 - **Sonido de bloque (marimba v2)** — se le agregó un transiente de "click" (ver sección dedicada), pero el usuario ya dijo dos veces que la versión anterior "no convence" — puede necesitar una 3ra iteración si el click tampoco resuelve la queja. No hay forma de verificar "cómo suena" sin que el usuario juegue y escuche.
+- **Sonido del láser (RMS bajado de ~49% a ~16%, duración 350ms→140ms)** — ajustado por medición (peor RMS de todo el juego), pero todavía no confirmado jugando tras el cambio.
 - **Balance de HP variado en Modo Infinito** — `Constants.WAVE_HP_VARIANCE_RATIO_PER_WAVE/MAX` (0.02/oleada, tope 0.6) son valores de partida sin playtesting — ajustar si la variedad se siente muy sutil o demasiado extrema en oleadas altas.
 - **Frecuencia de aparición del láser en fila normal** — `Constants.ROW_LASER_CHANCE=0.04` (Modo Infinito) y `LASER_CHANCE` en `tools/gen_levels.py` (Modo Nivel) son valores de partida — ajustar si aparece muy poco/demasiado seguido jugando.
 - **Balance del sistema de mejoras/oro** — recién implementado, sin playtesting: `Constants.GOLD_PER_SCORE_POINT`, los costos (`UPGRADE_BASE_COST/COST_STEP`) y los bonos por nivel (`UPGRADE_SEEDS/DAMAGE/SPEED_BONUS_PER_LEVEL`) son valores de partida razonables pero no verificados — puede que el oro se gane muy rápido/lento, o que las mejoras se sientan poco impactantes o rotas. Ajustar en `Constants.gd` y en `src/features/meta/upgrade_shop.gd` si hace falta.

@@ -7,11 +7,24 @@ extends Control
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
 const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
+const MenuBackgroundGd := preload("res://src/shared/menu_background.gd")
 
 const UPGRADE_NAME_KEYS: Dictionary = {
 	"seeds": "UPGRADE_SEEDS_NAME",
 	"damage": "UPGRADE_DAMAGE_NAME",
 	"speed": "UPGRADE_SPEED_NAME",
+}
+
+## Pedido explícito del usuario: "poner un poco de más diseño" — cada mejora ahora tiene un
+## ícono propio en vez de solo texto. "seeds" reutiliza el sprite de semilla YA existente
+## (`assets/sprites/seed.png`, encaja perfecto semánticamente); "damage"/"speed" son
+## nuevos, generados con el mismo pipeline procedural de `gen_assets.py` que ya usan los
+## power-ups (`make_damage_upgrade_icon()`/`make_speed_upgrade_icon()`) — no assets de IA
+## para íconos chicos funcionales, mismo criterio que lemon/seed_extra/laser.
+const UPGRADE_ICON_PATHS: Dictionary = {
+	"seeds": "res://assets/sprites/seed.png",
+	"damage": "res://assets/sprites/powerup_icons/upgrade_damage.png",
+	"speed": "res://assets/sprites/powerup_icons/upgrade_speed.png",
 }
 
 ## Pedido explícito del usuario: "solo hay textos y no es claro las mejoras que existen"
@@ -40,12 +53,7 @@ func _build_ui() -> void:
 	position = Vector2.ZERO
 	set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
 
-	var bg: ColorRect = ColorRect.new()
-	bg.color = Constants.COLOR_BG_BOARD
-	bg.position = Vector2.ZERO
-	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
+	MenuBackgroundGd.build(self)
 
 	var title: Label = Label.new()
 	title.text = "TITLE_SHOP"
@@ -117,7 +125,16 @@ func _build_upgrade_row(parent: VBoxContainer, upgrade_id: String) -> void:
 	panel.add_child(card)
 
 	var header: HBoxContainer = HBoxContainer.new()
+	header.add_theme_constant_override(&"separation", 10)
 	card.add_child(header)
+
+	var icon_path: String = UPGRADE_ICON_PATHS.get(upgrade_id, "") as String
+	if ResourceLoader.exists(icon_path):
+		var icon: TextureRect = TextureRect.new()
+		icon.texture = load(icon_path)
+		icon.custom_minimum_size = Vector2(28.0, 28.0)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		header.add_child(icon)
 
 	var name_label: Label = Label.new()
 	name_label.text = UPGRADE_NAME_KEYS.get(upgrade_id, "") as String
@@ -146,11 +163,36 @@ func _build_upgrade_row(parent: VBoxContainer, upgrade_id: String) -> void:
 	}
 
 
+## Pedido explícito del usuario ("más diseño"): antes solo el nombre en texto decía qué
+## personaje era — el color es literalmente el punto de un cosmético (tiñe el molcajete),
+## así que ahora se ve de verdad como una muestra circular, no solo se menciona en texto.
+## El swatch es un HERMANO del botón (columna propia en un HBoxContainer), NUNCA un hijo
+## superpuesto — un swatch superpuesto sobre el texto centrado del botón tapaba el
+## principio de nombres largos ("Rosa Mexicano" se veía "sa Mexicano").
 func _build_character_button(parent: GridContainer, character_id: String) -> void:
+	var character: Dictionary = UpgradeShopGd.find_character(character_id)
+	var cell_w: float = (Constants.DESIGN_WIDTH - 40.0 - 12.0) * 0.5
+
+	var wrapper: HBoxContainer = HBoxContainer.new()
+	wrapper.custom_minimum_size = Vector2(cell_w, 48.0)
+	wrapper.add_theme_constant_override(&"separation", 8)
+	parent.add_child(wrapper)
+
+	var swatch: Panel = Panel.new()
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = character.get("color", Color.WHITE) as Color
+	style.set_corner_radius_all(8)
+	swatch.add_theme_stylebox_override(&"panel", style)
+	swatch.custom_minimum_size = Vector2(16.0, 16.0)
+	swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wrapper.add_child(swatch)
+
 	var btn: Button = Button.new()
-	btn.custom_minimum_size = Vector2((Constants.DESIGN_WIDTH - 40.0 - 12.0) * 0.5, 48.0)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.custom_minimum_size = Vector2(0.0, 48.0)
 	btn.pressed.connect(_on_character_pressed.bind(character_id))
-	parent.add_child(btn)
+	wrapper.add_child(btn)
+
 	_character_buttons[character_id] = btn
 
 

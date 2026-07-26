@@ -4,7 +4,7 @@ extends Control
 ## persiste la elección — nunca vuelve a aparecer para este jugador.
 
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
-const MENU_BG_PATH: String = "res://assets/sprites/backgrounds/menu_bg.png"
+const MenuBackgroundGd := preload("res://src/shared/menu_background.gd")
 const LANG_CODES: Array = ["es", "en", "pt_BR", "fr"]
 const LANG_NAME_KEYS: Array = ["LANG_NAME_ES", "LANG_NAME_EN", "LANG_NAME_PT_BR", "LANG_NAME_FR"]
 
@@ -44,32 +44,10 @@ func _build_ui() -> void:
 		vbox.add_child(btn)
 
 
-## Mismo fondo que MainMenu.gd (ver ese archivo para el porqué del scrim y del
-## fallback plano cuando el asset todavía no existe).
+## Mismo fondo que MainMenu.gd, extraído a src/shared/menu_background.gd (ver ese archivo
+## para el porqué del scrim y del fallback plano cuando el asset todavía no existe).
 func _build_background() -> void:
-	if not ResourceLoader.exists(MENU_BG_PATH):
-		var flat_bg: ColorRect = ColorRect.new()
-		flat_bg.color = Constants.COLOR_BG_BOARD
-		flat_bg.position = Vector2.ZERO
-		flat_bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-		flat_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(flat_bg)
-		return
-
-	var bg: TextureRect = TextureRect.new()
-	bg.texture = load(MENU_BG_PATH)
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
-	bg.position = Vector2.ZERO
-	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
-	var scrim: ColorRect = ColorRect.new()
-	scrim.color = Color(0.0, 0.0, 0.0, 0.4)
-	scrim.position = Vector2.ZERO
-	scrim.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(scrim)
+	MenuBackgroundGd.build(self)
 
 
 func _on_language_pressed(code: String) -> void:

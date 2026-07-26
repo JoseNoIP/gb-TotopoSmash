@@ -89,20 +89,50 @@ func _build_grid() -> void:
 		if _is_pack_level(level_id):
 			continue
 		var level_number: int = i + 1
-		_build_level_button(grid, level_id, level_number, level_number <= highest_unlocked)
+		_build_level_button(grid, level_id, level_number, highest_unlocked)
 
 
+## Pedido explícito del usuario ("revisa qué pantallas necesitan pulirse"): antes los 100
+## botones se veían IDÉNTICOS sin importar el estado (completado/actual/bloqueado no se
+## distinguían más que por la atenuación default de Godot en `disabled`). Tres estados
+## visuales reales ahora: COMPLETADO (verde + check ✓, ya jugado, se puede repetir),
+## ACTUAL (dorado, el próximo desafío nuevo — mismo acento que usan los títulos de toda la
+## app), BLOQUEADO (atenuado, deshabilitado). Solo se pisa el StyleBox de `normal`/
+## `pressed`/`disabled` (no `hover`): el control del juego es 100% táctil (ver tabla de
+## Stack en CLAUDE.md), así que hover nunca se ve en un dispositivo real.
 func _build_level_button(
-	grid: GridContainer, level_id: String, level_number: int, unlocked: bool
+	grid: GridContainer, level_id: String, level_number: int, highest_unlocked: int
 ) -> void:
 	var btn: Button = Button.new()
-	btn.text = str(level_number)
 	btn.custom_minimum_size = Vector2(BUTTON_SIZE, BUTTON_SIZE)
-	if unlocked:
+	if level_number < highest_unlocked:
+		btn.text = str(level_number) + "\n✓"
+		_apply_level_button_style(btn, Constants.COLOR_SEED_TRAIL)
+		btn.pressed.connect(_on_level_pressed.bind(level_id))
+	elif level_number == highest_unlocked:
+		btn.text = str(level_number)
+		_apply_level_button_style(btn, Constants.COLOR_TOTOPO)
 		btn.pressed.connect(_on_level_pressed.bind(level_id))
 	else:
+		btn.text = str(level_number)
 		btn.disabled = true
 	grid.add_child(btn)
+
+
+func _apply_level_button_style(btn: Button, accent: Color) -> void:
+	var normal: StyleBoxFlat = StyleBoxFlat.new()
+	normal.bg_color = Color(accent.r, accent.g, accent.b, 0.22)
+	normal.border_color = accent
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(8)
+	btn.add_theme_stylebox_override(&"normal", normal)
+
+	var pressed: StyleBoxFlat = StyleBoxFlat.new()
+	pressed.bg_color = Color(accent.r, accent.g, accent.b, 0.4)
+	pressed.border_color = accent
+	pressed.set_border_width_all(2)
+	pressed.set_corner_radius_all(8)
+	btn.add_theme_stylebox_override(&"pressed", pressed)
 
 
 func _on_level_pressed(level_id: String) -> void:

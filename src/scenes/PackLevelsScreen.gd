@@ -102,12 +102,25 @@ func _build_grid(prefix: String) -> void:
 		## es el margen visual respecto al borde del botón (sin tocar el StyleBox del tema,
 		## que ya trae su propio look de fondo/borde/hover — pisarlo con un StyleBox propio
 		## rompería esos estados visuales sin necesidad).
-		btn.text = "  " + _level_button_text(level_id, position_in_pack)
+		var label_text: String = _level_button_text(level_id, position_in_pack)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.custom_minimum_size = Vector2(BUTTON_WIDTH, BUTTON_HEIGHT)
-		if position_in_pack <= highest_unlocked:
+		## Pedido explícito del usuario ("revisa qué pantallas necesitan pulirse"): antes
+		## los 3 estados (completado/actual/bloqueado) se veían casi idénticos — solo la
+		## atenuación default de `disabled`. Mismo lenguaje de color que LevelSelectScreen
+		## (verde=completado con check, dorado=próximo desafío), pero vía color de fuente en
+		## vez de StyleBox, para no romper el look/hover del tema que este archivo ya había
+		## decidido preservar (ver comentario arriba).
+		if position_in_pack < highest_unlocked:
+			btn.text = "  " + label_text + " ✓"
+			btn.add_theme_color_override(&"font_color", Constants.COLOR_SEED_TRAIL)
+			btn.pressed.connect(_on_level_pressed.bind(level_id))
+		elif position_in_pack == highest_unlocked:
+			btn.text = "  " + label_text
+			btn.add_theme_color_override(&"font_color", Constants.COLOR_TOTOPO)
 			btn.pressed.connect(_on_level_pressed.bind(level_id))
 		else:
+			btn.text = "  " + label_text
 			btn.disabled = true
 		grid.add_child(btn)
 

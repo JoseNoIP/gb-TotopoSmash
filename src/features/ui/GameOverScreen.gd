@@ -26,7 +26,7 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	var panel_w: float = 300.0
-	var panel_h: float = 300.0
+	var panel_h: float = 320.0
 	var origin_x: float = (Constants.DESIGN_WIDTH - panel_w) * 0.5
 	var origin_y: float = (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	_panel.position = Vector2(origin_x, origin_y)
@@ -42,14 +42,21 @@ func _build_ui() -> void:
 
 	## KEY cruda (no tr()) — auto-translate nativo (ver MainMenu.gd). El título se fija en
 	## _on_game_over() porque depende del modo (Infinito/Nivel), no se conoce al construir.
+	## Pedido explícito del usuario ("revisa qué pantallas necesitan pulirse"): antes este
+	## título se veía visualmente idéntico al de LevelCompleteScreen (mismo blanco, mismo
+	## tamaño) pese a ser el desenlace OPUESTO — rojo (COLOR_SALSA, mismo tono que la línea
+	## de peligro) + más grande, para que la derrota se sienta distinta de la victoria.
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title_label.add_theme_font_size_override(&"font_size", 20)
+	_title_label.add_theme_font_size_override(&"font_size", 24)
+	_title_label.add_theme_color_override(&"font_color", Constants.COLOR_SALSA)
 	vbox.add_child(_title_label)
 
 	for label: Label in [_score_label, _wave_label, _best_label]:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
 		vbox.add_child(label)
+
+	vbox.add_child(HSeparator.new())
 
 	var retry_btn: Button = Button.new()
 	retry_btn.text = "BTN_RETRY"
