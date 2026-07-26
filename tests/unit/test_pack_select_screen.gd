@@ -5,11 +5,11 @@ extends GutTest
 const PackSelectScreenGd := preload("res://src/scenes/PackSelectScreen.gd")
 
 
-func _find_button_with_text(root: Node, text: String) -> Button:
+func _find_label_with_text(root: Node, text: String) -> Label:
 	for child: Node in root.get_children():
-		if child is Button and (child as Button).text == text:
-			return child as Button
-		var found: Button = _find_button_with_text(child, text)
+		if child is Label and (child as Label).text == text:
+			return child as Label
+		var found: Label = _find_label_with_text(child, text)
 		if found != null:
 			return found
 	return null
@@ -23,6 +23,10 @@ func _count_levels_with_prefix(prefix: String) -> int:
 	return count
 
 
+## Pedido explícito del usuario ("revisa qué pantallas necesitan pulirse"): la tarjeta de
+## cada pack ahora es un Button de texto VACÍO (identidad visual vía StyleBox propio, ver
+## PackSelectScreen.gd) con el nombre y el progreso como Label hijos independientes — ya
+## no se puede buscar por el texto combinado de un solo botón.
 func test_shows_a_card_for_each_registered_pack_with_levels() -> void:
 	var screen: Control = PackSelectScreenGd.new()
 	add_child_autofree(screen)
@@ -31,9 +35,16 @@ func test_shows_a_card_for_each_registered_pack_with_levels() -> void:
 		var count: int = _count_levels_with_prefix(prefix)
 		assert_true(count > 0, "arreglo del test: %s debe tener niveles en el manifiesto real" % prefix)
 		var pack_name: String = tr(pack.get("name_key", "") as String)
-		var expected_text: String = tr(&"LABEL_PACK_CARD") % [pack_name, count]
-		var btn: Button = _find_button_with_text(screen, expected_text)
-		assert_not_null(btn, "debe existir una tarjeta para el pack '%s'" % prefix)
+		var name_label: Label = _find_label_with_text(screen, pack_name)
+		assert_not_null(name_label, "debe existir una tarjeta para el pack '%s'" % prefix)
+		assert_true(
+			name_label.get_parent() is Button,
+			"el nombre del pack debe vivir dentro de una tarjeta clickeable"
+		)
+		var highest_unlocked: int = mini(LevelManager.get_pack_highest_unlocked(prefix), count)
+		var expected_progress: String = tr(&"LABEL_PACK_PROGRESS") % [highest_unlocked, count]
+		var progress_label: Label = _find_label_with_text(screen, expected_progress)
+		assert_not_null(progress_label, "debe mostrar el progreso real del pack '%s'" % prefix)
 
 
 func test_pressing_a_pack_card_sets_the_pending_pack_prefix() -> void:

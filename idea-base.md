@@ -1150,6 +1150,47 @@ del audio?"
 - No se tocó ningún `.gd` — cambio 100% en el asset generado + su script generador.
   `gdlint`/233 tests sin cambios (ninguno depende del contenido exacto del `.wav`).
 
+## Pulido de 5 pantallas (auditoría + fix) ✅
+
+Pedido del usuario: "revisa qué pantallas necesitan pulirse" → auditoría con capturas
+reales de las 11 pantallas principales, seguida de "aplica las 5 mejoras que
+identificaste". Mismo lenguaje de color en toda la app: **verde (`COLOR_SEED_TRAIL`) =
+completado/éxito**, **dorado (`COLOR_TOTOPO`) = próximo desafío/acento estándar**, **rojo
+(`COLOR_SALSA`) = derrota**.
+
+1. **`LevelSelectScreen`** — antes los 100 botones numéricos eran idénticos sin importar
+   el estado. Ahora 3 estilos reales vía `StyleBoxFlat` (`normal`/`pressed`, nunca `hover`
+   — el juego es 100% táctil, hover no se ve en dispositivo real): completado (verde +
+   "✓"), actual/próximo (dorado), bloqueado (default atenuado + `disabled`).
+2. **`PackSelectScreen`** — cada pack ahora tiene su propio acento de color
+   (`Constants.LEVEL_PACKS.color`, nuevo campo: rojo navideño, verde Mundial) vía borde
+   izquierdo + tinte de fondo, y muestra progreso REAL (`LevelManager.
+   get_pack_highest_unlocked()`) en vez de solo el conteo total de niveles. El `Button`
+   queda con `.text` vacío; el contenido de dos líneas (nombre coloreado + progreso) son
+   `Label` hijos con `mouse_filter = MOUSE_FILTER_IGNORE` (para no robarle el toque al
+   botón padre) — necesario porque un `Button.text` no puede tener dos colores distintos
+   en la misma cadena.
+3. **`PackLevelsScreen`** — mismo lenguaje de color (verde+"✓"/dorado/muted) pero vía
+   `font_color` en vez de `StyleBoxFlat`, respetando la decisión ya documentada en este
+   archivo de no pisar el look/hover del tema (alineación a la izquierda con texto más
+   largo, distinto de la grilla cuadrada de `LevelSelectScreen`).
+4. **`GameOverScreen`/`LevelCompleteScreen`** — antes visualmente idénticos en tono pese a
+   ser el desenlace opuesto (mismo blanco, mismo tamaño de título). Ahora: título rojo +
+   grande en GameOver, verde + grande en LevelComplete, y un `HSeparator` entre las
+   estadísticas y los botones en ambos (antes todo el texto se sentía "una sola lista" sin
+   jerarquía). Alturas de panel ajustadas (+20px) para el separador nuevo.
+5. **`PauseScreen`** — menor prioridad (pantalla utilitaria transitoria), ajuste ligero:
+   título con el mismo acento dorado que ya usan todos los demás títulos de la app (antes
+   era el único sin color propio) + `HSeparator`.
+- Tests actualizados: `test_pack_select_screen.gd` (la tarjeta ya no se busca por texto de
+  botón combinado, sino por el `Label` del nombre + verificar que su padre es un `Button`,
+  y por el `Label` de progreso).
+- Verificado con capturas reales forzando estados de progreso (`highest_level_unlocked=4`,
+  progreso de pack Mundial=3) — respaldando/restaurando `save.json` a mano alrededor del
+  probe (no pasa por `tools/run_tests.sh`, regla CLAUDE.md #56 adenda) y borrando el
+  `pack_progress.json` de prueba al terminar (no existía antes). `gdlint`/233 tests sin
+  regresiones.
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.

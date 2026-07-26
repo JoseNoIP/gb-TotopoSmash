@@ -10,7 +10,7 @@ const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
 const PACK_LEVELS_SCENE: String = "res://src/scenes/PackLevelsScreen.tscn"
 
 const CARD_WIDTH: float = 280.0
-const CARD_HEIGHT: float = 64.0
+const CARD_HEIGHT: float = 72.0
 const CARD_GAP: float = 16.0
 
 
@@ -64,12 +64,7 @@ func _build_ui() -> void:
 		var count: int = _count_levels_with_prefix(manifest, prefix)
 		if count <= 0:
 			continue
-		var btn: Button = Button.new()
-		btn.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT)
-		var pack_name: String = tr(pack.get("name_key", "") as String)
-		btn.text = tr(&"LABEL_PACK_CARD") % [pack_name, count]
-		btn.pressed.connect(_on_pack_pressed.bind(prefix))
-		vbox.add_child(btn)
+		vbox.add_child(_build_pack_card(pack, prefix, count))
 
 	var back_btn: Button = Button.new()
 	back_btn.text = "BTN_BACK"
@@ -85,6 +80,58 @@ func _count_levels_with_prefix(manifest: Array, prefix: String) -> int:
 		if (level_id as String).begins_with(prefix + "_"):
 			count += 1
 	return count
+
+
+## Pedido explícito del usuario ("revisa qué pantallas necesitan pulirse"): antes cada
+## pack era un botón de texto plano IDÉNTICO, sin ninguna identidad visual pese a que cada
+## pack tiene un tema propio (navideño, mundial). Ahora cada tarjeta usa el acento de color
+## de `Constants.LEVEL_PACKS` (borde + tinte de fondo) y muestra el progreso real de
+## desbloqueo, no solo el conteo total de niveles. El botón en sí queda con texto vacío —
+## los Label hijos (con `mouse_filter = IGNORE` para no robarle el toque al botón) dan el
+## contenido de dos líneas con colores independientes, algo que el `.text` de un solo
+## Button no puede lograr.
+func _build_pack_card(pack: Dictionary, prefix: String, count: int) -> Button:
+	var accent: Color = pack.get("color", Constants.COLOR_TOTOPO) as Color
+	var btn: Button = Button.new()
+	btn.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT)
+	btn.text = ""
+	_apply_pack_card_style(btn, accent)
+	btn.pressed.connect(_on_pack_pressed.bind(prefix))
+
+	var name_label: Label = Label.new()
+	name_label.text = tr(pack.get("name_key", "") as String)
+	name_label.add_theme_font_size_override(&"font_size", 19)
+	name_label.add_theme_color_override(&"font_color", accent)
+	name_label.position = Vector2(16.0, 8.0)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(name_label)
+
+	var highest_unlocked: int = mini(LevelManager.get_pack_highest_unlocked(prefix), count)
+	var progress_label: Label = Label.new()
+	progress_label.text = tr(&"LABEL_PACK_PROGRESS") % [highest_unlocked, count]
+	progress_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE - 2)
+	progress_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
+	progress_label.position = Vector2(16.0, 36.0)
+	progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(progress_label)
+
+	return btn
+
+
+func _apply_pack_card_style(btn: Button, accent: Color) -> void:
+	var normal: StyleBoxFlat = StyleBoxFlat.new()
+	normal.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
+	normal.border_color = accent
+	normal.border_width_left = 5
+	normal.set_corner_radius_all(8)
+	btn.add_theme_stylebox_override(&"normal", normal)
+
+	var pressed: StyleBoxFlat = StyleBoxFlat.new()
+	pressed.bg_color = Color(accent.r, accent.g, accent.b, 0.28)
+	pressed.border_color = accent
+	pressed.border_width_left = 5
+	pressed.set_corner_radius_all(8)
+	btn.add_theme_stylebox_override(&"pressed", pressed)
 
 
 func _on_pack_pressed(prefix: String) -> void:

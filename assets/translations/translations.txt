@@ -95,6 +95,6 @@ CHARACTER_PINK,Rosa Mexicano,Mexican Pink,Rosa Mexicano,Rose Mexicain
 CHARACTER_GOLD,Dorado,Golden,Dourado,Doré
 TITLE_PACK_SELECT,PACKS ESPECIALES,SPECIAL PACKS,PACOTES ESPECIAIS,PACKS SPÉCIAUX
 HINT_PACK_SELECT,Niveles especiales con figuras temáticas,Special levels with themed shapes,Níveis especiais com formas temáticas,Niveaux spéciaux avec des formes à thème
-LABEL_PACK_CARD,%s (%d niveles),%s (%d levels),%s (%d níveis),%s (%d niveaux)
+LABEL_PACK_PROGRESS,%d/%d completados,%d/%d completed,%d/%d completos,%d/%d terminés
 PACK_HOLIDAY_NAME,Pack Navideño,Holiday Pack,Pacote Natalino,Pack de Noël
 PACK_WORLDCUP_NAME,Pack Mundial,World Cup Pack,Pacote Copa do Mundo,Pack Coupe du Monde

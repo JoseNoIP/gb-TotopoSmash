@@ -202,10 +202,11 @@ const STATIC_LEVEL_DEFAULT_SUBDIVISION: int = 2
 # --- Packs temáticos de niveles (ver PackSelectScreen/PackLevelsScreen/LevelSelectScreen) ---
 ## Registro central de packs — un nivel nuevo agregado por /level-designer con un prefijo
 ## de id nuevo (ej. "easter_001") necesita una entrada nueva aquí para aparecer en
-## PackSelectScreen; si no, sigue siendo jugable (visible en la sección "PACKS ESPECIALES"
-## de LevelSelectScreen, que detecta packs solo por prefijo != "level_"), simplemente no
-## sale en la lista dedicada de packs hasta que se registre acá.
+## PackSelectScreen; si no, sigue siendo jugable directo por LevelManager, simplemente no
+## sale en la lista dedicada de packs hasta que se registre acá (los packs NUNCA se
+## muestran en LevelSelectScreen, pedido explícito del usuario). `color` = acento visual
+## propio de la tarjeta en PackSelectScreen (pedido explícito: identidad visual por pack).
 const LEVEL_PACKS: Array = [
-	{"prefix": "holiday", "name_key": "PACK_HOLIDAY_NAME"},
-	{"prefix": "worldcup", "name_key": "PACK_WORLDCUP_NAME"},
+	{"prefix": "holiday", "name_key": "PACK_HOLIDAY_NAME", "color": Color(0.831, 0.129, 0.129)},
+	{"prefix": "worldcup", "name_key": "PACK_WORLDCUP_NAME", "color": Color(0.2, 0.62, 0.29)},
 ]

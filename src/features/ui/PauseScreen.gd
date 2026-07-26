@@ -23,7 +23,7 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	var panel_w: float = 280.0
-	var panel_h: float = 240.0
+	var panel_h: float = 260.0
 	var origin_x: float = (Constants.DESIGN_WIDTH - panel_w) * 0.5
 	var origin_y: float = (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	_panel.position = Vector2(origin_x, origin_y)
@@ -40,11 +40,18 @@ func _build_ui() -> void:
 	## KEY cruda (no tr()): esta pantalla se construye una vez en _ready() y solo se
 	## muestra/oculta — con la key cruda, el auto-translate nativo de Control re-traduce
 	## sola si el idioma cambia mientras el overlay ya existe (ver nota en MainMenu.gd).
+	## Color de acento (pedido explícito del usuario: "revisa qué pantallas necesitan
+	## pulirse") — antes era el único título de toda la app sin ningún color propio
+	## (MainMenu/LevelSelectScreen/PackSelectScreen/PackLevelsScreen/UpgradeShopScreen ya
+	## usan COLOR_TOTOPO), lo que lo hacía sentir "menos terminado" que el resto.
 	var title: Label = Label.new()
 	title.text = "TITLE_PAUSE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override(&"font_size", 22)
+	title.add_theme_font_size_override(&"font_size", 24)
+	title.add_theme_color_override(&"font_color", Constants.COLOR_TOTOPO)
 	vbox.add_child(title)
+
+	vbox.add_child(HSeparator.new())
 
 	vbox.add_child(_make_button("BTN_CONTINUE", _on_resume_pressed))
 	vbox.add_child(_make_button("BTN_RESTART", _on_restart_pressed))
