@@ -430,6 +430,47 @@ def make_seed_extra_icon(size=48):
     return _flat(g)
 
 
+def make_damage_upgrade_icon(size=48):
+    """Mejora permanente 'Daño Base' (tienda, upgrade_shop.gd) — estrella de impacto/
+    explosión, mismo espíritu visual que el daño en el juego (rojo, como la salsa)."""
+    BURST = (219, 68, 55, 255)
+    HI = (255, 190, 140, 255)
+    g = _grid(size, size, T)
+    cx = cy = size // 2
+    r_out = size * 0.46
+    r_in = size * 0.20
+    spikes = 8
+    points = []
+    for i in range(spikes * 2):
+        angle = math.pi * i / spikes - math.pi / 2
+        r = r_out if i % 2 == 0 else r_in
+        points.append((int(cx + r * math.cos(angle)), int(cy + r * math.sin(angle))))
+    _poly(g, points, BURST)
+    _circle(g, cx, cy, int(size * 0.13), HI)
+    return _flat(g)
+
+
+def make_speed_upgrade_icon(size=48):
+    """Mejora permanente 'Velocidad' (tienda, upgrade_shop.gd) — rayo eléctrico, símbolo
+    universal de rapidez (color propio, celeste, para no confundirse con otros acentos ya
+    usados: verde=completado, dorado=acento estándar, rojo=daño/derrota)."""
+    BOLT = (87, 197, 255, 255)
+    HI = (220, 245, 255, 255)
+    g = _grid(size, size, T)
+    unit = size / 12.0
+    points = [
+        (int(6.5 * unit), int(0.5 * unit)),
+        (int(2.5 * unit), int(6.7 * unit)),
+        (int(5.3 * unit), int(6.7 * unit)),
+        (int(4.3 * unit), int(11.5 * unit)),
+        (int(9.5 * unit), int(4.6 * unit)),
+        (int(6.4 * unit), int(4.6 * unit)),
+    ]
+    _poly(g, points, BOLT)
+    _circle(g, int(6.5 * unit), int(3.2 * unit), max(1, int(unit * 0.35)), HI)
+    return _flat(g)
+
+
 def make_laser_icon(size=48, orientation="horizontal"):
     """Láser (Constants.COLOR_LASER) — ícono de poder, dispara en línea recta a toda la
     fila/columna/AMBAS donde está. TRES variantes ("horizontal"/"vertical"/"both"), nunca

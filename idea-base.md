@@ -1191,6 +1191,37 @@ completado/éxito**, **dorado (`COLOR_TOTOPO`) = próximo desafío/acento están
   `pack_progress.json` de prueba al terminar (no existía antes). `gdlint`/233 tests sin
   regresiones.
 
+## Tienda v2: fondo real + íconos por mejora + swatches de personaje ✅
+
+Feedback tras el rediseño anterior: "aún no me convence... poner un poco de más diseño".
+El v1 (tarjetas con descripción numérica) resolvió la claridad, pero seguía siendo texto
+sobre un `ColorRect` plano — sin ninguna riqueza visual real.
+
+- **Fondo**: antes `ColorRect` plano; ahora reutiliza el mismo fondo de IA que
+  `MainMenu`/`LanguageSelectScreen` (imagen + scrim oscuro para legibilidad). Al ser la
+  TERCERA pantalla con este patrón exacto, se extrajo a
+  `src/shared/menu_background.gd::build(parent)` — `MainMenu.gd`/`LanguageSelectScreen.gd`
+  se refactorizaron para usar el helper compartido en vez de tener el bloque duplicado
+  (mismo criterio que `modal_style.gd`/`grid_math.gd`).
+- **Ícono por mejora**: "Semillas Extra" reutiliza el sprite de semilla YA existente
+  (encaja perfecto, cero trabajo nuevo); "Daño Base" y "Velocidad" son 2 íconos nuevos
+  generados con el mismo pipeline procedural puro-Python que ya usan los power-ups
+  (`gen_assets.py::make_damage_upgrade_icon()` — estrella de impacto roja de 8 puntas;
+  `make_speed_upgrade_icon()` — rayo eléctrico celeste). Verificados con zoom
+  nearest-neighbor ANTES de integrar (mismo hábito que los sprites de bloques). **Bug real
+  encontrado al integrar**: los PNG nuevos no se veían en el juego (`ResourceLoader.exists()`
+  fallaba en silencio) hasta correr `godot --headless --editor --quit` — Godot necesita
+  ese paso para generar el `.import` de un asset nuevo antes de poder cargarlo en runtime;
+  generar el PNG con Python no alcanza.
+- **Swatch de color por personaje**: antes solo el nombre en texto decía qué personaje
+  era, pese a que el color es el punto entero del cosmético. **Bug real de layout
+  encontrado con captura**: el primer intento puso el swatch como HIJO superpuesto del
+  botón (posición absoluta) — con nombres largos ("Rosa Mexicano") el texto centrado del
+  botón quedaba tapado por el swatch ("sa Mexicano"). Fix: el swatch es un HERMANO del
+  botón dentro de un `HBoxContainer` (columna propia), nunca un hijo superpuesto — cero
+  solapamiento posible sin importar el largo del nombre.
+- `gdlint`/233 tests sin regresiones (ningún test cubre esta pantalla directamente).
+
 ## Pendientes
 
 - **iOS sin configurar** — `export_presets.cfg` tiene `application/app_store_team_id="PLACEHOLDER_TEAM_ID"` sin llenar (falta el Team ID de Apple Developer); no existe workflow de CI para iOS (no se ha pedido todavía). Explícitamente dejado para después.

@@ -9,8 +9,8 @@ const LANGUAGE_SELECT_SCENE: String = "res://src/scenes/LanguageSelectScreen.tsc
 const LEVEL_SELECT_SCENE: String = "res://src/scenes/LevelSelectScreen.tscn"
 const PACK_SELECT_SCENE: String = "res://src/scenes/PackSelectScreen.tscn"
 const UPGRADE_SHOP_SCENE: String = "res://src/scenes/UpgradeShopScreen.tscn"
-const MENU_BG_PATH: String = "res://assets/sprites/backgrounds/menu_bg.png"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
+const MenuBackgroundGd := preload("res://src/shared/menu_background.gd")
 
 var _settings: CanvasLayer = null
 var _gold_label: Label = Label.new()
@@ -110,30 +110,10 @@ func _build_ui() -> void:
 ## legibles encima. Si el asset no existe todavía, cae al ColorRect plano de siempre —
 ## el fondo del tablero de juego SÍ debe quedarse plano (GDD sección 5: para resaltar
 ## las trayectorias de las semillas), esto solo aplica al menú, que no compite con nada.
+## Extraído a src/shared/menu_background.gd (reutilizado por LanguageSelectScreen y
+## UpgradeShopScreen con el mismo patrón exacto).
 func _build_background() -> void:
-	if not ResourceLoader.exists(MENU_BG_PATH):
-		var flat_bg: ColorRect = ColorRect.new()
-		flat_bg.color = Constants.COLOR_BG_BOARD
-		flat_bg.position = Vector2.ZERO
-		flat_bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-		flat_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(flat_bg)
-		return
-
-	var bg: TextureRect = TextureRect.new()
-	bg.texture = load(MENU_BG_PATH)
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
-	bg.position = Vector2.ZERO
-	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
-	var scrim: ColorRect = ColorRect.new()
-	scrim.color = Color(0.0, 0.0, 0.0, 0.4)
-	scrim.position = Vector2.ZERO
-	scrim.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(scrim)
+	MenuBackgroundGd.build(self)
 
 
 ## Modo Infinito (progresión al azar de siempre). Limpia el buzón de LevelManager antes

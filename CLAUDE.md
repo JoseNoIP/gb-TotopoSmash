@@ -174,7 +174,7 @@ func _exit_tree() -> void:
     ```bash
     python3 -c "import sys; sys.path.insert(0,'tools'); from gen_assets import _make_XX_icon, save_png; save_png('ruta.png', 64, 64, _make_XX_icon())"
     ```
-37. **Siempre consultar `/gen-ai-art` antes de tocar archivos de imagen** — el skill documenta el pipeline, los bugs de Pollinations.ai y el proceso de reimport en Godot.
+37. **Siempre consultar `/gen-ai-art` antes de tocar archivos de imagen** — el skill documenta el pipeline, los bugs de Pollinations.ai y el proceso de reimport en Godot. **Un PNG nuevo (no una regeneración de uno que ya existía) generado fuera del editor (`gen_assets.py` vía Python puro) NO es cargable en runtime hasta correr `godot --headless --editor --quit`** — sin su `.import` (verificar con `ls archivo.png.import`), `ResourceLoader.exists()`/`load()` fallan EN SILENCIO (sin error, el ícono simplemente no aparece en juego, muy fácil de confundir con un bug de lógica de UI). Regenerar un asset YA existente (mismo nombre de archivo, `.import` ya presente) no necesita este paso; solo un archivo genuinamente nuevo lo necesita.
 
 ### Reglas de tipado descubiertas construyendo Totopo Smash
 38. **`var velocity: Vector2` en un script que `extends CharacterBody2D`** → error de compilación "Member velocity redefined" (`velocity` ya es nativo de `CharacterBody2D`, usado por `move_and_slide()`). Si el script implementa su propio movimiento a mano (ej. rebote con `move_and_collide()`), NO redeclarar la propiedad — usar directamente el `velocity` heredado.
